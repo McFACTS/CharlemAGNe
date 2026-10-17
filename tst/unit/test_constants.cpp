@@ -48,4 +48,3 @@ TEST_CASE("Constants", "[constants]")
 {
     REQUIRE(constants::SOLAR_MASS_KG == 1.988409870698051e+30);
 }
-

@@ -56,11 +56,10 @@ TEST_CASE("SG03 Disk object defaults", "[sg03]")
 //// SG03 Assign ////
 TEST_CASE("SG03 Disk object value assignments", "[sg03]")
 {
-    auto B = SG03(
-        1.e7, /* SMBH mass */
-        1.0, /* Eddington ratio */
-        0.02, /* Alpha */
-        0.715 /* X mass abundance */
+    auto B = SG03(1.e7, /* SMBH mass */
+        1.0,            /* Eddington ratio */
+        0.02,           /* Alpha */
+        0.715           /* X mass abundance */
     );
     REQUIRE(B.GetSMBHMass() == 1e7);
     REQUIRE(B.GetEddingtonRatio() == 1.0);

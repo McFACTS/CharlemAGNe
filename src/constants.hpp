@@ -33,6 +33,7 @@
  */
 #pragma once
 
-namespace constants {
-    inline constexpr double SOLAR_MASS_KG = 1.988409870698051e+30;
+namespace constants
+{
+inline constexpr double SOLAR_MASS_KG = 1.988409870698051e+30;
 }
