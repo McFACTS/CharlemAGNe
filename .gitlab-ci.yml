@@ -1,0 +1,48 @@
+# CI on CPUs: GCC on CentOS oughta build about anything
+
+image: quay.io/centos/centos:stream10
+
+variables:
+  GIT_STRATEGY: clone
+  GIT_SUBMODULE_STRATEGY: recursive
+
+### DEFAULT TEST BEHAVIOR ###
+default:
+  # By default: install hdf5
+  before_script:
+    - dnf -y install hdf5
+  # Always keep logs and plots.  Results should be printed to console!
+  # artifacts:
+  #   when: always
+  #   paths:
+  #     - tests/*/*.png
+  #     - tests/*/*.txt
+
+# Tests can be executed in parallel
+stages:
+  - build
+  # - tests
+
+# Build, obviously overrides script/artifacts
+build:
+  stage: build
+  before_script:
+    - dnf -y group install development-tools
+    - dnf -y install cmake hdf5-devel hdf5-static
+  script:
+    - cmake -B build/ && cmake --build build/
+  artifacts:
+    paths:
+      - build/src/charlemagne
+
+#Run all tests in parallel
+# tests:
+#   stage: tests
+#   script:
+#     - cd tests/$TEST
+#     - ./run.sh
+#   parallel:
+#     matrix:
+#       - TEST: [all_pars, anisotropic_conduction, bondi, bondi_rad, bondi_viscous, bz_monopole, conducting_atmosphere,
+#                emhdmodes, emhdshock, entropy_wave, hubble_flow, mhdmodes, mhdmodes_smr, noh, rad_linear_waves, radshock,
+#                regrid, reinit, resize, restart, tilt_init, torus_sanity]
