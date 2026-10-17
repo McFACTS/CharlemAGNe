@@ -33,10 +33,19 @@
  */
 
 //
+//////// Include ////////
+//// Local ////
+#include "disk1d.hpp"
+//// Third Party ////
+//// Standard Library ////
 #include <iostream>
 
 int main(int argc, char* argv[])
 {
     std::cout << "Hello, world!" << std::endl;
+    auto A = SG03();
+    printf("SG03 smbh_mass: %g\n", A.GetSMBHMass());
+    auto B = SG03(1.0e7);
+    printf("SG03 smbh_mass: %g\n", B.GetSMBHMass());
     return 0;
 }

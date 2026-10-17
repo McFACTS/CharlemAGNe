@@ -13,6 +13,9 @@ init:
 build: clean
 	cd build; cmake ..; make
 
+run: build
+	./build/src/charlemagne
+
 ######## Tests ########
 tests: build
 

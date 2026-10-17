@@ -1,5 +1,5 @@
 /*
- *  File: main.cpp
+ *  File: disk1d.hpp
  *
  *  BSD 3-Clause License
  *
@@ -31,6 +31,30 @@
  *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once
 
 class Disk1D
-{};
+{
+public:
+    /* Define this in daughter classes */
+    Disk1D() {}
+        
+};
+
+class SG03 : public Disk1D
+{
+public:
+    /* Constructor for SG03 */
+    SG03(
+        double smbh_mass = 1.0e8 /*In Solar Masses*/
+    ) : smbh_mass_(smbh_mass) {}
+
+    /* const is a promise that it does not modify anything in the object */
+    /* accessors will have it. setters will not. */
+    double GetSMBHMass() const {return smbh_mass_;} 
+
+private:
+    /* SMBH Mass private variable*/
+    double smbh_mass_;
+};
+
