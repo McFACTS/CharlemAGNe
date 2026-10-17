@@ -32,13 +32,38 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+//////// Include ////////
+//// Local ////
 #include "disk1d.hpp"
 
+//// Third Party ////
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("SG03 Disk object basics", "[sg03]")
+//// Standard Library ////
+
+//////// Tests ////////
+
+//// SG03 Defaults ////
+TEST_CASE("SG03 Disk object defaults", "[sg03]")
 {
-    auto A = SG03(1e8);
+    auto A = SG03();
     REQUIRE(A.GetSMBHMass() == 1e8);
+    REQUIRE(A.GetEddingtonRatio() == 0.5);
+    REQUIRE(A.GetAlpha() == 0.01);
+    REQUIRE(A.GetX() == 0.7);
 }
 
+//// SG03 Assign ////
+TEST_CASE("SG03 Disk object value assignments", "[sg03]")
+{
+    auto B = SG03(
+        1.e7, /* SMBH mass */
+        1.0, /* Eddington ratio */
+        0.02, /* Alpha */
+        0.715 /* X mass abundance */
+    );
+    REQUIRE(B.GetSMBHMass() == 1e7);
+    REQUIRE(B.GetEddingtonRatio() == 1.0);
+    REQUIRE(B.GetAlpha() == 0.02);
+    REQUIRE(B.GetX() == 0.715);
+}

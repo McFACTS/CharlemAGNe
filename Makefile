@@ -3,6 +3,9 @@
 #
 all: clean build tests
 
+######## Settings ########
+MAX_THREADS=20
+
 ######## PACKAGE ########
 
 #### Install ####
@@ -12,6 +15,9 @@ init:
 
 build: clean
 	cd build; cmake ..; make
+
+tests: clean
+	cd build; cmake -DCHARLES_BUILD_TESTS=ON ..; make -j ${MAX_THREADS}
 
 run: build
 	./build/src/charlemagne

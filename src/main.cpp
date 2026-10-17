@@ -35,6 +35,7 @@
 //
 //////// Include ////////
 //// Local ////
+#include "constants.hpp"
 #include "disk1d.hpp"
 //// Third Party ////
 //// Standard Library ////
