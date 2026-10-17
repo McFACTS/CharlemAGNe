@@ -46,15 +46,35 @@ class SG03 : public Disk1D
 public:
     /* Constructor for SG03 */
     SG03(
-        double smbh_mass = 1.0e8 /*In Solar Masses*/
-    ) : smbh_mass_(smbh_mass) {}
+        /* SMBH mass in solar masses */
+        double smbh_mass = 1.0e8,
+        /* Fraction of Eddington Luminosity */
+        double eddington_ratio = 0.5,
+        /* Shakura-Sunyaev parameter */
+        double alpha = 0.01,
+        /* Hydrogen abundance of gas in the disk */
+        /* Fun fact, Cecilia Payne-Gaposchkin came up with this, and she
+         * determined that stars are mostly hydrogen and helium. */
+        double X_mass_fraction = 0.7
+    ) : 
+        smbh_mass_(smbh_mass),
+        eddington_ratio_(eddington_ratio),
+        alpha_(alpha),
+        X_mass_fraction_(X_mass_fraction)
+    {}
 
     /* const is a promise that it does not modify anything in the object */
     /* accessors will have it. setters will not. */
     double GetSMBHMass() const {return smbh_mass_;} 
+    double GetEddingtonRatio() const {return eddington_ratio_;}
+    double GetAlpha() const {return alpha_;}
+    double GetX() const {return X_mass_fraction_;}
 
 private:
-    /* SMBH Mass private variable*/
+    /* Privates of things in constructor */
     double smbh_mass_;
+    double eddington_ratio_;
+    double alpha_;
+    double X_mass_fraction_;
 };
 
