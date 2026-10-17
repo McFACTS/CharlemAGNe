@@ -33,6 +33,13 @@
  */
 #pragma once
 
+//////// Include ////////
+//// Local ////
+#include "constants.hpp"
+//// Third Party ////
+//// Standard Library ////
+#include <cmath>
+
 class Disk1D
 {
   public:
@@ -54,19 +61,40 @@ class SG03 : public Disk1D
         /* Hydrogen abundance of gas in the disk */
         /* Fun fact, Cecilia Payne-Gaposchkin came up with this, and she
          * determined that stars are mostly hydrogen and helium. */
-        double X_mass_fraction = 0.7)
-        : smbh_mass_(smbh_mass)
-        , eddington_ratio_(eddington_ratio)
-        , alpha_(alpha)
-        , X_mass_fraction_(X_mass_fraction)
+        double X_mass_fraction = 0.7,
+        /* Radiative efficiency */
+        double radiative_efficiency = 0.1
+    ) : 
+        smbh_mass_(smbh_mass),
+        eddington_ratio_(eddington_ratio),
+        alpha_(alpha),
+        X_mass_fraction_(X_mass_fraction),
+        radiative_efficiency_(radiative_efficiency)
     {}
 
     /* const is a promise that it does not modify anything in the object */
     /* accessors will have it. setters will not. */
-    double GetSMBHMass() const { return smbh_mass_; }
-    double GetEddingtonRatio() const { return eddington_ratio_; }
-    double GetAlpha() const { return alpha_; }
-    double GetX() const { return X_mass_fraction_; }
+    double GetSMBHMass() const {return smbh_mass_;} 
+    double GetEddingtonRatio() const {return eddington_ratio_;}
+    double GetAlpha() const {return alpha_;}
+    double GetX() const {return X_mass_fraction_;}
+    double GetRadiativeEfficiency() const {return radiative_efficiency_;}
+
+    /* Mass accretion rate */
+    double GetMDot() const {
+        /* Electron scattering opacity */
+        /* cm^2 g^-1 * (1 m / 100 cm)^2 * (1 kg / 1000 g)^-1 */
+        double electron_scattering_opacity = 0.2 * (1.0 + GetX()) * 0.1;
+        /* Eddington Luminosity */
+        double eddington_luminosity = 4.0 * M_PI * constants::G_SI * 
+            constants::C_SI * GetSMBHMass() * constants::SOLAR_MASS_KG / 
+            electron_scattering_opacity;
+        /* Mdot at Eddington */
+        double mdot_eddington = eddington_luminosity / (
+            GetRadiativeEfficiency() * constants::C_SI * constants::C_SI);
+        /* Mass accretion rate */
+        return mdot_eddington * GetEddingtonRatio();
+    }
 
   private:
     /* Privates of things in constructor */
@@ -74,4 +102,5 @@ class SG03 : public Disk1D
     double eddington_ratio_;
     double alpha_;
     double X_mass_fraction_;
+    double radiative_efficiency_;
 };

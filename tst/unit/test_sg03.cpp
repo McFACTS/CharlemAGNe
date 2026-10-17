@@ -51,18 +51,22 @@ TEST_CASE("SG03 Disk object defaults", "[sg03]")
     REQUIRE(A.GetEddingtonRatio() == 0.5);
     REQUIRE(A.GetAlpha() == 0.01);
     REQUIRE(A.GetX() == 0.7);
+    REQUIRE(A.GetRadiativeEfficiency() == 0.1);
 }
 
 //// SG03 Assign ////
 TEST_CASE("SG03 Disk object value assignments", "[sg03]")
 {
-    auto B = SG03(1.e7, /* SMBH mass */
-        1.0,            /* Eddington ratio */
-        0.02,           /* Alpha */
-        0.715           /* X mass abundance */
+    auto B = SG03(
+        1.e7, /* SMBH mass */
+        1.0, /* Eddington ratio */
+        0.02, /* Alpha */
+        0.715, /* X mass abundance */
+        0.2 /* radiative efficiency */
     );
     REQUIRE(B.GetSMBHMass() == 1e7);
     REQUIRE(B.GetEddingtonRatio() == 1.0);
     REQUIRE(B.GetAlpha() == 0.02);
     REQUIRE(B.GetX() == 0.715);
+    REQUIRE(B.GetRadiativeEfficiency() == 0.2);
 }
