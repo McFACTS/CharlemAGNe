@@ -20,7 +20,12 @@ include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 git_describe_working_tree(GIT_VERSION --tags)
 
-# Build KHARMA
+# Singularity-opac options
+set(SINGULARITY_USE_HDF5 ON CACHE BOOL "" FORCE)
+# Build Singularity-opac
+add_subdirectory(external/singularity-opac)
+
+# Build CharlemAGNe
 add_subdirectory(src)
 
 if (CHARLES_BUILD_TESTS)
