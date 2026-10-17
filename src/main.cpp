@@ -44,8 +44,14 @@ int main(int argc, char* argv[])
 {
     std::cout << "Hello, world!" << std::endl;
     auto A = SG03();
-    printf("SG03 smbh_mass: %g\n", A.GetSMBHMass());
+    printf("A smbh_mass: %g\n",         A.GetSMBHMass());
+    printf("A eddington_ratio: %g\n",   A.GetEddingtonRatio());
+    printf("A alpha: %g\n",             A.GetAlpha());
+    printf("A X: %g\n",                 A.GetX());
     auto B = SG03(1.0e7);
-    printf("SG03 smbh_mass: %g\n", B.GetSMBHMass());
+    printf("B smbh_mass: %g\n",         B.GetSMBHMass());
+    printf("B eddington_ratio: %g\n",   B.GetEddingtonRatio());
+    printf("B alpha: %g\n",             B.GetAlpha());
+    printf("B X: %g\n",                 B.GetX());
     return 0;
 }
