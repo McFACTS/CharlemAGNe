@@ -12,7 +12,7 @@ default:
   before_script:
     - dnf -y groupinstall "Development Tools"
     - dnf -y install epel-release
-    - dnf -y install hdf5
+    - dnf -y install cmake hdf5
   # Always keep logs and plots.  Results should be printed to console!
   # artifacts:
   #   when: always
