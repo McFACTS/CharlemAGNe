@@ -27,7 +27,7 @@ stages:
 build:
   stage: build
   before_script:
-    - dnf -y group install development-tools
+    - dnf -y groupinstall "Development Tools"
     - dnf -y install cmake hdf5-devel hdf5-static
   script:
     - cmake -B build/ && cmake --build build/
