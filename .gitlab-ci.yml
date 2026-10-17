@@ -21,6 +21,7 @@ default:
 # Tests can be executed in parallel
 stages:
   - build
+  - unit
   # - tests
 
 # Build, obviously overrides script/artifacts
@@ -31,12 +32,17 @@ build:
     - dnf -y install epel-release
     - dnf -y install cmake hdf5-devel hdf5-static
   script:
-    - cmake -B build/ && cmake --build build/
+    - cmake -DCHARLES_BUILD_TESTS=ON -B build/ && cmake --build build/ -j32
   artifacts:
     paths:
-      - build/src/charlemagne
+      - build/
 
-#Run all tests in parallel
+# Unit tests
+unit:
+  stage: unit
+  script:
+    cd build/ && make test
+
 # tests:
 #   stage: tests
 #   script:

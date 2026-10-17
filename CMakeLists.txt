@@ -1,7 +1,7 @@
 # CharlemAGNe CMake top file
 # General options, not target specifics
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 project(kharma LANGUAGES C CXX)
 
 option(CHARLES_BUILD_TESTS "Build unit tests" OFF)
