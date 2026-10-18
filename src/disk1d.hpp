@@ -41,6 +41,7 @@
 //// Standard Library ////
 #include <cmath>
 #include <cstdio>
+#include <utility>
 
 
 //////// Setup /////////
@@ -137,6 +138,49 @@ public:
     );
   }
 
+  void calc_inv_jacobian(double r, double log10cs, double log10T, double jac_inv[4]) {
+
+    constexpr double eps = 1e-5;
+    double p, rad, p_mc, rad_mc, p_mT, rad_mT;
+    cs_T_eqn(r, log10cs, log10T, p, rad);
+    cs_T_eqn(r, log10cs - eps, log10T, p_mc, rad_mc);
+    cs_T_eqn(r, log10cs, log10T - eps, p_mT, rad_mT);
+
+    double jac[4] = {(p - p_mc) / eps, (p - p_mT) / eps,
+                     (rad - rad_mc) / eps, (rad - rad_mT) / eps};
+    // Analytic inverse
+    jac_inv[0] = jac[3];
+    jac_inv[1] = -jac[1];
+    jac_inv[2] = -jac[2];
+    jac_inv[3] = jac[0];
+    double inv_det = 1. / (jac[0]*jac[3] - jac[1]*jac[2]);
+    for (int i=0; i < 4; i++)
+      jac_inv[i] *= inv_det;
+  }
+
+  // Solve for cs and T in a 2D rootfind
+  void solve_cs_T(double r, double &log10cs, double &log10T) {
+
+    // TODO args or properties
+    constexpr int iter_max = 15;
+    constexpr double tol = 1e-5;
+    
+    double jac_inv[4] = {0.};
+    for (int iter=0; iter < iter_max; iter++) {
+      calc_inv_jacobian(r, log10cs, log10T, jac_inv);
+      double rhs_cs = jac_inv[0] * log10cs + jac_inv[1] * log10T;
+      double rhs_T = jac_inv[2] * log10cs + jac_inv[3] * log10T;
+      log10cs -= rhs_cs;
+      log10T -= rhs_T;
+
+      double fn_pressure, fn_radiation;
+      cs_T_eqn(r, log10cs, log10T, fn_pressure, fn_radiation);
+      if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol)
+        break;
+    }
+    
+  }
+
 
 private:
   /* Privates of things in constructor */
@@ -145,4 +189,45 @@ private:
   double alpha_;
   double X_mass_fraction_;
   double radiative_efficiency_;
+
+  double kappaLogTLogRopac(double LogT, double LogRopac, bool grid = false) {
+    return 0.; // TODO
+  }
+
+  // Equation for cs/T rootfind
+  void cs_T_eqn(double r, double log10cs, double log10T, double &fn_pressure, double &fn_radiation) {
+
+        double cs = std::pow(log10cs, 10.);
+        double cs2 = cs * cs;
+        double T = std::pow(log10T, 10.);
+
+        double omega = GetAngularVelocity(r);
+        double Teff4 = GetEffectiveTemperature4(r, omega);
+        double Mdotprime = GetMDot() * std::sqrt(1 - (GetRmin() / r));
+
+        // Sound speed has a different expression depending on b=0,1
+        double rho = (1) ?
+            Mdotprime * omega * omega / (6 * M_PI * GetAlpha() * cs2 * cs) :
+            Mdotprime * omega * omega * constants::AMU / (6 * M_PI * GetAlpha() * cs * T * constants::KBOLTZMANN);
+        double log10rho = std::log10(rho);
+
+        // TODO(CEP) 18???
+        double LogRopac = log10rho - log10T * 3 + 18;
+        double kappa = 10; // raised to self.kappaLogTLogRopac(LogT, LogRopac, grid=False)
+
+        double tauV = kappa * rho * cs / omega;
+
+        double Ppgas = (constants::KBOLTZMANN / constants::AMU) * T / cs2;
+        double PPrad = tauV * constants::STEFAN_BOLTZMANN / (2 * constants::C_SI) * Teff4 / (rho * cs2);
+
+        // Rewritten as dimensionless, dividing by cs2
+        fn_pressure = Ppgas + PPrad - 1;
+        // Same, dividing by Teff4
+        double opacfac = (0.375 * tauV + 0.5 + 0.25 / tauV);
+        double T4 = T * T * T * T;
+        double T4ratio = Teff4 / T4;
+        double Rr = T4ratio * opacfac;
+        fn_radiation = Rr - 1;
+  }
+
 };

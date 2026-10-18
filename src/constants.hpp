@@ -39,4 +39,6 @@ inline constexpr double SOLAR_MASS_KG = 1.988409870698051e+30;
 inline constexpr double G_SI = 6.6743e-11;
 inline constexpr double C_SI = 299792458.0;
 inline constexpr double STEFAN_BOLTZMANN = 5.670374419e-08;
+inline constexpr double KBOLTZMANN = 1.380649e-23;
+inline constexpr double AMU = 1.6605390666050e-27;
 } // namespace constants
