@@ -47,7 +47,7 @@
 //// SG03 Defaults ////
 TEST_CASE("SG03 Disk object defaults", "[sg03]") {
   auto A = SG03();
-  REQUIRE(A.GetSMBHMass() == 1e8);
+  REQUIRE(A.GetSMBHMassSolar() == 1e8);
   REQUIRE(A.GetEddingtonRatio() == 0.5);
   REQUIRE(A.GetAlpha() == 0.01);
   REQUIRE(A.GetX() == 0.7);
@@ -62,9 +62,15 @@ TEST_CASE("SG03 Disk object value assignments", "[sg03]") {
                 0.715, /* X mass abundance */
                 0.2    /* radiative efficiency */
   );
-  REQUIRE(B.GetSMBHMass() == 1e7);
+  REQUIRE(B.GetSMBHMassSolar() == 1e7);
   REQUIRE(B.GetEddingtonRatio() == 1.0);
   REQUIRE(B.GetAlpha() == 0.02);
   REQUIRE(B.GetX() == 0.715);
   REQUIRE(B.GetRadiativeEfficiency() == 0.2);
+}
+
+//// SG03 Mdot ////
+TEST_CASE("SG03 Disk Mdot default", "[sg03]") {
+    auto disk = SG03();
+    REQUIRE(std::abs((disk.GetMDot() - 8.180726668384155e+22)/8.180726668384155e+22) < 1e-7);
 }

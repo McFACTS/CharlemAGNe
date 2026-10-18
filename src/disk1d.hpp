@@ -40,7 +40,13 @@
 //// Third Party ////
 //// Standard Library ////
 #include <cmath>
+#include <cstdio>
 
+
+//////// Setup /////////
+using namespace constants;
+
+//////// Objects /////////
 class Disk1D {
 public:
   /* Define this in daughter classes */
@@ -49,27 +55,32 @@ public:
 
 class SG03 : public Disk1D {
 public:
-  /* Constructor for SG03 */
+  /* Constructor for SG03
+   * Fun fact, Cecilia Payne-Gaposchkin came up with the X/Y/Z
+   * mass abundance labels, and she
+   * determined that stars are mostly hydrogen and helium.
+   * @param smbh_mass Schwarzschild radius
+   * @param eddington_ratio Fraction of Eddington Luminosity
+   * @param alpha Shakura-Sunyaev viscosity parameter
+   * @param X_mass_fraction Schwarzschild radius
+   * @param radiative_efficiency The radiative efficiency
+  */
   SG03(
-      /* SMBH mass in solar masses */
       double smbh_mass = 1.0e8,
-      /* Fraction of Eddington Luminosity */
       double eddington_ratio = 0.5,
-      /* Shakura-Sunyaev parameter */
       double alpha = 0.01,
-      /* Hydrogen abundance of gas in the disk */
-      /* Fun fact, Cecilia Payne-Gaposchkin came up with this, and she
-       * determined that stars are mostly hydrogen and helium. */
       double X_mass_fraction = 0.7,
-      /* Radiative efficiency */
       double radiative_efficiency = 0.1)
-      : smbh_mass_(smbh_mass), eddington_ratio_(eddington_ratio), alpha_(alpha),
+      : smbh_mass_(smbh_mass * SOLAR_MASS_KG),
+        eddington_ratio_(eddington_ratio),
+        alpha_(alpha),
         X_mass_fraction_(X_mass_fraction),
         radiative_efficiency_(radiative_efficiency) {}
 
   /* const is a promise that it does not modify anything in the object */
   /* accessors will have it. setters will not. */
   double GetSMBHMass() const { return smbh_mass_; }
+  double GetSMBHMassSolar() const { return smbh_mass_ / SOLAR_MASS_KG; }
   double GetEddingtonRatio() const { return eddington_ratio_; }
   double GetAlpha() const { return alpha_; }
   double GetX() const { return X_mass_fraction_; }
@@ -82,15 +93,50 @@ public:
     double electron_scattering_opacity = 0.2 * (1.0 + GetX()) * 0.1;
     /* Eddington Luminosity */
     double eddington_luminosity =
-        4.0 * M_PI * constants::G_SI * constants::C_SI * GetSMBHMass() *
-        constants::SOLAR_MASS_KG / electron_scattering_opacity;
+        4.0 * M_PI * G_SI * C_SI * GetSMBHMass() /
+        electron_scattering_opacity;
     /* Mdot at Eddington */
     double mdot_eddington =
         eddington_luminosity /
-        (GetRadiativeEfficiency() * constants::C_SI * constants::C_SI);
+        (GetRadiativeEfficiency() * C_SI * C_SI);
     /* Mass accretion rate */
     return mdot_eddington * GetEddingtonRatio();
   }
+
+  /* Rg */
+  double GetRg() const {
+    return GetSMBHMass() * G_SI / (C_SI * C_SI);
+  }
+
+  /* Rmin */
+  double GetRmin() const {
+    /*  Schwarzschild radius / (4 * rad_eff) 
+     *  Schwarzschild radius = 2 Rg */
+    return GetRg() / (2.0 * GetRadiativeEfficiency());
+  }
+
+  /* These are the things
+   *
+  */
+
+  /* angular_velocity (omega; from Kepler) */
+  double GetAngularVelocity(double r) const {
+    return std::sqrt(G_SI * GetSMBHMass() / (r * r * r));
+  }
+
+  /* Effective temperature to the fourth power */
+  double GetEffectiveTemperature4(double r, double angular_velocity) const {
+    return 3.0 * GetSMBHMass() * (1 - std::sqrt(GetRmin() / r)) * angular_velocity * angular_velocity / (8.0 * M_PI);
+  }
+  /* Effective temperature */
+  double GetEffectiveTemperature(double r, double angular_velocity) const {
+    return std::sqrt(
+        std::sqrt(
+            GetEffectiveTemperature4(r, angular_velocity)
+        )
+    );
+  }
+
 
 private:
   /* Privates of things in constructor */

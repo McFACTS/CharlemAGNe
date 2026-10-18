@@ -17,7 +17,7 @@ build: clean
 	cd build; cmake ..; make
 
 tests: clean
-	cd build; cmake -DCHARLES_BUILD_TESTS=ON ..; make -j ${MAX_THREADS}
+	cd build && cmake -DCHARLES_BUILD_TESTS=ON .. && make -j ${MAX_THREADS} && make test
 
 run: build
 	./build/src/charlemagne

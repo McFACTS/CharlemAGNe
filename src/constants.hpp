@@ -38,4 +38,5 @@ namespace constants {
 inline constexpr double SOLAR_MASS_KG = 1.988409870698051e+30;
 inline constexpr double G_SI = 6.6743e-11;
 inline constexpr double C_SI = 299792458.0;
+inline constexpr double STEFAN_BOLTZMANN = 5.670374419e-08;
 } // namespace constants
