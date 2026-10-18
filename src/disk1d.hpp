@@ -158,7 +158,15 @@ public:
       jac_inv[i] *= inv_det;
   }
 
-  // Solve for cs and T in a 2D rootfind
+  /// Solve for cs and T in a 2D rootfind
+  /// We are trying to solve these two equations:
+  /// $c_s^2 = \frac{p_{\rm tot}}{\rho}$
+  /// $T^4 = (\frac{3}{8}\tau_V + \frac{1}{2} + \frac{1}{4\tau_V}) T_{\rm eff}^4
+  /// by finding the sound speed and temperature which satisfy them.
+  ///
+  /// For a 2D Newton's method, X_{i + 1} = X_{i} - J^{-1} f(X_{i})
+  /// where here f(X_{i}) has rows which are the pressure term and the radiation term
+  /// which are both being minimized.
   void solve_cs_T(double r, double &log10cs, double &log10T) {
 
     // TODO args or properties
