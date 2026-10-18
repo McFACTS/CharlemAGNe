@@ -170,7 +170,7 @@ public:
   void solve_cs_T(double r, double &log10cs, double &log10T) {
 
     // TODO args or properties
-    constexpr int iter_max = 15;
+    constexpr int iter_max = 30;
     constexpr double tol = 1e-5;
     double fn_pressure, fn_radiation;
     cs_T_eqn(r, log10cs, log10T, fn_pressure, fn_radiation);
@@ -217,7 +217,7 @@ private:
         // Sound speed has a different expression depending on b=0,1
         double rho = (1) ?
             Mdotprime * omega * omega / (6 * M_PI * GetAlpha() * cs2 * cs) :
-            Mdotprime * omega * omega * AMU / (6 * M_PI * GetAlpha() * cs * T * KBOLTZMANN);
+            Mdotprime * omega * omega * AMU / (6 * M_PI * GetAlpha() * cs * T * STEFAN_BOLTZMANN);
         double log10rho = std::log10(rho);
 
         // TODO(CEP) 18???

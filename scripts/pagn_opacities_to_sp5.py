@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""Construct a spiner-compatible table from the pAGN opacity tables
+
+The pAGN team put a lot of work into developing a set of opacity tables
+  which are valid Rosseland Mean Opacity estimates from 5 to 10^8 Kelvin.
+
+At low temperatures, pAGN uses the Semenov+2003 opacities for ice and dust.
+https://arxiv.org/pdf/astro-ph/0308344
+At high temperatures, pAGN uses Bandell+2005 
+https://academic.oup.com/mnras/article/360/2/458/964515?login=false
+
+The Semenov opacities were provided (rather than in a csv format) in the body
+  of Fortran 77 subroutines.
+The pAGN developers created an F2py module to provide a Python interface,
+  which lives only in the 'utils' directory and is not installed through
+  PyPi when you `pip install pagn`.
+The size of the grid pAGN used for the Semenov opacities was arbitrary, and
+  one could modify the spacing by rerunning the module.
+
+The Bandell opacities have an even spacing in logT below and above 10^6 K,
+  and are interpolated directly from published tables.
+
+The pAGN developers claim that "for the smoothest transition" between the
+  two opacity models, the highest temperature recorded from Semenov is
+  at 4,544 Kelvin and the lowest temperature recorded from Bandell is at
+  7079 Kelvin.
+I feel more comfortable with this gap knowing that they looked at it and
+  decided this was best after trying different things.
+
+In order to take advantage of their hard work, while using singularity-opac,
+  we need to repackage it in singularity-opac's format, which means sampling
+  on an evenly spaced grid.
+The pAGN developers use a Bivariate Quadratic Spline 
+  through scipy.interpolate's RectBivariateSpline object,
+  assigning kx=2, ky=2, and s=0.
+As a result, it passes through every point exactly,
+  and the function and its first derivative are continuous,
+  but its second derivative may change abruptly.
+When we re-evaluate, we should use the same interpolator.
+"""
+######## Imports ########
+#### Standard Library ####
+import os
+#### Third Party ####
+import numpy as np
+import h5py
+#### pAGN ####
+from pagn.opacities import get_combined_opacity
+
+######## Setup ########
+NAME    = "pagn_combined"
+OUT     = f"{NAME}.sp5"
+OPACID  = 1001
+
+## Temperature grid
+LOG10T_MIN  = np.log10(5)
+LOG10T_MAX  = 8.
+LOG10T_NUM  = 147 # 147 for 0.05 spacing or 244 for 0.03 spacing
+LOG10T_GRID = np.linspace(LOG10T_MIN, LOG10T_MAX, LOG10T_NUM)
+
+## Density grid
+LOG10RHO_MIN    = -7.5
+LOG10RHO_MAX    = 1.0
+LOG10RHO_NUM    = 18
+LOG10RHO_GRID = np.linspace(LOG10RHO_MIN, LOG10RHO_MAX, LOG10RHO_NUM)
+
+#### Load the pAGN data ####
+PAGN_INTERP = get_combined_opacity()
+
+######## Main ########
+def main():
+    # Generate the meshgrid
+    log10T, log10rho = np.meshgrid(LOG10T_GRID, LOG10RHO_GRID, indexing="ij")
+    # Evaluate the meshgrid
+    log10Kappa = np.vstack([
+        PAGN_INTERP(log10T[i], log10rho[i]) for i in range(len(log10T))
+    ])
+    # Get linear kappa in cgs
+    Kappa = 10**log10Kappa
+    with h5py.File(OUT, 'w') as F:
+        # Create a top level group with the name of the model
+        group = F.create_group(NAME)
+        # Assign attributes
+        group.attrs["opacid"] = np.int32(OPACID)
+        group.attrs["opac_name"] = NAME
+        # Instantiate the array to write to SPS
+        kappa_sps = np.empty((Kappa.shape[1], Kappa.shape[0], 1))
+        kappa_sps[:,:,0] = Kappa.T
+
+        ## Write opacity group ##
+        sub_name = f"{NAME}/Rosseland group opacity"
+        sub = F.create_group(sub_name)
+        sub.attrs["rank"] = np.int32(3)
+        sub.attrs["dims"] = np.asarray(list(kappa_sps.shape),dtype=np.int32)
+        sub.attrs["index_types"] = np.array([2, 0, 0])
+        sub.attrs["index_types_info"] = "Interpolated:0\nNamed:1\nIndexed:2"
+        sub.create_dataset("data", data=kappa_sps)
+        grid_group = sub.create_group("grids")
+        grid_group.create_dataset("grid_[2]", data=np.array([
+            LOG10T_GRID[0],
+            LOG10T_GRID[-1],
+            LOG10T_GRID[1] - LOG10T_GRID[0]
+        ]))
+        grid_group["grid_[2]"].attrs["npoints"] = np.int32(LOG10T_GRID.size)
+        grid_group["grid_[2]"].attrs["range columns"] = "[0]:min [1]:max [2]:dx"
+        grid_group.create_dataset("grid_[3]", data=np.array([
+            LOG10RHO_GRID[0],
+            LOG10RHO_GRID[-1],
+            LOG10RHO_GRID[1] - LOG10RHO_GRID[0]
+        ]))
+        grid_group["grid_[3]"].attrs["npoints"] = np.int32(LOG10RHO_GRID.size)
+        grid_group["grid_[3]"].attrs["range columns"] = "[0]:min [1]:max [2]:dx"
+
+        ## Write bounds group ##
+        sub_name = f"{NAME}/group bounds"
+        sub = F.create_group(sub_name)
+        sub.attrs["rank"] = np.int32(1)
+        sub.attrs["dims"] = np.asarray([2,], dtype=np.int32)
+        sub.attrs["index_types"] = np.array([2])
+        sub.attrs["index_types_info"] = "Interpolated:0\nNamed:1\nIndexed:2"
+        sub.create_dataset("data", data=np.asarray([0.0, np.inf]))
+
+######## Execution ########
+if __name__ == "__main__":
+    main()
+
