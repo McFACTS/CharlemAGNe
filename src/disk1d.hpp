@@ -127,7 +127,7 @@ public:
 
   /* Effective temperature to the fourth power */
   double GetEffectiveTemperature4(double r, double angular_velocity) const {
-    return 3.0 * GetSMBHMass() * (1 - std::sqrt(GetRmin() / r)) * angular_velocity * angular_velocity / (8.0 * M_PI);
+    return 3.0 * GetMDot() * (1 - std::sqrt(GetRmin() / r)) * angular_velocity * angular_velocity / (8.0 * M_PI * KBOLTZMANN);
   }
   /* Effective temperature */
   double GetEffectiveTemperature(double r, double angular_velocity) const {
@@ -164,16 +164,17 @@ public:
     // TODO args or properties
     constexpr int iter_max = 15;
     constexpr double tol = 1e-5;
+    double fn_pressure, fn_radiation;
+    cs_T_eqn(r, log10cs, log10T, fn_pressure, fn_radiation);
     
     double jac_inv[4] = {0.};
     for (int iter=0; iter < iter_max; iter++) {
       calc_inv_jacobian(r, log10cs, log10T, jac_inv);
-      double rhs_cs = jac_inv[0] * log10cs + jac_inv[1] * log10T;
-      double rhs_T = jac_inv[2] * log10cs + jac_inv[3] * log10T;
+      double rhs_cs = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
+      double rhs_T  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
       log10cs -= rhs_cs;
       log10T -= rhs_T;
 
-      double fn_pressure, fn_radiation;
       cs_T_eqn(r, log10cs, log10T, fn_pressure, fn_radiation);
       if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol)
         break;
@@ -197,18 +198,18 @@ private:
   // Equation for cs/T rootfind
   void cs_T_eqn(double r, double log10cs, double log10T, double &fn_pressure, double &fn_radiation) {
 
-        double cs = std::pow(log10cs, 10.);
+        double cs = std::pow(10., log10cs);
         double cs2 = cs * cs;
-        double T = std::pow(log10T, 10.);
+        double T = std::pow(10., log10T);
 
         double omega = GetAngularVelocity(r);
         double Teff4 = GetEffectiveTemperature4(r, omega);
-        double Mdotprime = GetMDot() * std::sqrt(1 - (GetRmin() / r));
+        double Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
 
         // Sound speed has a different expression depending on b=0,1
         double rho = (1) ?
             Mdotprime * omega * omega / (6 * M_PI * GetAlpha() * cs2 * cs) :
-            Mdotprime * omega * omega * constants::AMU / (6 * M_PI * GetAlpha() * cs * T * constants::KBOLTZMANN);
+            Mdotprime * omega * omega * AMU / (6 * M_PI * GetAlpha() * cs * T * KBOLTZMANN);
         double log10rho = std::log10(rho);
 
         // TODO(CEP) 18???
@@ -217,8 +218,8 @@ private:
 
         double tauV = kappa * rho * cs / omega;
 
-        double Ppgas = (constants::KBOLTZMANN / constants::AMU) * T / cs2;
-        double PPrad = tauV * constants::STEFAN_BOLTZMANN / (2 * constants::C_SI) * Teff4 / (rho * cs2);
+        double Ppgas = (KBOLTZMANN / AMU) * T / cs2;
+        double PPrad = tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 / (rho * cs2);
 
         // Rewritten as dimensionless, dividing by cs2
         fn_pressure = Ppgas + PPrad - 1;
