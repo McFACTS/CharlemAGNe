@@ -3,6 +3,7 @@
 
 The pAGN team put a lot of work into developing a set of opacity tables
   which are valid Rosseland Mean Opacity estimates from 5 to 10^8 Kelvin.
+They are not evenly spaced, which is a requirement for singularity-opac.
 
 At low temperatures, pAGN uses the Semenov+2003 opacities for ice and dust.
 https://arxiv.org/pdf/astro-ph/0308344
@@ -71,12 +72,13 @@ PAGN_INTERP = get_combined_opacity()
 def main():
     # Generate the meshgrid
     log10T, log10rho = np.meshgrid(LOG10T_GRID, LOG10RHO_GRID, indexing="ij")
+    # pAGN's interpolator goes in rho[g/cm^3] / (T/1_000_000 K)^3
+    # singularity-opac wants CGS
+    log10Ropac = log10rho - 3*log10T + 21
     # Evaluate the meshgrid
-    log10Kappa = np.vstack([
-        PAGN_INTERP(log10T[i], log10rho[i]) for i in range(len(log10T))
-    ])
-    # Get linear kappa in cgs
-    Kappa = 10**log10Kappa
+    log10Kappa = PAGN_INTERP(log10T, log10Ropac, grid=False)
+    # Get linear kappa in cgs (cm^2 / g from m^2 / kg)
+    Kappa = 10**(log10Kappa + 1.0)
     with h5py.File(OUT, 'w') as F:
         # Create a top level group with the name of the model
         group = F.create_group(NAME)
@@ -91,7 +93,7 @@ def main():
         sub_name = f"{NAME}/Rosseland group opacity"
         sub = F.create_group(sub_name)
         sub.attrs["rank"] = np.int32(3)
-        sub.attrs["dims"] = np.asarray(list(kappa_sps.shape),dtype=np.int32)
+        sub.attrs["dims"] = np.asarray(list(kappa_sps.shape),dtype=np.int32)[::-1]
         sub.attrs["index_types"] = np.array([2, 0, 0])
         sub.attrs["index_types_info"] = "Interpolated:0\nNamed:1\nIndexed:2"
         sub.create_dataset("data", data=kappa_sps)
@@ -119,6 +121,8 @@ def main():
         sub.attrs["index_types"] = np.array([2])
         sub.attrs["index_types_info"] = "Interpolated:0\nNamed:1\nIndexed:2"
         sub.create_dataset("data", data=np.asarray([0.0, np.inf]))
+        # Create empty grid group for some reason
+        grid_group = sub.create_group("grids")
 
 ######## Execution ########
 if __name__ == "__main__":
