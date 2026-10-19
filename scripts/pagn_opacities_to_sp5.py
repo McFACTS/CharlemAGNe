@@ -7,7 +7,7 @@ They are not evenly spaced, which is a requirement for singularity-opac.
 
 At low temperatures, pAGN uses the Semenov+2003 opacities for ice and dust.
 https://arxiv.org/pdf/astro-ph/0308344
-At high temperatures, pAGN uses Bandell+2005 
+At high temperatures, pAGN uses Badnell+2005 
 https://academic.oup.com/mnras/article/360/2/458/964515?login=false
 
 The Semenov opacities were provided (rather than in a csv format) in the body
@@ -18,12 +18,12 @@ The pAGN developers created an F2py module to provide a Python interface,
 The size of the grid pAGN used for the Semenov opacities was arbitrary, and
   one could modify the spacing by rerunning the module.
 
-The Bandell opacities have an even spacing in logT below and above 10^6 K,
+The Badnell opacities have an even spacing in logT below and above 10^6 K,
   and are interpolated directly from published tables.
 
 The pAGN developers claim that "for the smoothest transition" between the
   two opacity models, the highest temperature recorded from Semenov is
-  at 4,544 Kelvin and the lowest temperature recorded from Bandell is at
+  at 4,544 Kelvin and the lowest temperature recorded from Badnell is at
   7079 Kelvin.
 I feel more comfortable with this gap knowing that they looked at it and
   decided this was best after trying different things.
