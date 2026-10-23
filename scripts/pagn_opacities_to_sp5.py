@@ -42,10 +42,13 @@ When we re-evaluate, we should use the same interpolator.
 ######## Imports ########
 #### Standard Library ####
 import os
+from importlib import resources as impresources
 #### Third Party ####
 import numpy as np
 import h5py
+import scipy
 #### pAGN ####
+import pagn
 from pagn.opacities import get_combined_opacity
 
 ######## Setup ########
@@ -66,6 +69,33 @@ LOG10RHO_NUM    = 18
 LOG10RHO_GRID = np.linspace(LOG10RHO_MIN, LOG10RHO_MAX, LOG10RHO_NUM)
 
 #### Load the pAGN data ####
+#print(os.listdir(impresources.files(pagn.opacities) / "opacity_tables" ))
+#opacity_dir = impresources.files(pagn.opacities) / "opacity_tables"
+#PAGN_LOGRT_COMBINED_DATA = np.loadtxt(opacity_dir / "logRT_combined_table.dat")
+#PAGN_LOGRT_COMBINED_T = np.loadtxt(opacity_dir / "logRT_combined_Taxis.dat")
+#PAGN_LOGRT_COMBINED_R = np.loadtxt(opacity_dir / "logRT_combined_Raxis.dat")
+#_R, _T = np.meshgrid(PAGN_LOGRT_COMBINED_R, PAGN_LOGRT_COMBINED_T)
+#CEIL = 9.999
+#CEIL_MASK = np.isclose(PAGN_LOGRT_COMBINED_DATA, CEIL)
+#APPLY_MASK = True
+
+## Trim data
+#if APPLY_MASK:
+#    _R = _R[~CEIL_MASK]
+#    _T = _T[~CEIL_MASK]
+#    _DATA = PAGN_LOGRT_COMBINED_DATA[~CEIL_MASK]
+#else:
+#    _R = _R.flatten()
+#    _T = _T.flatten()
+#    _DATA = PAGN_LOGRT_COMBINED_DATA.flatten()
+#PAGN_INTERP = scipy.interpolate.RectBivariateSpline(
+#    _T,
+#    _R,
+#    _DATA,
+#    kx=2,
+#    ky=2,
+#    s=0,
+#)
 PAGN_INTERP = get_combined_opacity()
 
 ######## Main ########
