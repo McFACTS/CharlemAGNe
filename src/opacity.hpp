@@ -51,11 +51,11 @@
 
 //////// Setup /////////
 using namespace constants;
-const char CHARLEMAGNE_OPACITY_NAME[]   = "CHARLEMAGNE_OPACITY_NAME";
+constexpr char CHARLEMAGNE_OPACITY_NAME[]   = "CHARLEMAGNE_OPACITY_NAME";
 //std::string name = "pagn_combined",
-const char CHARLEMAGNE_OPACITY_PATH[]   = "CHARLEMAGNE_OPACITY_PATH";
+constexpr char CHARLEMAGNE_OPACITY_PATH[]   = "CHARLEMAGNE_OPACITY_PATH";
 //std::string path = "./pagn_combined.sp5",
-const char CHARLEMAGNE_OPACITY_ID[]     = "CHARLEMAGNE_OPACITY_ID";
+constexpr char CHARLEMAGNE_OPACITY_ID[]     = "CHARLEMAGNE_OPACITY_ID";
 //int opacid = 1001
 
 //////// Objects /////////
@@ -69,8 +69,8 @@ class PAGNCombined : public OpacityHandler {
 public:
   /* Constructor for PAGNCombined OpacityHandler */
   PAGNCombined(
-    std::string name,
-    std::string path,
+    const std::string name,
+    const std::string path,
     int opacid
   ) :
     name_(std::move(name)),
@@ -85,13 +85,23 @@ public:
   }
 
   /* Constructor from env */
-  PAGNCombined() :
-    name_(std::getenv(CHARLEMAGNE_OPACITY_NAME)),
-    path_(std::getenv(CHARLEMAGNE_OPACITY_PATH)),
-    opacid_(std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID))),
-    mean_opac_cgs_(path_, name_)
-  {
-    printf("name_: %s; path_: %s; opacid: %d\n", name_, path_, opacid_);
+  PAGNCombined() {
+    const char *opacid_char = std::getenv(CHARLEMAGNE_OPACITY_ID);
+    if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+        throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+    }
+    if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+        throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+    }
+    if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+        throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+    }
+    name_ = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+    path_ = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+    opacid_ = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+    //MeanOpacityBase mean_opac_cgs_(path, name, false);
+    mean_opac_cgs_ = singularity::photons::MeanOpacityBase(path_, name_);
+    //printf("name_: %s; path_: %s; opacid: %d\n", name_, path_, opacid_);
     // Make sure at least one char
     if (name_.empty()) {
         throw std::runtime_error("Cannot load from env: " + std::string(CHARLEMAGNE_OPACITY_NAME));
@@ -112,7 +122,8 @@ public:
   double eval(double rho_si, double temp) {
     const double logRopac = std::log10(rho_si) - 3.0 * std::log10(temp) + 15.0;
     const double fake_rho = (rho_si / (temp * temp * temp)) * 1.e15;
-    return 0.1 * mean_opac_cgs_.RosselandMeanAbsorptionCoefficient(fake_rho, temp) / fake_rho;
+    double value = 0.1 * mean_opac_cgs_.RosselandMeanAbsorptionCoefficient(fake_rho, temp) / fake_rho;
+    return value;
   }
 
 private:
