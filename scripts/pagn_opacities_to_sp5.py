@@ -108,7 +108,7 @@ def main():
     # Evaluate the meshgrid
     log10Kappa = PAGN_INTERP(log10T, log10R, grid=False)
     # Get linear kappa in cgs (cm^2 / g from m^2 / kg)
-    Kappa = 10**(log10Kappa + 1.0)
+    Kappa = 10**(log10Kappa)
     with h5py.File(OUT, 'w') as F:
         # Create a top level group with the name of the model
         group = F.create_group(NAME)
