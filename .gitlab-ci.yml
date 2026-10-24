@@ -5,6 +5,10 @@ image: docker.io/almalinux:10
 variables:
   GIT_STRATEGY: clone
   GIT_SUBMODULE_STRATEGY: recursive
+  CHARLEMAGNE_OPACITY_NAME: "pagn_combined"
+  CHARLEMAGNE_OPACITY_PATH: "${CI_PROJECT_DIR}/pagn_combined.sp5"
+  CHARLEMAGNE_OPACITY_ID: "1001"
+
 
 ### DEFAULT TEST BEHAVIOR ###
 default:
