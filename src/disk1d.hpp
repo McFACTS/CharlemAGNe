@@ -212,15 +212,15 @@ public:
     out.Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
     // Check arguments for rootfind guess
     if (log10cs == 0.0) {
-        out.log10cs = std::log10(out.omega * r * 1.e-2);
+        log10cs = std::log10(out.omega * r * 1.e-2);
     } else {
-        out.log10cs = log10cs;
+        log10cs = log10cs;
     }
 
     if (log10T == 0.0) {
-        out.log10T = std::log10(out.Teff);
+        log10T = std::log10(out.Teff);
     } else {
-        out.log10T = log10T;
+        log10T = log10T;
     }
 
     // TODO args or properties
@@ -241,6 +241,8 @@ public:
       if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol)
         break;
     }
+
+    // TODO fill Q / h
     return out;
     
   }
@@ -287,7 +289,7 @@ private:
         // Sound speed has a different expression depending on b=0,1
         parcel.rho = (1) ?
             parcel.Mdotprime * parcel.omega * parcel.omega / (6 * M_PI * GetAlpha() * cs2 * parcel.cs) :
-            parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (6 * M_PI * GetAlpha() * parcel.cs * parcel.T * STEFAN_BOLTZMANN);
+            parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (6 * M_PI * GetAlpha() * parcel.cs * parcel.T * KBOLTZMANN);
         parcel.log10rho = std::log10(parcel.rho);
         //printf("rho: %g\n", rho);
 

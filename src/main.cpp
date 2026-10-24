@@ -46,6 +46,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <chrono>
 
 constexpr char CHARLEMAGNE_OPACITY_NAME[]   = "CHARLEMAGNE_OPACITY_NAME";
 //std::string name = "pagn_combined",
@@ -90,8 +91,12 @@ int main(int argc, char *argv[]) {
   double xguess_b = std::log10(Teff);
   printf("x_guess (%g r_g) = %g, %g\n", r_12, xguess_a, xguess_b);
   /* do the solve */
-  Parcel parcel = disk.solve_cs_T(r_12, xguess_a, xguess_b);
+  auto tic = std::chrono::high_resolution_clock::now();
+  Parcel parcel = disk.solve_cs_T(r_12);//, xguess_a, xguess_b);
+  auto toc = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
   printf("x_solve (%g r_g) = %g, %g\n", r_12, parcel.log10cs, parcel.log10T);
+  printf("time: %g ms\n", duration.count() / 1000000.0);
 
 
   return 0;

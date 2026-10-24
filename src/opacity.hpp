@@ -69,13 +69,13 @@ public:
   ) :
     name_(std::move(name)),
     path_(std::move(path)),
-    opacid_(std::move(opacid)),
-    mean_opac_cgs_(path_, name_)
+    opacid_(std::move(opacid))
   {
     // Make sure the filepath checks out
     if (!std::filesystem::is_regular_file(path_)) {
         throw std::runtime_error("File not found: " + path_);
     }
+    mean_opac_cgs_ = singularity::photons::MeanOpacityBase(path_, name_);
   }
 
   // Return the name of the opacity table
@@ -83,10 +83,9 @@ public:
 
   // Return the value of the opacity
   double eval(double rho_si, double temp) {
-    const double logRopac = std::log10(rho_si) - 3.0 * std::log10(temp) + 15.0;
+    //const double logRopac = std::log10(rho_si) - 3.0 * std::log10(temp) + 15.0;
     const double fake_rho = (rho_si / (temp * temp * temp)) * 1.e15;
-    double value = 0.1 * mean_opac_cgs_.RosselandMeanAbsorptionCoefficient(fake_rho, temp) / fake_rho;
-    return value;
+    return 0.1 * mean_opac_cgs_.RosselandMeanAbsorptionCoefficient(fake_rho, temp) / fake_rho;
   }
 
 private:
