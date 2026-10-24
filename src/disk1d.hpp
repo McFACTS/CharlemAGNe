@@ -213,14 +213,9 @@ public:
     // Check arguments for rootfind guess
     if (log10cs == 0.0) {
         log10cs = std::log10(out.omega * r * 1.e-2);
-    } else {
-        log10cs = log10cs;
     }
-
     if (log10T == 0.0) {
         log10T = std::log10(out.Teff);
-    } else {
-        log10T = log10T;
     }
 
     // TODO args or properties
@@ -231,15 +226,18 @@ public:
     
     double jac_inv[4] = {0.};
     for (int iter=0; iter < iter_max; iter++) {
-      calc_inv_jacobian(out, log10cs, log10T, jac_inv);
+      // Call the function here so we don't do it twice
+      cs_T_eqn(out, log10cs, log10T, fn_pressure, fn_radiation);
+      calc_inv_jacobian(out, jac_inv, log10cs, log10T, fn_pressure, fn_radiation);
       double rhs_cs = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
       double rhs_T  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
-      log10cs -= rhs_cs;
-      log10T -= rhs_T;
 
-      cs_T_eqn(out, log10cs, log10T, fn_pressure, fn_radiation);
+      // stop. We're all done here.
       if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol)
         break;
+      // continue iterating
+      log10cs -= rhs_cs;
+      log10T -= rhs_T;
     }
 
     // TODO fill Q / h
@@ -257,11 +255,10 @@ private:
   double radiative_efficiency_;
   PAGNCombined opac_;
 
-  void calc_inv_jacobian(Parcel &parcel, double log10cs, double log10T, double jac_inv[4]) {
+  void calc_inv_jacobian(Parcel &parcel, double jac_inv[4], double log10cs, double log10T, double p, double rad) {
 
     constexpr double eps = 1e-5;
-    double p, rad, p_mc, rad_mc, p_mT, rad_mT;
-    cs_T_eqn(parcel, log10cs, log10T, p, rad);
+    double p_mc, rad_mc, p_mT, rad_mT;
     cs_T_eqn(parcel, log10cs - eps, log10T, p_mc, rad_mc);
     cs_T_eqn(parcel, log10cs, log10T - eps, p_mT, rad_mT);
 
@@ -282,9 +279,9 @@ private:
 
         parcel.log10cs = log10cs;
         parcel.log10T = log10T;
-        parcel.cs = std::pow(10., log10cs);
+        parcel.cs = std::exp(log10cs * M_LN10);
         double cs2 = parcel.cs * parcel.cs;
-        parcel.T = std::pow(10., log10T);
+        parcel.T = std::exp(log10T * M_LN10);
 
         // Sound speed has a different expression depending on b=0,1
         parcel.rho = (1) ?
