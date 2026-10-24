@@ -74,3 +74,25 @@ TEST_CASE("SG03 Disk Mdot default", "[sg03]") {
     auto disk = SG03();
     REQUIRE(std::abs((disk.GetMDot() - 8.180726668384155e+22)/8.180726668384155e+22) < 1e-7);
 }
+
+//// SG03 omega and Teff4 ////
+TEST_CASE("SG03 Disk annulus", "[sg03]") {
+    auto disk = SG03();
+    double r_12 = 12.0 * disk.GetRg();
+    /* Test r_g */
+    REQUIRE(std::abs((r_12 - 1.773e+12) /1.773e+12) < 1.e-3 );
+    /* Test omega */
+    double omega = disk.GetAngularVelocity(r_12);
+    REQUIRE(std::abs((omega - 4.8786388186989514e-05) / 4.8786388186989514e-05) < 1.e-2);
+    /* Teff4 */
+    double Teff4 = disk.GetEffectiveTemperature4(r_12, omega);
+    REQUIRE(std::abs((Teff4 - 1.4540e+20)/1.4540e+20) < 1.e-1);
+    /* xguess */
+    double Teff = disk.GetEffectiveTemperature(r_12, omega);
+    double xguess_a = std::log10(omega * r_12 * 1.e-2);
+    double xguess_b = std::log10(Teff);
+    REQUIRE(std::abs((xguess_a - 5.93707448) / 5.93707448) < 1.e-4);
+    REQUIRE(std::abs((xguess_b - 5.04064371) / 5.04064371) < 1.e-4);
+
+
+}

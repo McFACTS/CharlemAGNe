@@ -51,5 +51,21 @@ int main(int argc, char *argv[]) {
   printf("disk alpha: %g\n", disk.GetAlpha());
   printf("disk X: %g\n", disk.GetX());
   printf("disk Mdot: %g\n", disk.GetMDot());
+  double r_12 = 12.0 * disk.GetRg();
+  double omega = disk.GetAngularVelocity(r_12);
+  double Teff4 = disk.GetEffectiveTemperature4(r_12, omega);
+  double Teff = disk.GetEffectiveTemperature(r_12, omega);
+  printf("omega (%g r_g) = %g\n", r_12, disk.GetAngularVelocity(r_12));
+  printf("Teff4 (%g r_g) = %g\n", r_12, Teff4);
+  
+  /* setup xguess */
+  double xguess_a = std::log10(omega * r_12 * 1.e-2);
+  double xguess_b = std::log10(Teff);
+  printf("x_guess (%g r_g) = %g, %g\n", r_12, xguess_a, xguess_b);
+  /* do the solve */
+  disk.solve_cs_T(r_12, xguess_a, xguess_b);
+  printf("x_solve (%g r_g) = %g, %g\n", r_12, xguess_a, xguess_b);
+
+
   return 0;
 }

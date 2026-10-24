@@ -37,10 +37,12 @@
 //////// Include ////////
 //// Local ////
 #include "constants.hpp"
+#include "opacity.hpp"
 //// Third Party ////
 //// Standard Library ////
 #include <cmath>
 #include <cstdio>
+#include <stdexcept>
 #include <utility>
 
 
@@ -76,7 +78,10 @@ public:
         eddington_ratio_(eddington_ratio),
         alpha_(alpha),
         X_mass_fraction_(X_mass_fraction),
-        radiative_efficiency_(radiative_efficiency) {}
+        radiative_efficiency_(radiative_efficiency),
+        opac_() {}
+
+  const PAGNCombined& opac() const { return opac_; }
 
   /* const is a promise that it does not modify anything in the object */
   /* accessors will have it. setters will not. */
@@ -127,7 +132,7 @@ public:
 
   /* Effective temperature to the fourth power */
   double GetEffectiveTemperature4(double r, double angular_velocity) const {
-    return 3.0 * GetMDot() * (1 - std::sqrt(GetRmin() / r)) * angular_velocity * angular_velocity / (8.0 * M_PI * KBOLTZMANN);
+    return 3.0 * GetMDot() * (1.0 - std::sqrt(GetRmin() / r)) * angular_velocity * angular_velocity / (8.0 * M_PI * STEFAN_BOLTZMANN);
   }
   /* Effective temperature */
   double GetEffectiveTemperature(double r, double angular_velocity) const {
@@ -198,6 +203,7 @@ private:
   double alpha_;
   double X_mass_fraction_;
   double radiative_efficiency_;
+  PAGNCombined opac_;
 
   double kappaLogTLogRopac(double LogT, double LogRopac, bool grid = false) {
     return 0.; // TODO
@@ -213,16 +219,23 @@ private:
         double omega = GetAngularVelocity(r);
         double Teff4 = GetEffectiveTemperature4(r, omega);
         double Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
+        printf(
+            "cs_T_eqn: r: %g; rmin: %g; omega: %g; Teff4: %g; Mdotprime: %g\n",
+            r, GetRmin(), omega, Teff4, Mdotprime
+        );
 
         // Sound speed has a different expression depending on b=0,1
         double rho = (1) ?
             Mdotprime * omega * omega / (6 * M_PI * GetAlpha() * cs2 * cs) :
             Mdotprime * omega * omega * AMU / (6 * M_PI * GetAlpha() * cs * T * STEFAN_BOLTZMANN);
         double log10rho = std::log10(rho);
+        printf("rho: %g\n", rho);
 
         // TODO(CEP) 18???
         double LogRopac = log10rho - log10T * 3 + 18;
-        double kappa = 10; // raised to self.kappaLogTLogRopac(LogT, LogRopac, grid=False)
+        printf("LogRopac: %g\n", LogRopac);
+        double kappa = opac_.eval(LogRopac, log10T); // raised to self.kappaLogTLogRopac(LogT, LogRopac, grid=False)
+        printf("kappa: %g\n", kappa);
 
         double tauV = kappa * rho * cs / omega;
 
@@ -237,6 +250,7 @@ private:
         double T4ratio = Teff4 / T4;
         double Rr = T4ratio * opacfac;
         fn_radiation = Rr - 1;
+        throw std::runtime_error("Crash!\n");
   }
 
 };

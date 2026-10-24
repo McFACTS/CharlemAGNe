@@ -75,11 +75,15 @@ public:
     if (!std::filesystem::is_regular_file(path_)) {
         throw std::runtime_error("File not found: " + path_);
     }
-    //
   }
 
   // Return the name of the opacity table
   std::string GetName() const { return name_; }
+
+  // Return the value of the opacity
+  double eval(double rho, double temp) {
+    return mean_opac_cgs_.RosselandMeanAbsorptionCoefficient(rho, temp);
+  }
 
 private:
     std::string name_;
