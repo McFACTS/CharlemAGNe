@@ -44,6 +44,7 @@
 #include <cstdio>
 #include <stdexcept>
 #include <utility>
+#include <string>
 
 
 //////// Setup /////////
@@ -110,6 +111,9 @@ public:
    * @param radiative_efficiency The radiative efficiency
   */
   SG03(
+      std::string opac_name,
+      std::string opac_path,
+      int opac_id,
       double smbh_mass = 1.0e8,
       double eddington_ratio = 0.5,
       double alpha = 0.01,
@@ -120,7 +124,7 @@ public:
         alpha_(alpha),
         X_mass_fraction_(X_mass_fraction),
         radiative_efficiency_(radiative_efficiency),
-        opac_() {}
+        opac_(opac_name, opac_path, opac_id) {}
 
   const PAGNCombined& opac() const { return opac_; }
 

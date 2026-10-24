@@ -51,12 +51,6 @@
 
 //////// Setup /////////
 using namespace constants;
-constexpr char CHARLEMAGNE_OPACITY_NAME[]   = "CHARLEMAGNE_OPACITY_NAME";
-//std::string name = "pagn_combined",
-constexpr char CHARLEMAGNE_OPACITY_PATH[]   = "CHARLEMAGNE_OPACITY_PATH";
-//std::string path = "./pagn_combined.sp5",
-constexpr char CHARLEMAGNE_OPACITY_ID[]     = "CHARLEMAGNE_OPACITY_ID";
-//int opacid = 1001
 
 //////// Objects /////////
 class OpacityHandler {
@@ -78,37 +72,6 @@ public:
     opacid_(std::move(opacid)),
     mean_opac_cgs_(path_, name_)
   {
-    // Make sure the filepath checks out
-    if (!std::filesystem::is_regular_file(path_)) {
-        throw std::runtime_error("File not found: " + path_);
-    }
-  }
-
-  /* Constructor from env */
-  PAGNCombined() {
-    const char *opacid_char = std::getenv(CHARLEMAGNE_OPACITY_ID);
-    if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
-        throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
-    }
-    if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
-        throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
-    }
-    if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
-        throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
-    }
-    name_ = std::getenv(CHARLEMAGNE_OPACITY_NAME);
-    path_ = std::getenv(CHARLEMAGNE_OPACITY_PATH);
-    opacid_ = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
-    //MeanOpacityBase mean_opac_cgs_(path, name, false);
-    mean_opac_cgs_ = singularity::photons::MeanOpacityBase(path_, name_);
-    //printf("name_: %s; path_: %s; opacid: %d\n", name_, path_, opacid_);
-    // Make sure at least one char
-    if (name_.empty()) {
-        throw std::runtime_error("Cannot load from env: " + std::string(CHARLEMAGNE_OPACITY_NAME));
-    }
-    if (path_.empty()) {
-        throw std::runtime_error("Cannot load from env: " + std::string(CHARLEMAGNE_OPACITY_PATH));
-    }
     // Make sure the filepath checks out
     if (!std::filesystem::is_regular_file(path_)) {
         throw std::runtime_error("File not found: " + path_);

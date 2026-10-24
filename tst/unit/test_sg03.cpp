@@ -42,11 +42,31 @@
 
 //// Standard Library ////
 
+//////// Setup ////////
+constexpr char CHARLEMAGNE_OPACITY_NAME[]   = "CHARLEMAGNE_OPACITY_NAME";
+//std::string name = "pagn_combined",
+constexpr char CHARLEMAGNE_OPACITY_PATH[]   = "CHARLEMAGNE_OPACITY_PATH";
+//std::string path = "./pagn_combined.sp5",
+constexpr char CHARLEMAGNE_OPACITY_ID[]     = "CHARLEMAGNE_OPACITY_ID";
+//int opacid = 1001
+
 //////// Tests ////////
 
 //// SG03 Defaults ////
 TEST_CASE("SG03 Disk object defaults", "[sg03]") {
-  auto A = SG03();
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+  auto A = SG03(opac_name, opac_path, opac_id);
   REQUIRE(A.GetSMBHMassSolar() == 1e8);
   REQUIRE(A.GetEddingtonRatio() == 0.5);
   REQUIRE(A.GetAlpha() == 0.01);
@@ -56,11 +76,27 @@ TEST_CASE("SG03 Disk object defaults", "[sg03]") {
 
 //// SG03 Assign ////
 TEST_CASE("SG03 Disk object value assignments", "[sg03]") {
-  auto B = SG03(1.e7,  /* SMBH mass */
-                1.0,   /* Eddington ratio */
-                0.02,  /* Alpha */
-                0.715, /* X mass abundance */
-                0.2    /* radiative efficiency */
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+  auto B = SG03(
+    opac_name,
+    opac_path,
+    opac_id,
+    1.e7,  /* SMBH mass */
+    1.0,   /* Eddington ratio */
+    0.02,  /* Alpha */
+    0.715, /* X mass abundance */
+    0.2    /* radiative efficiency */
   );
   REQUIRE(B.GetSMBHMassSolar() == 1e7);
   REQUIRE(B.GetEddingtonRatio() == 1.0);
@@ -71,13 +107,37 @@ TEST_CASE("SG03 Disk object value assignments", "[sg03]") {
 
 //// SG03 Mdot ////
 TEST_CASE("SG03 Disk Mdot default", "[sg03]") {
-    auto disk = SG03();
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+    auto disk = SG03(opac_name, opac_path, opac_id);
     REQUIRE(std::abs((disk.GetMDot() - 8.180726668384155e+22)/8.180726668384155e+22) < 1e-7);
 }
 
 //// SG03 omega and Teff4 ////
 TEST_CASE("SG03 Disk annulus", "[sg03]") {
-    auto disk = SG03();
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+    auto disk = SG03(opac_name, opac_path, opac_id);
     double r_12 = 12.0 * disk.GetRg();
     /* Test r_g */
     REQUIRE(std::abs((r_12 - 1.773e+12) /1.773e+12) < 1.e-3 );

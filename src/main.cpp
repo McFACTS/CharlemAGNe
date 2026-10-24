@@ -41,11 +41,38 @@
 #include "opacity.hpp"
 //// Third Party ////
 //// Standard Library ////
+#include <cstdio>
 #include <iostream>
+#include <filesystem>
+#include <stdexcept>
+#include <string>
+
+constexpr char CHARLEMAGNE_OPACITY_NAME[]   = "CHARLEMAGNE_OPACITY_NAME";
+//std::string name = "pagn_combined",
+constexpr char CHARLEMAGNE_OPACITY_PATH[]   = "CHARLEMAGNE_OPACITY_PATH";
+//std::string path = "./pagn_combined.sp5",
+constexpr char CHARLEMAGNE_OPACITY_ID[]     = "CHARLEMAGNE_OPACITY_ID";
+//int opacid = 1001
 
 int main(int argc, char *argv[]) {
-  std::cout << "Hello, world!" << std::endl;
-  auto disk = SG03();
+  // Get arguments
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+
+  // setup disk
+  auto disk = SG03(opac_name, opac_path, opac_id);
+
+  //tests
   printf("disk smbh_mass: %g\n", disk.GetSMBHMassSolar());
   printf("disk eddington_ratio: %g\n", disk.GetEddingtonRatio());
   printf("disk alpha: %g\n", disk.GetAlpha());
