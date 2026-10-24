@@ -63,8 +63,8 @@ int main(int argc, char *argv[]) {
   double xguess_b = std::log10(Teff);
   printf("x_guess (%g r_g) = %g, %g\n", r_12, xguess_a, xguess_b);
   /* do the solve */
-  disk.solve_cs_T(r_12, xguess_a, xguess_b);
-  printf("x_solve (%g r_g) = %g, %g\n", r_12, xguess_a, xguess_b);
+  Parcel parcel = disk.solve_cs_T(r_12, xguess_a, xguess_b);
+  printf("x_solve (%g r_g) = %g, %g\n", r_12, parcel.log10cs, parcel.log10T);
 
 
   return 0;

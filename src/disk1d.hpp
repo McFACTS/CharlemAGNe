@@ -61,6 +61,8 @@ struct Parcel {
     // Effective temperature
     double Teff4 = 0.0;
     double Teff = 0.0;
+    // Mdotprime
+    double Mdotprime = 0.0;
     // Midplane temperature
     double T4 = 0.0;
     double T = 0.0;
@@ -85,8 +87,8 @@ struct Parcel {
     double h = 0.0;
 
     //// Constructor
-    Parcel(double r_cyl) : r_cyl(r_cyl) {}
-}
+    Parcel(double r_cyl) : r_cyl(r_cyl) {};
+};
 
 //// Disks ////
 class Disk1D {
@@ -191,7 +193,31 @@ public:
   /// For a 2D Newton's method, X_{i + 1} = X_{i} - J^{-1} f(X_{i})
   /// where here f(X_{i}) has rows which are the pressure term and the radiation term
   /// which are both being minimized.
-  Parcel solve_cs_T(double r, double log10cs, double log10T) {
+  Parcel solve_cs_T(
+        double r,
+        double log10cs = 0.0,
+        double log10T = 0.0
+    ) {
+    // Construct Parcel
+    Parcel out = Parcel(r);
+
+    // Fill things outside of the hot loop
+    out.omega = GetAngularVelocity(r);
+    out.Teff4 = GetEffectiveTemperature4(r, out.omega);
+    out.Teff = std::sqrt(std::sqrt(out.Teff4));
+    out.Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
+    // Check arguments for rootfind guess
+    if (log10cs == 0.0) {
+        out.log10cs = std::log10(out.omega * r * 1.e-2);
+    } else {
+        out.log10cs = log10cs;
+    }
+
+    if (log10T == 0.0) {
+        out.log10T = std::log10(out.Teff);
+    } else {
+        out.log10T = log10T;
+    }
 
     // TODO args or properties
     constexpr int iter_max = 30;
@@ -211,6 +237,7 @@ public:
       if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol)
         break;
     }
+    return out;
     
   }
 
@@ -223,10 +250,6 @@ private:
   double X_mass_fraction_;
   double radiative_efficiency_;
   PAGNCombined opac_;
-
-  double kappaLogTLogRopac(double LogT, double LogRopac, bool grid = false) {
-    return 0.; // TODO
-  }
 
   void calc_inv_jacobian(double r, double log10cs, double log10T, double jac_inv[4]) {
 
@@ -249,46 +272,38 @@ private:
   }
 
   // Equation for cs/T rootfind
-  void cs_T_eqn(double r, double log10cs, double log10T, double &fn_pressure, double &fn_radiation) {
+  void cs_T_eqn(Parcel parcel, double log10cs, double log10T, double &fn_pressure, double &fn_radiation) {
 
-        double cs = std::pow(10., log10cs);
-        double cs2 = cs * cs;
-        double T = std::pow(10., log10T);
-
-        double omega = GetAngularVelocity(r);
-        double Teff4 = GetEffectiveTemperature4(r, omega);
-        double Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
-        //printf(
-        //    "cs_T_eqn: r: %g; rmin: %g; omega: %g; Teff4: %g; Mdotprime: %g\n",
-        //    r, GetRmin(), omega, Teff4, Mdotprime
-        //);
+        parcel.cs = std::pow(10., log10cs);
+        double cs2 = parcel.cs * parcel.cs;
+        parcel.T = std::pow(10., log10T);
 
         // Sound speed has a different expression depending on b=0,1
-        double rho = (1) ?
-            Mdotprime * omega * omega / (6 * M_PI * GetAlpha() * cs2 * cs) :
-            Mdotprime * omega * omega * AMU / (6 * M_PI * GetAlpha() * cs * T * STEFAN_BOLTZMANN);
-        double log10rho = std::log10(rho);
+        parcel.rho = (1) ?
+            parcel.Mdotprime * parcel.omega * parcel.omega / (6 * M_PI * GetAlpha() * cs2 * parcel.cs) :
+            parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (6 * M_PI * GetAlpha() * parcel.cs * parcel.T * STEFAN_BOLTZMANN);
+        parcel.log10rho = std::log10(parcel.rho);
         //printf("rho: %g\n", rho);
 
-        double kappa = opac_.eval(rho, T); // raised to self.kappaLogTLogRopac(LogT, LogRopac, grid=False)
+        parcel.kappa = opac_.eval(parcel.rho, parcel.T);
         //printf("kappa: %g\n", kappa);
 
-        double tauV = kappa * rho * cs / omega;
+        parcel.tauV = parcel.kappa * parcel.rho * parcel.cs / parcel.omega;
         //printf("tauV: %g\n", tauV);
 
-        double Ppgas = (KBOLTZMANN / AMU) * T / cs2;
-        //printf("Ppgas: %g\n", Ppgas);
-        double PPrad = tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 / (rho * cs2);
+        parcel.PPgas = (KBOLTZMANN / AMU) * parcel.T / cs2;
+        //printf("PPgas: %g\n", PPgas);
+        parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN / (2 * C_SI) * parcel.Teff4 / (parcel.rho * cs2);
         //printf("PPrad: %g\n", PPrad);
 
         // Rewritten as dimensionless, dividing by cs2
-        fn_pressure = Ppgas + PPrad - 1;
+        fn_pressure = parcel.PPgas + parcel.PPrad - 1;
         // Same, dividing by Teff4
-        double opacfac = (0.375 * tauV + 0.5 + 0.25 / tauV);
+        parcel.opacfac = (0.375 * parcel.tauV + 0.5 + 0.25 / parcel.tauV);
         //printf("opacfac: %g\n", opacfac);
-        double T4 = T * T * T * T;
-        double T4ratio = Teff4 / T4;
-        double Rr = T4ratio * opacfac;
+        parcel.T4 = parcel.T * parcel.T * parcel.T * parcel.T;
+        double T4ratio = parcel.Teff4 / parcel.T4;
+        double Rr = T4ratio * parcel.opacfac;
         fn_radiation = Rr - 1;
         //printf("fn_pressure: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
         //throw std::runtime_error("Crash!\n");
