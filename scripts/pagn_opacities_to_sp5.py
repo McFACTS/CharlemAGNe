@@ -63,50 +63,50 @@ LOG10T_NUM  = 147 # 147 for 0.05 spacing or 244 for 0.03 spacing
 LOG10T_GRID = np.linspace(LOG10T_MIN, LOG10T_MAX, LOG10T_NUM)
 
 ## Density grid
-LOG10RHO_MIN    = -7.5
-LOG10RHO_MAX    = 1.0
-LOG10RHO_NUM    = 18
-LOG10RHO_GRID = np.linspace(LOG10RHO_MIN, LOG10RHO_MAX, LOG10RHO_NUM)
+LOG10R_MIN    = -7.5
+LOG10R_MAX    = 1.0
+LOG10R_NUM    = 18
+LOG10R_GRID = np.linspace(LOG10R_MIN, LOG10R_MAX, LOG10R_NUM)
 
 #### Load the pAGN data ####
 #print(os.listdir(impresources.files(pagn.opacities) / "opacity_tables" ))
-#opacity_dir = impresources.files(pagn.opacities) / "opacity_tables"
-#PAGN_LOGRT_COMBINED_DATA = np.loadtxt(opacity_dir / "logRT_combined_table.dat")
-#PAGN_LOGRT_COMBINED_T = np.loadtxt(opacity_dir / "logRT_combined_Taxis.dat")
-#PAGN_LOGRT_COMBINED_R = np.loadtxt(opacity_dir / "logRT_combined_Raxis.dat")
-#_R, _T = np.meshgrid(PAGN_LOGRT_COMBINED_R, PAGN_LOGRT_COMBINED_T)
-#CEIL = 9.999
-#CEIL_MASK = np.isclose(PAGN_LOGRT_COMBINED_DATA, CEIL)
-#APPLY_MASK = True
+opacity_dir = impresources.files(pagn.opacities) / "opacity_tables"
+PAGN_LOGRT_COMBINED_DATA = np.loadtxt(opacity_dir / "logRT_combined_table.dat")
+PAGN_LOGRT_COMBINED_T = np.loadtxt(opacity_dir / "logRT_combined_Taxis.dat")
+PAGN_LOGRT_COMBINED_R = np.loadtxt(opacity_dir / "logRT_combined_Raxis.dat")
+_R, _T = np.meshgrid(PAGN_LOGRT_COMBINED_R, PAGN_LOGRT_COMBINED_T)
+CEIL = 9.999
+CEIL_MASK = np.isclose(PAGN_LOGRT_COMBINED_DATA, CEIL)
+APPLY_MASK = False
 
 ## Trim data
-#if APPLY_MASK:
-#    _R = _R[~CEIL_MASK]
-#    _T = _T[~CEIL_MASK]
-#    _DATA = PAGN_LOGRT_COMBINED_DATA[~CEIL_MASK]
-#else:
-#    _R = _R.flatten()
-#    _T = _T.flatten()
-#    _DATA = PAGN_LOGRT_COMBINED_DATA.flatten()
-#PAGN_INTERP = scipy.interpolate.RectBivariateSpline(
-#    _T,
-#    _R,
-#    _DATA,
-#    kx=2,
-#    ky=2,
-#    s=0,
-#)
-PAGN_INTERP = get_combined_opacity()
+if APPLY_MASK:
+    _R = _R[~CEIL_MASK]
+    _T = _T[~CEIL_MASK]
+    _DATA = PAGN_LOGRT_COMBINED_DATA[~CEIL_MASK]
+else:
+    _R = _R.flatten()
+    _T = _T.flatten()
+    _DATA = PAGN_LOGRT_COMBINED_DATA.flatten()
+PAGN_INTERP = scipy.interpolate.RectBivariateSpline(
+    PAGN_LOGRT_COMBINED_T,#_T,
+    PAGN_LOGRT_COMBINED_R,#_R,
+    PAGN_LOGRT_COMBINED_DATA,#_DATA,
+    kx=2,
+    ky=2,
+    s=0,
+)
+#PAGN_INTERP = get_combined_opacity()
 
 ######## Main ########
 def main():
     # Generate the meshgrid
-    log10T, log10rho = np.meshgrid(LOG10T_GRID, LOG10RHO_GRID, indexing="ij")
+    log10T, log10R = np.meshgrid(LOG10T_GRID, LOG10R_GRID, indexing="ij")
     # pAGN's interpolator goes in rho[g/cm^3] / (T/1_000_000 K)^3
     # singularity-opac wants CGS
-    log10Ropac = log10rho - 3*log10T + 21
+    #log10Ropac = log10R - 3*log10T + 21
     # Evaluate the meshgrid
-    log10Kappa = PAGN_INTERP(log10T, log10Ropac, grid=False)
+    log10Kappa = PAGN_INTERP(log10T, log10R, grid=False)
     # Get linear kappa in cgs (cm^2 / g from m^2 / kg)
     Kappa = 10**(log10Kappa + 1.0)
     with h5py.File(OUT, 'w') as F:
@@ -136,11 +136,11 @@ def main():
         grid_group["grid_[2]"].attrs["npoints"] = np.int32(LOG10T_GRID.size)
         grid_group["grid_[2]"].attrs["range columns"] = "[0]:min [1]:max [2]:dx"
         grid_group.create_dataset("grid_[3]", data=np.array([
-            LOG10RHO_GRID[0],
-            LOG10RHO_GRID[-1],
-            LOG10RHO_GRID[1] - LOG10RHO_GRID[0]
+            LOG10R_GRID[0],
+            LOG10R_GRID[-1],
+            LOG10R_GRID[1] - LOG10R_GRID[0]
         ]))
-        grid_group["grid_[3]"].attrs["npoints"] = np.int32(LOG10RHO_GRID.size)
+        grid_group["grid_[3]"].attrs["npoints"] = np.int32(LOG10R_GRID.size)
         grid_group["grid_[3]"].attrs["range columns"] = "[0]:min [1]:max [2]:dx"
 
         ## Write bounds group ##
