@@ -42,6 +42,7 @@
 //// Standard Library ////
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -50,6 +51,12 @@
 
 //////// Setup /////////
 using namespace constants;
+const char CHARLEMAGNE_OPACITY_NAME[]   = "CHARLEMAGNE_OPACITY_NAME";
+//std::string name = "pagn_combined",
+const char CHARLEMAGNE_OPACITY_PATH[]   = "CHARLEMAGNE_OPACITY_PATH";
+//std::string path = "./pagn_combined.sp5",
+const char CHARLEMAGNE_OPACITY_ID[]     = "CHARLEMAGNE_OPACITY_ID";
+//int opacid = 1001
 
 //////// Objects /////////
 class OpacityHandler {
@@ -62,15 +69,36 @@ class PAGNCombined : public OpacityHandler {
 public:
   /* Constructor for PAGNCombined OpacityHandler */
   PAGNCombined(
-    std::string name = "pagn_combined",
-    std::string path = "./pagn_combined.sp5",
-    int opacid = 1001
+    std::string name,
+    std::string path,
+    int opacid
   ) :
     name_(std::move(name)),
     path_(std::move(path)),
     opacid_(std::move(opacid)),
     mean_opac_cgs_(path_, name_)
   {
+    // Make sure the filepath checks out
+    if (!std::filesystem::is_regular_file(path_)) {
+        throw std::runtime_error("File not found: " + path_);
+    }
+  }
+
+  /* Constructor from env */
+  PAGNCombined() :
+    name_(std::getenv(CHARLEMAGNE_OPACITY_NAME)),
+    path_(std::getenv(CHARLEMAGNE_OPACITY_PATH)),
+    opacid_(std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID))),
+    mean_opac_cgs_(path_, name_)
+  {
+    printf("name_: %s; path_: %s; opacid: %d\n", name_, path_, opacid_);
+    // Make sure at least one char
+    if (name_.empty()) {
+        throw std::runtime_error("Cannot load from env: " + std::string(CHARLEMAGNE_OPACITY_NAME));
+    }
+    if (path_.empty()) {
+        throw std::runtime_error("Cannot load from env: " + std::string(CHARLEMAGNE_OPACITY_PATH));
+    }
     // Make sure the filepath checks out
     if (!std::filesystem::is_regular_file(path_)) {
         throw std::runtime_error("File not found: " + path_);
