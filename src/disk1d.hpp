@@ -223,17 +223,17 @@ public:
     constexpr int iter_max = 30;
     constexpr double tol = 1e-5;
     double fn_pressure, fn_radiation;
-    cs_T_eqn(r, log10cs, log10T, fn_pressure, fn_radiation);
+    cs_T_eqn(out, log10cs, log10T, fn_pressure, fn_radiation);
     
     double jac_inv[4] = {0.};
     for (int iter=0; iter < iter_max; iter++) {
-      calc_inv_jacobian(r, log10cs, log10T, jac_inv);
+      calc_inv_jacobian(out, log10cs, log10T, jac_inv);
       double rhs_cs = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
       double rhs_T  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
       log10cs -= rhs_cs;
       log10T -= rhs_T;
 
-      cs_T_eqn(r, log10cs, log10T, fn_pressure, fn_radiation);
+      cs_T_eqn(out, log10cs, log10T, fn_pressure, fn_radiation);
       if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol)
         break;
     }
@@ -251,13 +251,13 @@ private:
   double radiative_efficiency_;
   PAGNCombined opac_;
 
-  void calc_inv_jacobian(double r, double log10cs, double log10T, double jac_inv[4]) {
+  void calc_inv_jacobian(Parcel &parcel, double log10cs, double log10T, double jac_inv[4]) {
 
     constexpr double eps = 1e-5;
     double p, rad, p_mc, rad_mc, p_mT, rad_mT;
-    cs_T_eqn(r, log10cs, log10T, p, rad);
-    cs_T_eqn(r, log10cs - eps, log10T, p_mc, rad_mc);
-    cs_T_eqn(r, log10cs, log10T - eps, p_mT, rad_mT);
+    cs_T_eqn(parcel, log10cs, log10T, p, rad);
+    cs_T_eqn(parcel, log10cs - eps, log10T, p_mc, rad_mc);
+    cs_T_eqn(parcel, log10cs, log10T - eps, p_mT, rad_mT);
 
     double jac[4] = {(p - p_mc) / eps, (p - p_mT) / eps,
                      (rad - rad_mc) / eps, (rad - rad_mT) / eps};
@@ -272,8 +272,10 @@ private:
   }
 
   // Equation for cs/T rootfind
-  void cs_T_eqn(Parcel parcel, double log10cs, double log10T, double &fn_pressure, double &fn_radiation) {
+  void cs_T_eqn(Parcel &parcel, double log10cs, double log10T, double &fn_pressure, double &fn_radiation) {
 
+        parcel.log10cs = log10cs;
+        parcel.log10T = log10T;
         parcel.cs = std::pow(10., log10cs);
         double cs2 = parcel.cs * parcel.cs;
         parcel.T = std::pow(10., log10T);
