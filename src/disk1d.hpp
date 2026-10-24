@@ -219,38 +219,40 @@ private:
         double omega = GetAngularVelocity(r);
         double Teff4 = GetEffectiveTemperature4(r, omega);
         double Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
-        printf(
-            "cs_T_eqn: r: %g; rmin: %g; omega: %g; Teff4: %g; Mdotprime: %g\n",
-            r, GetRmin(), omega, Teff4, Mdotprime
-        );
+        //printf(
+        //    "cs_T_eqn: r: %g; rmin: %g; omega: %g; Teff4: %g; Mdotprime: %g\n",
+        //    r, GetRmin(), omega, Teff4, Mdotprime
+        //);
 
         // Sound speed has a different expression depending on b=0,1
         double rho = (1) ?
             Mdotprime * omega * omega / (6 * M_PI * GetAlpha() * cs2 * cs) :
             Mdotprime * omega * omega * AMU / (6 * M_PI * GetAlpha() * cs * T * STEFAN_BOLTZMANN);
         double log10rho = std::log10(rho);
-        printf("rho: %g\n", rho);
+        //printf("rho: %g\n", rho);
 
-        // TODO(CEP) 18???
-        double LogRopac = log10rho - log10T * 3 + 15;
-        printf("LogRopac: %g\n", LogRopac);
         double kappa = opac_.eval(rho, T); // raised to self.kappaLogTLogRopac(LogT, LogRopac, grid=False)
-        printf("kappa: %g\n", kappa);
+        //printf("kappa: %g\n", kappa);
 
         double tauV = kappa * rho * cs / omega;
+        //printf("tauV: %g\n", tauV);
 
         double Ppgas = (KBOLTZMANN / AMU) * T / cs2;
+        //printf("Ppgas: %g\n", Ppgas);
         double PPrad = tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 / (rho * cs2);
+        //printf("PPrad: %g\n", PPrad);
 
         // Rewritten as dimensionless, dividing by cs2
         fn_pressure = Ppgas + PPrad - 1;
         // Same, dividing by Teff4
         double opacfac = (0.375 * tauV + 0.5 + 0.25 / tauV);
+        //printf("opacfac: %g\n", opacfac);
         double T4 = T * T * T * T;
         double T4ratio = Teff4 / T4;
         double Rr = T4ratio * opacfac;
         fn_radiation = Rr - 1;
-        throw std::runtime_error("Crash!\n");
+        //printf("fn_pressure: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
+        //throw std::runtime_error("Crash!\n");
   }
 
 };
