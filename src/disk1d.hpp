@@ -49,7 +49,46 @@
 //////// Setup /////////
 using namespace constants;
 
-//////// Objects /////////
+//////// Objects ////////
+//// Parcel ////
+/// A parcel of gas
+struct Parcel {
+    //// Members 
+    // The distance from the axis of the disk to the point
+    double r_cyl;
+    // The angular velocity
+    double omega = 0.0;
+    // Effective temperature
+    double Teff4 = 0.0;
+    double Teff = 0.0;
+    // Midplane temperature
+    double T4 = 0.0;
+    double T = 0.0;
+    double log10T = 0.0;
+    // Sound speed
+    double cs = 0.0;
+    double log10cs = 0.0;
+    // density
+    double rho = 0.0;
+    double log10rho = 0.0;
+    // opacity
+    double kappa = 0.0;
+    double tauV = 0.0;
+    // pressure
+    double PPgas = 0.0;
+    double PPrad = 0.0;
+    // opacfac
+    double opacfac = 0.0;
+    // Toomre instability
+    double Q = 0.0;
+    // Scale height
+    double h = 0.0;
+
+    //// Constructor
+    Parcel(double r_cyl) : r_cyl(r_cyl) {}
+}
+
+//// Disks ////
 class Disk1D {
 public:
   /* Define this in daughter classes */
@@ -143,26 +182,6 @@ public:
     );
   }
 
-  void calc_inv_jacobian(double r, double log10cs, double log10T, double jac_inv[4]) {
-
-    constexpr double eps = 1e-5;
-    double p, rad, p_mc, rad_mc, p_mT, rad_mT;
-    cs_T_eqn(r, log10cs, log10T, p, rad);
-    cs_T_eqn(r, log10cs - eps, log10T, p_mc, rad_mc);
-    cs_T_eqn(r, log10cs, log10T - eps, p_mT, rad_mT);
-
-    double jac[4] = {(p - p_mc) / eps, (p - p_mT) / eps,
-                     (rad - rad_mc) / eps, (rad - rad_mT) / eps};
-    // Analytic inverse
-    jac_inv[0] = jac[3];
-    jac_inv[1] = -jac[1];
-    jac_inv[2] = -jac[2];
-    jac_inv[3] = jac[0];
-    double inv_det = 1. / (jac[0]*jac[3] - jac[1]*jac[2]);
-    for (int i=0; i < 4; i++)
-      jac_inv[i] *= inv_det;
-  }
-
   /// Solve for cs and T in a 2D rootfind
   /// We are trying to solve these two equations:
   /// $c_s^2 = \frac{p_{\rm tot}}{\rho}$
@@ -172,7 +191,7 @@ public:
   /// For a 2D Newton's method, X_{i + 1} = X_{i} - J^{-1} f(X_{i})
   /// where here f(X_{i}) has rows which are the pressure term and the radiation term
   /// which are both being minimized.
-  void solve_cs_T(double r, double &log10cs, double &log10T) {
+  Parcel solve_cs_T(double r, double log10cs, double log10T) {
 
     // TODO args or properties
     constexpr int iter_max = 30;
@@ -207,6 +226,26 @@ private:
 
   double kappaLogTLogRopac(double LogT, double LogRopac, bool grid = false) {
     return 0.; // TODO
+  }
+
+  void calc_inv_jacobian(double r, double log10cs, double log10T, double jac_inv[4]) {
+
+    constexpr double eps = 1e-5;
+    double p, rad, p_mc, rad_mc, p_mT, rad_mT;
+    cs_T_eqn(r, log10cs, log10T, p, rad);
+    cs_T_eqn(r, log10cs - eps, log10T, p_mc, rad_mc);
+    cs_T_eqn(r, log10cs, log10T - eps, p_mT, rad_mT);
+
+    double jac[4] = {(p - p_mc) / eps, (p - p_mT) / eps,
+                     (rad - rad_mc) / eps, (rad - rad_mT) / eps};
+    // Analytic inverse
+    jac_inv[0] = jac[3];
+    jac_inv[1] = -jac[1];
+    jac_inv[2] = -jac[2];
+    jac_inv[3] = jac[0];
+    double inv_det = 1. / (jac[0]*jac[3] - jac[1]*jac[2]);
+    for (int i=0; i < 4; i++)
+      jac_inv[i] *= inv_det;
   }
 
   // Equation for cs/T rootfind
