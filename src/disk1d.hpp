@@ -234,7 +234,7 @@ private:
         // TODO(CEP) 18???
         double LogRopac = log10rho - log10T * 3 + 15;
         printf("LogRopac: %g\n", LogRopac);
-        double kappa = 0.1 * opac_.eval(rho, pow(10,log10T)); // raised to self.kappaLogTLogRopac(LogT, LogRopac, grid=False)
+        double kappa = opac_.eval(rho, T); // raised to self.kappaLogTLogRopac(LogT, LogRopac, grid=False)
         printf("kappa: %g\n", kappa);
 
         double tauV = kappa * rho * cs / omega;
