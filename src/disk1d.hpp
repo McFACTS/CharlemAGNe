@@ -248,7 +248,9 @@ public:
         break;
       }
       // continue iterating
-      log10cs -= rhs_cs;
+      if (!out.star_formation) {
+        log10cs -= rhs_cs;
+      }
       log10T -= rhs_T;
     }
     // Update steps
@@ -292,9 +294,9 @@ private:
   // Equation for cs/T rootfind
   void cs_T_eqn(Parcel &parcel, double log10cs, double log10T, double &fn_pressure, double &fn_radiation) {
 
-        parcel.log10cs = log10cs;
         parcel.log10T = log10T;
         double cs = std::exp(log10cs * M_LN10);
+        parcel.cs = cs;
         double cs2 = cs * cs;
         parcel.T = std::exp(log10T * M_LN10);
 
@@ -317,7 +319,12 @@ private:
             1./3.
           );
 
-        parcel.cs = cs;
+        if (parcel.cs == cs) {
+            parcel.log10cs = log10cs;
+        } else {
+            parcel.log10cs = std::log10(cs);
+            parcel.cs = cs;
+        }
         //printf("rho: %g\n", rho);
 
         parcel.kappa = opac_.eval(parcel.rho, parcel.T);
