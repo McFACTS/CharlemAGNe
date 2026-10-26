@@ -55,6 +55,12 @@ using namespace constants;
 /// A parcel of gas
 struct Parcel {
     //// Members 
+    // If we successfully solved the disk at this radius
+    bool converged = false;
+    // Number of steps iterated
+    int steps = 0;
+    // Star formation flag
+    bool star_formation = false;
     // The distance from the axis of the disk to the point
     double r_cyl;
     // The angular velocity
@@ -118,12 +124,14 @@ public:
       double eddington_ratio = 0.5,
       double alpha = 0.01,
       double X_mass_fraction = 0.7,
-      double radiative_efficiency = 0.1)
+      double radiative_efficiency = 0.1,
+      int viscosity_switch = 0)
       : smbh_mass_(smbh_mass * SOLAR_MASS_KG),
         eddington_ratio_(eddington_ratio),
         alpha_(alpha),
         X_mass_fraction_(X_mass_fraction),
         radiative_efficiency_(radiative_efficiency),
+        viscosity_switch_(viscosity_switch),
         opac_(opac_name, opac_path, opac_id) {}
 
   const PAGNCombined& opac() const { return opac_; }
@@ -200,10 +208,14 @@ public:
   Parcel solve_cs_T(
         double r,
         double log10cs = 0.0,
-        double log10T = 0.0
+        double log10T = 0.0,
+        const int iter_max = 30,
+        const double tol = 1.e-5,
+        const bool star_formation = false
     ) {
     // Construct Parcel
     Parcel out = Parcel(r);
+    out.star_formation = star_formation;
 
     // Fill things outside of the hot loop
     out.omega = GetAngularVelocity(r);
@@ -218,9 +230,6 @@ public:
         log10T = std::log10(out.Teff);
     }
 
-    // TODO args or properties
-    constexpr int iter_max = 30;
-    constexpr double tol = 1e-5;
     double fn_pressure, fn_radiation;
     cs_T_eqn(out, log10cs, log10T, fn_pressure, fn_radiation);
     
@@ -233,12 +242,17 @@ public:
       double rhs_T  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
 
       // stop. We're all done here.
-      if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol)
+      if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol) {
+        out.converged = true;
+        out.steps = iter;
         break;
+      }
       // continue iterating
       log10cs -= rhs_cs;
       log10T -= rhs_T;
     }
+    // Update steps
+    if (!out.converged) {out.steps = iter_max;}
 
     // TODO fill Q / h
     return out;
@@ -251,6 +265,7 @@ private:
   double smbh_mass_;
   double eddington_ratio_;
   double alpha_;
+  int viscosity_switch_;
   double X_mass_fraction_;
   double radiative_efficiency_;
   PAGNCombined opac_;
@@ -279,15 +294,30 @@ private:
 
         parcel.log10cs = log10cs;
         parcel.log10T = log10T;
-        parcel.cs = std::exp(log10cs * M_LN10);
-        double cs2 = parcel.cs * parcel.cs;
+        double cs = std::exp(log10cs * M_LN10);
+        double cs2 = cs * cs;
         parcel.T = std::exp(log10T * M_LN10);
 
-        // Sound speed has a different expression depending on b=0,1
-        parcel.rho = (1) ?
-            parcel.Mdotprime * parcel.omega * parcel.omega / (6 * M_PI * GetAlpha() * cs2 * parcel.cs) :
-            parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (6 * M_PI * GetAlpha() * parcel.cs * parcel.T * KBOLTZMANN);
+        // Density / sound speed have different expression depending on b=0,1
+        parcel.rho = (parcel.star_formation) ?
+            parcel.omega * parcel.omega /  (2.0 * M_PI * G_SI) :
+          (viscosity_switch_) ?
+            parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (6 * M_PI * GetAlpha() * cs * parcel.T * KBOLTZMANN):
+            parcel.Mdotprime * parcel.omega * parcel.omega / (6 * M_PI * GetAlpha() * cs2 * cs);
         parcel.log10rho = std::log10(parcel.rho);
+
+        // Sound speed
+        cs = (!parcel.star_formation) ? cs :
+          (viscosity_switch_) ?
+            parcel.Mdotprime * parcel.omega * parcel.omega * AMU /
+              (6.0 * M_PI * GetAlpha() * parcel.rho * parcel.T * KBOLTZMANN) : 
+          pow(
+            parcel.Mdotprime * parcel.omega * parcel.omega /
+              (6.0 * M_PI * GetAlpha() * parcel.rho),
+            1./3.
+          );
+
+        parcel.cs = cs;
         //printf("rho: %g\n", rho);
 
         parcel.kappa = opac_.eval(parcel.rho, parcel.T);
