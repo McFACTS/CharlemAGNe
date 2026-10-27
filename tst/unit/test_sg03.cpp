@@ -277,19 +277,19 @@ TEST_CASE("SG03 Disk annulus (inner, SF on, viscosity_flag false)", "[sg03]") {
     // R: 233981685308525.47
     REQUIRE((std::abs(parcel.r_cyl - 233981685308525.47)/233981685308525.47) < 1.e-6);
     // cs: 55589.63200337918
-    REQUIRE((std::abs(parcel.cs - 55589.632)/55589.632) < 1.e-1);
+    REQUIRE((std::abs(parcel.cs - 55589.632)/55589.632) < 1.e-4);
     // T: 70383.14284818874
-    REQUIRE((std::abs(parcel.T - 70383.14284818874)/70383.14284818874) < 1.e-1);
+    REQUIRE((std::abs(parcel.T - 70383.14284818874)/70383.14284818874) < 1.e-4);
     // Teff: 3603.107000477657
-    REQUIRE((std::abs(parcel.Teff - 3603.107)/3603.107) < 1.e-1);
+    REQUIRE((std::abs(parcel.Teff - 3603.107)/3603.107) < 1.e-2);
     // rho: 2.470550e-06
-    REQUIRE((std::abs(parcel.rho - 2.470550e-06)/2.470550e-06) < 1.e-1);
+    REQUIRE((std::abs(parcel.rho - 2.470550e-06)/2.470550e-06) < 1.e-4);
     // kappa: 9.099875e-02
     REQUIRE((std::abs(parcel.kappa - 9.099875e-02)/9.099875e-02) < 1.e-1);
     // tauV: 3.882695e+05
     REQUIRE((std::abs(parcel.tauV - 3.882695e+05)/3.882695e+05) < 1.e-1);
     // Q: 1.000000e+00
-    REQUIRE((std::abs(parcel.Q - 1.000000e+00)/1.000000e+00) < 1.e-1);
+    REQUIRE((std::abs(parcel.Q - 1.000000e+00)/1.000000e+00) < 1.e-6);
     // h: 1.727047e+12
-    REQUIRE((std::abs(parcel.h - 1.727047e+12)/1.727047e+12) < 1.e-1);
+    REQUIRE((std::abs(parcel.h - 1.727047e+12)/1.727047e+12) < 1.e-3);
 }
