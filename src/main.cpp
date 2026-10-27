@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
   printf("disk alpha: %g\n", disk.GetAlpha());
   printf("disk X: %g\n", disk.GetX());
   printf("disk Mdot: %g\n", disk.GetMDot());
-  double r_12 = 12.0 * disk.GetRg();
+  double r_12 = 1773273854892.248;
   double omega = disk.GetAngularVelocity(r_12);
   double Teff4 = disk.GetEffectiveTemperature4(r_12, omega);
   double Teff = disk.GetEffectiveTemperature(r_12, omega);
