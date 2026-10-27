@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
 
   /* setup xguess */
   xguess_a = std::log10(Teff);// + 1.6;
-  xguess_b = std::log10(parcel.T);// + 1.6;
+  xguess_b = std::log10(Teff) + 1.6;
   printf("solve_Teff_T:");
   printf("x_guess (%g r_g) = %g, %g\n", r_800, xguess_a, xguess_b);
   /* do the solve */

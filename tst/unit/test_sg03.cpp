@@ -228,6 +228,68 @@ TEST_CASE("SG03 Disk annulus (inner, SF off, viscosity_flag true)", "[sg03]") {
     /// Q: 5.389132e+03
     REQUIRE((std::abs(parcel.h - 1.947099e+11)/1.947099e+11) < 1.e-1);
     /// h: 1.947099e+11
+}
+TEST_CASE("SG03 Disk annulus (inner, SF on, viscosity_flag false)", "[sg03]") {
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+  auto disk = SG03(opac_name, opac_path, opac_id);
+  double r_800 = 233981685308525.47;
+  double omega = disk.GetAngularVelocity(r_800);
+  double Teff4 = disk.GetEffectiveTemperature4(r_800, omega);
+  /* xguess */
+  double Teff = disk.GetEffectiveTemperature(r_800, omega);
+  double xguess_a = std::log10(omega * r_800 * 1.e-2);
+  double xguess_b = std::log10(Teff);
+  /* do the fake solve and let it crash */
+  Parcel parcel = disk.solve_cs_T(r_800, xguess_a, xguess_b);
 
-
+  /* We're only using Teff to set up our next guess */
+  xguess_a = std::log10(Teff);// + 1.6;
+  xguess_b = std::log10(Teff) + 1.6;
+  /* do the real solve */
+  parcel = disk.solve_Teff_T(
+    r_800,
+    xguess_a,
+    xguess_b
+  );
+  printf("converged: %d\n", parcel.converged);
+  printf("r_cyl: %g\n", parcel.r_cyl);
+  printf("cs: %g\n", parcel.cs);
+  printf("T: %g\n", parcel.T);
+  printf("Teff: %g\n", parcel.Teff);
+  printf("rho: %g\n", parcel.rho);
+  printf("kappa: %g\n", parcel.kappa);
+  printf("tauV: %g\n", parcel.tauV);
+  printf("Q: %g\n", parcel.Q);
+  printf("h: %g\n", parcel.h);
+    REQUIRE(parcel.converged);
+    REQUIRE(parcel.steps > 0);
+    // R: 233981685308525.47
+    REQUIRE((std::abs(parcel.r_cyl - 233981685308525.47)/233981685308525.47) < 1.e-6);
+    // cs: 55589.63200337918
+    REQUIRE((std::abs(parcel.cs - 55589.632)/55589.632) < 1.e-1);
+    // T: 70383.14284818874
+    REQUIRE((std::abs(parcel.T - 70383.14284818874)/70383.14284818874) < 1.e-1);
+    // Teff: 3603.107000477657
+    REQUIRE((std::abs(parcel.Teff - 3603.107)/3603.107) < 1.e-1);
+    // rho: 2.470550e-06
+    REQUIRE((std::abs(parcel.rho - 2.470550e-06)/2.470550e-06) < 1.e-1);
+    // kappa: 9.099875e-02
+    REQUIRE((std::abs(parcel.kappa - 9.099875e-02)/9.099875e-02) < 1.e-1);
+    // tauV: 3.882695e+05
+    REQUIRE((std::abs(parcel.tauV - 3.882695e+05)/3.882695e+05) < 1.e-1);
+    // Q: 1.000000e+00
+    REQUIRE((std::abs(parcel.Q - 1.000000e+00)/1.000000e+00) < 1.e-1);
+    // h: 1.727047e+12
+    REQUIRE((std::abs(parcel.h - 1.727047e+12)/1.727047e+12) < 1.e-1);
 }
