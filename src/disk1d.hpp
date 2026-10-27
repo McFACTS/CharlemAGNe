@@ -93,6 +93,8 @@ struct Parcel {
     Parcel(double r_cyl) : r_cyl(r_cyl) {};
 };
 
+#define HOT_LOOP_ARGS Parcel& state, double logX0, double logX1, double &cost0, double &cost1
+
 //// Disks ////
 class Disk1D {
 public:
@@ -206,12 +208,10 @@ public:
         double log10cs = 0.0,
         double log10T = 0.0,
         const int iter_max = 30,
-        const double tol = 1.e-5,
-        const bool star_formation = false
+        const double tol = 1.e-5
     ) {
     // Construct Parcel
     Parcel out = Parcel(r);
-    out.star_formation = star_formation;
 
     // Fill things outside of the hot loop
     out.omega = GetAngularVelocity(r);
@@ -226,13 +226,10 @@ public:
     }
 
     double fn_pressure, fn_radiation;
-    cs_T_eqn(out, log10cs, log10T, fn_pressure, fn_radiation);
-    
     double jac_inv[4] = {0.};
     for (int iter=0; iter < iter_max; iter++) {
       // Call the function here so we don't do it twice
-      cs_T_eqn(out, log10cs, log10T, fn_pressure, fn_radiation);
-      calc_inv_jacobian(out, jac_inv, log10cs, log10T, fn_pressure, fn_radiation);
+      calc_inv_jacobian<&SG03::cs_T_eqn>(out, jac_inv, log10cs, log10T, fn_pressure, fn_radiation);
       double rhs_cs = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
       double rhs_T  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
 
@@ -243,15 +240,82 @@ public:
         break;
       }
       // continue iterating
-      if (!out.star_formation) {
-        log10cs -= rhs_cs;
-      }
+      log10cs -= rhs_cs;
       log10T -= rhs_T;
     }
     // Update steps
     if (!out.converged) {out.steps = iter_max;}
 
-    // TODO fill Q / h
+    // Fill Q / h
+    if (out.converged) {
+        out.Q = out.omega * out.omega / (2.0 * M_PI * G_SI * out.rho);
+        out.h = out.cs / out.omega;
+    }
+    return out;
+    
+  }
+  /// Solve for Teff and T in a 2D rootfind
+  /// We are trying to solve these two equations:
+  /// $c_s^2 = \frac{p_{\rm tot}}{T}$
+  /// $T^4 = (\frac{3}{8}\tau_V + \frac{1}{2} + \frac{1}{4\tau_V}) T_{\rm eff}^4
+  /// by finding the effective temperature and midplane temperature which satisfy them
+  ///
+  /// For a 2D Newton's method, X_{i + 1} = X_{i} - J^{-1} f(X_{i})
+  /// where here f(X_{i}) has rows which are the pressure term and the radiation term
+  /// which are both being minimized.
+  Parcel solve_Teff_T(
+        double r,
+        double log10Teff,
+        double log10T,
+        const int iter_max = 30,
+        const double tol = 1.e-5
+    ) {
+    // Construct Parcel
+    Parcel out = Parcel(r);
+
+    // Fill things outside of the hot loop
+    out.omega = GetAngularVelocity(r);
+    out.Teff = GetEffectiveTemperature(r, out.omega);
+    out.Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
+    // The guess is not optional for this one.
+
+    // We know Q and rho by fiat
+    out.Q = 1.0;
+    out.rho = out.omega * out.omega / (2.0 * M_PI * G_SI);
+
+    // We may or may not know cs by fiat
+    if (!viscosity_switch_) {
+        out.cs = pow(
+          out.Mdotprime * out.omega * out.omega / (
+            6.0 * M_PI * GetAlpha() * out.rho),
+          1.0/3.0
+        );
+    }
+    double fn_pressure, fn_radiation;
+    double jac_inv[4] = {0.};
+    for (int iter=0; iter < iter_max; iter++) {
+      // Call the function here so we don't do it twice
+      calc_inv_jacobian<&SG03::Teff_T_eqn>(out, jac_inv, log10Teff, log10T, fn_pressure, fn_radiation);
+      double rhs_Teff = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
+      double rhs_T  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
+
+      // stop. We're all done here.
+      if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol) {
+        out.converged = true;
+        out.steps = iter;
+        break;
+      }
+      // continue iterating
+      log10Teff -= rhs_Teff;
+      log10T -= rhs_T;
+    }
+    // Update steps
+    if (!out.converged) {out.steps = iter_max;}
+
+    // Fill Q / h
+    if (out.converged) {
+        out.h = out.cs / out.omega;
+    }
     return out;
     
   }
@@ -266,16 +330,25 @@ private:
   double X_mass_fraction_;
   double radiative_efficiency_;
   PAGNCombined opac_;
+  using HotLoopFn = void (SG03::*)(HOT_LOOP_ARGS);
 
-  void calc_inv_jacobian(Parcel &parcel, double jac_inv[4], double log10cs, double log10T, double p, double rad) {
-
+  template<HotLoopFn HotLoop>
+  void calc_inv_jacobian(
+    Parcel &parcel,
+    double jac_inv[4],
+    double log10X0,
+    double log10X1,
+    double &cost0, 
+    double &cost1
+  ) {
     constexpr double eps = 1e-5;
-    double p_mc, rad_mc, p_mT, rad_mT;
-    cs_T_eqn(parcel, log10cs - eps, log10T, p_mc, rad_mc);
-    cs_T_eqn(parcel, log10cs, log10T - eps, p_mT, rad_mT);
+    double cost0_m0, cost1_m0, cost0_m1, cost1_m1;
+    (this->*HotLoop)(parcel, log10X0 - eps, log10X1, cost0_m0, cost1_m0);
+    (this->*HotLoop)(parcel, log10X0, log10X1 - eps, cost0_m1, cost1_m1);
+    (this->*HotLoop)(parcel, log10X0, log10X1, cost0, cost1);
 
-    double jac[4] = {(p - p_mc) / eps, (p - p_mT) / eps,
-                     (rad - rad_mc) / eps, (rad - rad_mT) / eps};
+    double jac[4] = {(cost0 - cost0_m0) / eps, (cost0 - cost0_m1) / eps,
+                     (cost1 - cost1_m0) / eps, (cost1 - cost1_m1) / eps};
     // Analytic inverse
     jac_inv[0] = jac[3];
     jac_inv[1] = -jac[1];
@@ -305,6 +378,48 @@ private:
             parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (6 * M_PI * GetAlpha() * parcel.cs * parcel.T * KBOLTZMANN):
             parcel.Mdotprime * parcel.omega * parcel.omega / (6 * M_PI * GetAlpha() * cs2 * parcel.cs);
         //printf("rho: %g\n", rho);
+
+        parcel.kappa = opac_.eval(parcel.rho, parcel.T);
+        //printf("kappa: %g\n", kappa);
+
+        parcel.tauV = parcel.kappa * parcel.rho * parcel.cs / parcel.omega;
+        //printf("tauV: %g\n", tauV);
+
+        parcel.PPgas = (KBOLTZMANN / AMU) * parcel.T / cs2;
+        //printf("PPgas: %g\n", PPgas);
+        parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 / (parcel.rho * cs2);
+        //printf("PPrad: %g\n", PPrad);
+
+        // Rewritten as dimensionless, dividing by cs2
+        fn_pressure = parcel.PPgas + parcel.PPrad - 1;
+        // Same, dividing by Teff4
+        parcel.opacfac = (0.375 * parcel.tauV + 0.5 + 0.25 / parcel.tauV);
+        //printf("opacfac: %g\n", opacfac);
+        double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
+        double T4ratio = Teff4 / T4;
+        double Rr = T4ratio * parcel.opacfac;
+        fn_radiation = Rr - 1;
+        //printf("fn_pressure: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
+        //throw std::runtime_error("Crash!\n");
+  }
+
+  // Equation for Teff/T rootfind
+  void Teff_T_eqn(
+          Parcel &parcel,
+          double log10Teff,
+          double log10T,
+          double &fn_pressure,
+          double &fn_radiation
+  ) {
+
+        parcel.Teff = std::exp(log10Teff * M_LN10);
+        parcel.T = std::exp(log10T * M_LN10);
+        double Teff4 = parcel.Teff * parcel.Teff * parcel.Teff * parcel.Teff;
+        parcel.cs = (viscosity_switch_) ?
+            parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (
+              6.0 * M_PI * GetAlpha() * parcel.rho * KBOLTZMANN * parcel.T)
+              : parcel.cs;
+        double cs2 = parcel.cs * parcel.cs;
 
         parcel.kappa = opac_.eval(parcel.rho, parcel.T);
         //printf("kappa: %g\n", kappa);
