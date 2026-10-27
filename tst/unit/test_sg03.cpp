@@ -155,8 +155,8 @@ TEST_CASE("SG03 Disk annulus", "[sg03]") {
     REQUIRE(std::abs((xguess_b - 5.04064371) / 5.04064371) < 1.e-4);
     /* do the solve */
     Parcel parcel = disk.solve_cs_T(r_12, xguess_a, xguess_b);
-    REQUIRE(std::abs((parcel.log10cs - 6.987e+00) / 6.987e+00) < 1.e-2);
-    REQUIRE(std::abs((parcel.log10T - 5.794e+00) / 5.794e+00) < 1.e-3);
+    REQUIRE(std::abs((std::log10(parcel.cs) - 6.987e+00) / 6.987e+00) < 1.e-2);
+    REQUIRE(std::abs((std::log10(parcel.T) - 5.794e+00) / 5.794e+00) < 1.e-3);
 
 
 }
