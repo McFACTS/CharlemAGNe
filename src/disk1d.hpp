@@ -52,6 +52,7 @@ using namespace constants;
 
 //////// Objects ////////
 //// Parcel ////
+
 /// A parcel of gas
 struct Parcel {
     //// Members 
@@ -66,20 +67,15 @@ struct Parcel {
     // The angular velocity
     double omega = 0.0;
     // Effective temperature
-    double Teff4 = 0.0;
     double Teff = 0.0;
     // Mdotprime
     double Mdotprime = 0.0;
     // Midplane temperature
-    double T4 = 0.0;
     double T = 0.0;
-    double log10T = 0.0;
     // Sound speed
     double cs = 0.0;
-    double log10cs = 0.0;
     // density
     double rho = 0.0;
-    double log10rho = 0.0;
     // opacity
     double kappa = 0.0;
     double tauV = 0.0;
@@ -219,8 +215,7 @@ public:
 
     // Fill things outside of the hot loop
     out.omega = GetAngularVelocity(r);
-    out.Teff4 = GetEffectiveTemperature4(r, out.omega);
-    out.Teff = std::sqrt(std::sqrt(out.Teff4));
+    out.Teff = GetEffectiveTemperature(r, out.omega);
     out.Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
     // Check arguments for rootfind guess
     if (log10cs == 0.0) {
@@ -292,39 +287,23 @@ private:
   }
 
   // Equation for cs/T rootfind
-  void cs_T_eqn(Parcel &parcel, double log10cs, double log10T, double &fn_pressure, double &fn_radiation) {
+  void cs_T_eqn(
+          Parcel &parcel,
+          double log10cs,
+          double log10T,
+          double &fn_pressure,
+          double &fn_radiation
+  ) {
 
-        parcel.log10T = log10T;
-        double cs = std::exp(log10cs * M_LN10);
-        parcel.cs = cs;
-        double cs2 = cs * cs;
+        parcel.cs = std::exp(log10cs * M_LN10);
+        double cs2 = parcel.cs * parcel.cs;
         parcel.T = std::exp(log10T * M_LN10);
+        double Teff4 = parcel.Teff * parcel.Teff * parcel.Teff * parcel.Teff;
 
         // Density / sound speed have different expression depending on b=0,1
-        parcel.rho = (parcel.star_formation) ?
-            parcel.omega * parcel.omega /  (2.0 * M_PI * G_SI) :
-          (viscosity_switch_) ?
-            parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (6 * M_PI * GetAlpha() * cs * parcel.T * KBOLTZMANN):
-            parcel.Mdotprime * parcel.omega * parcel.omega / (6 * M_PI * GetAlpha() * cs2 * cs);
-        parcel.log10rho = std::log10(parcel.rho);
-
-        // Sound speed
-        cs = (!parcel.star_formation) ? cs :
-          (viscosity_switch_) ?
-            parcel.Mdotprime * parcel.omega * parcel.omega * AMU /
-              (6.0 * M_PI * GetAlpha() * parcel.rho * parcel.T * KBOLTZMANN) : 
-          pow(
-            parcel.Mdotprime * parcel.omega * parcel.omega /
-              (6.0 * M_PI * GetAlpha() * parcel.rho),
-            1./3.
-          );
-
-        if (parcel.cs == cs) {
-            parcel.log10cs = log10cs;
-        } else {
-            parcel.log10cs = std::log10(cs);
-            parcel.cs = cs;
-        }
+        parcel.rho = (viscosity_switch_) ?
+            parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (6 * M_PI * GetAlpha() * parcel.cs * parcel.T * KBOLTZMANN):
+            parcel.Mdotprime * parcel.omega * parcel.omega / (6 * M_PI * GetAlpha() * cs2 * parcel.cs);
         //printf("rho: %g\n", rho);
 
         parcel.kappa = opac_.eval(parcel.rho, parcel.T);
@@ -335,7 +314,7 @@ private:
 
         parcel.PPgas = (KBOLTZMANN / AMU) * parcel.T / cs2;
         //printf("PPgas: %g\n", PPgas);
-        parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN / (2 * C_SI) * parcel.Teff4 / (parcel.rho * cs2);
+        parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 / (parcel.rho * cs2);
         //printf("PPrad: %g\n", PPrad);
 
         // Rewritten as dimensionless, dividing by cs2
@@ -343,12 +322,11 @@ private:
         // Same, dividing by Teff4
         parcel.opacfac = (0.375 * parcel.tauV + 0.5 + 0.25 / parcel.tauV);
         //printf("opacfac: %g\n", opacfac);
-        parcel.T4 = parcel.T * parcel.T * parcel.T * parcel.T;
-        double T4ratio = parcel.Teff4 / parcel.T4;
+        double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
+        double T4ratio = Teff4 / T4;
         double Rr = T4ratio * parcel.opacfac;
         fn_radiation = Rr - 1;
         //printf("fn_pressure: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
         //throw std::runtime_error("Crash!\n");
   }
-
 };

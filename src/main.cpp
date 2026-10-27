@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
   Parcel parcel = disk.solve_cs_T(r_12);//, xguess_a, xguess_b);
   auto toc = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
-  printf("x_solve (%g r_g) = %g, %g\n", r_12, parcel.log10cs, parcel.log10T);
+  printf("x_solve (%g r_g) = %g, %g\n", r_12, std::log10(parcel.cs), std::log10(parcel.T));
   printf("time: %g ms\n", duration.count() / 1000000.0);
 
 
