@@ -247,10 +247,8 @@ public:
     if (!out.converged) {out.steps = iter_max;}
 
     // Fill Q / h
-    if (out.converged) {
-        out.Q = out.omega * out.omega / (2.0 * M_PI * G_SI * out.rho);
-        out.h = out.cs / out.omega;
-    }
+    out.Q = out.omega * out.omega / (2.0 * M_PI * G_SI * out.rho);
+    out.h = out.cs / out.omega;
     return out;
     
   }

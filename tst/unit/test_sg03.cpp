@@ -124,7 +124,7 @@ TEST_CASE("SG03 Disk Mdot default", "[sg03]") {
 }
 
 //// SG03 omega and Teff4 ////
-TEST_CASE("SG03 Disk annulus (inner)", "[sg03]") {
+TEST_CASE("SG03 Disk annulus (inner, SF off, viscosity_flag false)", "[sg03]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
       throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
@@ -151,6 +151,67 @@ TEST_CASE("SG03 Disk annulus (inner)", "[sg03]") {
     double Teff = disk.GetEffectiveTemperature(r_12, omega);
     double xguess_a = std::log10(omega * r_12 * 1.e-2);
     double xguess_b = std::log10(Teff);
+    REQUIRE(std::abs((xguess_a - 5.93707448) / 5.93707448) < 1.e-4);
+    REQUIRE(std::abs((xguess_b - 5.04064371) / 5.04064371) < 1.e-4);
+    /* do the solve */
+    Parcel parcel = disk.solve_cs_T(r_12, xguess_a, xguess_b);
+    REQUIRE(std::abs((std::log10(parcel.cs) - 6.987e+00) / 6.987e+00) < 1.e-2);
+    REQUIRE(std::abs((std::log10(parcel.T) - 5.794e+00) / 5.794e+00) < 1.e-3);
+    /* Test other things about the solution */
+    /* These are only going to agree to like 10 % */
+    /* That's okay. We don't have to be pAGN. */
+    REQUIRE(parcel.converged);
+    REQUIRE(parcel.steps > 0);
+    REQUIRE((std::abs(parcel.rho - 4.005222e-07)/4.005222e-07) < 1.e-1);
+    REQUIRE((std::abs(parcel.kappa - 3.444013e-02)/3.444013e-02) < 1.e-1);
+    REQUIRE((std::abs(parcel.tauV - 2.744850e+03)/2.744850e+03) < 1.e-1);
+    REQUIRE((std::abs(parcel.Q - 1.417050e+07)/1.417050e+07) < 1.e-1);
+    REQUIRE((std::abs(parcel.h - 1.989881e+11)/1.989881e+11) < 1.e-1);
+
+
+}
+
+TEST_CASE("SG03 Disk annulus (inner, SF off, viscosity_flag true)", "[sg03]") {
+  /// R: 1773273854892.248
+  /// cs: 9499194.578861302
+  /// T: 4405448.482048553
+  /// Teff: 109810.45933419175
+  /// rho: 1.053157e-03
+  /// kappa: 3.368785e-02
+  /// tauV: 6.908032e+06
+  /// Q: 5.389132e+03
+  /// h: 1.947099e+11
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+    auto disk = SG03(
+      opac_name,
+      opac_path,
+      opac_id,
+      1.0e8,
+      0.5,
+      0.01,
+      0.7,
+      0.1,
+      true
+    );
+    double r_12 = 12.0 * disk.GetRg();
+    /* Test r_g */
+    REQUIRE(std::abs((r_12 - 1.773e+12) /1.773e+12) < 1.e-3 );
+    double omega = disk.GetAngularVelocity(r_12);
+    double Teff = disk.GetEffectiveTemperature(r_12, omega);
+    /* xguess */
+    double xguess_a = std::log10(omega * r_12 * 1.e-2);
+    double xguess_b = std::log10(Teff) + 1.6;
     REQUIRE(std::abs((xguess_a - 5.93707448) / 5.93707448) < 1.e-4);
     REQUIRE(std::abs((xguess_b - 5.04064371) / 5.04064371) < 1.e-4);
     /* do the solve */

@@ -71,7 +71,17 @@ int main(int argc, char *argv[]) {
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
 
   // setup disk
-  auto disk = SG03(opac_name, opac_path, opac_id);
+  auto disk = SG03(
+    opac_name,
+    opac_path,
+    opac_id,
+    1.0e8,
+    0.5,
+    0.01,
+    0.7,
+    0.1,
+    true
+  );
 
   //tests
   printf("disk smbh_mass: %g\n", disk.GetSMBHMassSolar());
@@ -88,7 +98,7 @@ int main(int argc, char *argv[]) {
   
   /* setup xguess */
   double xguess_a = std::log10(omega * r_12 * 1.e-2);
-  double xguess_b = std::log10(Teff);
+  double xguess_b = std::log10(Teff) + 1.6;
   printf("x_guess (%g r_g) = %g, %g\n", r_12, xguess_a, xguess_b);
   /* do the solve */
   auto tic = std::chrono::high_resolution_clock::now();
@@ -97,7 +107,11 @@ int main(int argc, char *argv[]) {
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
   printf("x_solve (%g r_g) = %g, %g\n", r_12, std::log10(parcel.cs), std::log10(parcel.T));
   printf("time: %g ms\n", duration.count() / 1000000.0);
+  printf("converged: %d\n", parcel.converged);
   printf("r_cyl: %g\n", parcel.r_cyl);
+  printf("cs: %g\n", parcel.cs);
+  printf("T: %g\n", parcel.T);
+  printf("Teff: %g\n", parcel.Teff);
   printf("rho: %g\n", parcel.rho);
   printf("kappa: %g\n", parcel.kappa);
   printf("tauV: %g\n", parcel.tauV);
