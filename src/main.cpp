@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     0.01,
     0.7,
     0.1,
-    true
+    false
   );
 
   //tests
@@ -89,27 +89,28 @@ int main(int argc, char *argv[]) {
   printf("disk alpha: %g\n", disk.GetAlpha());
   printf("disk X: %g\n", disk.GetX());
   printf("disk Mdot: %g\n", disk.GetMDot());
-  double r_12 = 1773273854892.248;
-  double omega = disk.GetAngularVelocity(r_12);
-  double Teff4 = disk.GetEffectiveTemperature4(r_12, omega);
-  double Teff = disk.GetEffectiveTemperature(r_12, omega);
-  printf("omega (%g r_g) = %g\n", r_12, disk.GetAngularVelocity(r_12));
-  printf("Teff4 (%g r_g) = %g\n", r_12, Teff4);
+  double r_800 = 233981685308525.47;
+  double omega = disk.GetAngularVelocity(r_800);
+  double Teff4 = disk.GetEffectiveTemperature4(r_800, omega);
+  double Teff = disk.GetEffectiveTemperature(r_800, omega);
+  printf("omega (%g r_g) = %g\n", r_800, disk.GetAngularVelocity(r_800));
+  printf("Teff4 (%g r_g) = %g\n", r_800, Teff4);
   
   /* setup xguess */
-  double xguess_a = std::log10(omega * r_12 * 1.e-2);
-  double xguess_b = std::log10(Teff) + 1.6;
-  printf("x_guess (%g r_g) = %g, %g\n", r_12, xguess_a, xguess_b);
+  double xguess_a = std::log10(omega * r_800 * 1.e-2);
+  double xguess_b = std::log10(Teff);// + 1.6;
+  printf("solve_cs_T:");
+  printf("x_guess (%g r_g) = %g, %g\n", r_800, xguess_a, xguess_b);
   /* do the solve */
   auto tic = std::chrono::high_resolution_clock::now();
   Parcel parcel = disk.solve_cs_T(
-    r_12,
+    r_800,
     xguess_a,
     xguess_b
   );
   auto toc = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
-  printf("x_solve (%g r_g) = %g, %g\n", r_12, std::log10(parcel.cs), std::log10(parcel.T));
+  printf("x_solve (%g r_g) = %g, %g\n", r_800, std::log10(parcel.cs), std::log10(parcel.T));
   printf("time: %g ms\n", duration.count() / 1000000.0);
   printf("converged: %d\n", parcel.converged);
   printf("r_cyl: %g\n", parcel.r_cyl);
@@ -122,6 +123,41 @@ int main(int argc, char *argv[]) {
   printf("Q: %g\n", parcel.Q);
   printf("h: %g\n", parcel.h);
 
+  /* setup xguess */
+  xguess_a = std::log10(Teff);// + 1.6;
+  xguess_b = std::log10(parcel.T);// + 1.6;
+  printf("solve_Teff_T:");
+  printf("x_guess (%g r_g) = %g, %g\n", r_800, xguess_a, xguess_b);
+  /* do the solve */
+  tic = std::chrono::high_resolution_clock::now();
+  parcel = disk.solve_Teff_T(
+    r_800,
+    xguess_a,
+    xguess_b
+  );
+  toc = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
+  printf("x_solve (%g r_g) = %g, %g\n", r_800, std::log10(parcel.Teff), std::log10(parcel.T));
+  printf("time: %g ms\n", duration.count() / 1000000.0);
+  printf("converged: %d\n", parcel.converged);
+  printf("r_cyl: %g\n", parcel.r_cyl);
+  printf("cs: %g\n", parcel.cs);
+  printf("T: %g\n", parcel.T);
+  printf("Teff: %g\n", parcel.Teff);
+  printf("rho: %g\n", parcel.rho);
+  printf("kappa: %g\n", parcel.kappa);
+  printf("tauV: %g\n", parcel.tauV);
+  printf("Q: %g\n", parcel.Q);
+  printf("h: %g\n", parcel.h);
+  // R: 233981685308525.47
+  // cs: 55589.63200337918
+  // T: 70383.14284818874
+  // Teff: 3603.107000477657
+  // rho: 2.470550e-06
+  // kappa: 9.099875e-02
+  // tauV: 3.882695e+05
+  // Q: 1.000000e+00
+  // h: 1.727047e+12
 
   return 0;
 }
