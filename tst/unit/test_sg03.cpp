@@ -124,7 +124,7 @@ TEST_CASE("SG03 Disk Mdot default", "[sg03]") {
 }
 
 //// SG03 omega and Teff4 ////
-TEST_CASE("SG03 Disk annulus", "[sg03]") {
+TEST_CASE("SG03 Disk annulus (inner)", "[sg03]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
       throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
@@ -157,6 +157,16 @@ TEST_CASE("SG03 Disk annulus", "[sg03]") {
     Parcel parcel = disk.solve_cs_T(r_12, xguess_a, xguess_b);
     REQUIRE(std::abs((std::log10(parcel.cs) - 6.987e+00) / 6.987e+00) < 1.e-2);
     REQUIRE(std::abs((std::log10(parcel.T) - 5.794e+00) / 5.794e+00) < 1.e-3);
+    /* Test other things about the solution */
+    /* These are only going to agree to like 10 % */
+    /* That's okay. We don't have to be pAGN. */
+    REQUIRE(parcel.converged);
+    REQUIRE(parcel.steps > 0);
+    REQUIRE((std::abs(parcel.rho - 4.005222e-07)/4.005222e-07) < 1.e-1);
+    REQUIRE((std::abs(parcel.kappa - 3.444013e-02)/3.444013e-02) < 1.e-1);
+    REQUIRE((std::abs(parcel.tauV - 2.744850e+03)/2.744850e+03) < 1.e-1);
+    REQUIRE((std::abs(parcel.Q - 1.417050e+07)/1.417050e+07) < 1.e-1);
+    REQUIRE((std::abs(parcel.h - 1.989881e+11)/1.989881e+11) < 1.e-1);
 
 
 }

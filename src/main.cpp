@@ -97,6 +97,12 @@ int main(int argc, char *argv[]) {
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
   printf("x_solve (%g r_g) = %g, %g\n", r_12, std::log10(parcel.cs), std::log10(parcel.T));
   printf("time: %g ms\n", duration.count() / 1000000.0);
+  printf("r_cyl: %g\n", parcel.r_cyl);
+  printf("rho: %g\n", parcel.rho);
+  printf("kappa: %g\n", parcel.kappa);
+  printf("tauV: %g\n", parcel.tauV);
+  printf("Q: %g\n", parcel.Q);
+  printf("h: %g\n", parcel.h);
 
 
   return 0;

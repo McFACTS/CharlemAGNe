@@ -123,7 +123,7 @@ public:
       double alpha = 0.01,
       double X_mass_fraction = 0.7,
       double radiative_efficiency = 0.1,
-      int viscosity_switch = 0)
+      bool viscosity_switch = false)
       : smbh_mass_(smbh_mass * SOLAR_MASS_KG),
         eddington_ratio_(eddington_ratio),
         alpha_(alpha),
@@ -285,7 +285,7 @@ public:
 
     // We may or may not know cs by fiat
     if (!viscosity_switch_) {
-        out.cs = pow(
+        out.cs = std::pow(
           out.Mdotprime * out.omega * out.omega / (
             6.0 * M_PI * GetAlpha() * out.rho),
           1.0/3.0
@@ -326,7 +326,7 @@ private:
   double smbh_mass_;
   double eddington_ratio_;
   double alpha_;
-  int viscosity_switch_;
+  bool viscosity_switch_;
   double X_mass_fraction_;
   double radiative_efficiency_;
   PAGNCombined opac_;
