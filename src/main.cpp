@@ -102,7 +102,11 @@ int main(int argc, char *argv[]) {
   printf("x_guess (%g r_g) = %g, %g\n", r_12, xguess_a, xguess_b);
   /* do the solve */
   auto tic = std::chrono::high_resolution_clock::now();
-  Parcel parcel = disk.solve_cs_T(r_12);//, xguess_a, xguess_b);
+  Parcel parcel = disk.solve_cs_T(
+    r_12,
+    xguess_a,
+    xguess_b
+  );
   auto toc = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
   printf("x_solve (%g r_g) = %g, %g\n", r_12, std::log10(parcel.cs), std::log10(parcel.T));
