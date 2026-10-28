@@ -100,6 +100,37 @@ class Disk1D {
 public:
   /* Define this in daughter classes */
   Disk1D() {}
+
+protected:
+  template<auto HotLoop, class D>
+  void calc_inv_jacobian(
+    D& self,
+    Parcel &parcel,
+    double jac_inv[4],
+    double log10X0,
+    double log10X1,
+    double &cost0, 
+    double &cost1
+  ) {
+    constexpr double eps = 1e-5;
+    double cost0_m0, cost1_m0, cost0_m1, cost1_m1;
+    (self.*HotLoop)(parcel, log10X0 - eps, log10X1, cost0_m0, cost1_m0);
+    (self.*HotLoop)(parcel, log10X0, log10X1 - eps, cost0_m1, cost1_m1);
+    (self.*HotLoop)(parcel, log10X0, log10X1, cost0, cost1);
+
+    double jac[4] = {(cost0 - cost0_m0) / eps, (cost0 - cost0_m1) / eps,
+                     (cost1 - cost1_m0) / eps, (cost1 - cost1_m1) / eps};
+    // Analytic inverse
+    jac_inv[0] = jac[3];
+    jac_inv[1] = -jac[1];
+    jac_inv[2] = -jac[2];
+    jac_inv[3] = jac[0];
+    double inv_det = 1. / (jac[0]*jac[3] - jac[1]*jac[2]);
+    for (int i=0; i < 4; i++)
+      jac_inv[i] *= inv_det;
+  }
+
+  // Equation for cs/T rootfind
 };
 
 class SG03 : public Disk1D {
@@ -229,7 +260,13 @@ public:
     double jac_inv[4] = {0.};
     for (int iter=0; iter < iter_max; iter++) {
       // Call the function here so we don't do it twice
-      calc_inv_jacobian<&SG03::cs_T_eqn>(out, jac_inv, log10cs, log10T, fn_pressure, fn_radiation);
+      calc_inv_jacobian<&SG03::cs_T_eqn>(
+        *this,
+        out,
+        jac_inv,
+        log10cs, log10T,
+        fn_pressure, fn_radiation
+      );
       double rhs_cs = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
       double rhs_T  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
 
@@ -293,7 +330,13 @@ public:
     double jac_inv[4] = {0.};
     for (int iter=0; iter < iter_max; iter++) {
       // Call the function here so we don't do it twice
-      calc_inv_jacobian<&SG03::Teff_T_eqn>(out, jac_inv, log10Teff, log10T, fn_pressure, fn_radiation);
+      calc_inv_jacobian<&SG03::Teff_T_eqn>(
+        *this,
+        out,
+        jac_inv,
+        log10Teff, log10T,
+        fn_pressure, fn_radiation
+      );
       double rhs_Teff = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
       double rhs_T  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
 
@@ -328,36 +371,7 @@ private:
   double X_mass_fraction_;
   double radiative_efficiency_;
   PAGNCombined opac_;
-  using HotLoopFn = void (SG03::*)(HOT_LOOP_ARGS);
 
-  template<HotLoopFn HotLoop>
-  void calc_inv_jacobian(
-    Parcel &parcel,
-    double jac_inv[4],
-    double log10X0,
-    double log10X1,
-    double &cost0, 
-    double &cost1
-  ) {
-    constexpr double eps = 1e-5;
-    double cost0_m0, cost1_m0, cost0_m1, cost1_m1;
-    (this->*HotLoop)(parcel, log10X0 - eps, log10X1, cost0_m0, cost1_m0);
-    (this->*HotLoop)(parcel, log10X0, log10X1 - eps, cost0_m1, cost1_m1);
-    (this->*HotLoop)(parcel, log10X0, log10X1, cost0, cost1);
-
-    double jac[4] = {(cost0 - cost0_m0) / eps, (cost0 - cost0_m1) / eps,
-                     (cost1 - cost1_m0) / eps, (cost1 - cost1_m1) / eps};
-    // Analytic inverse
-    jac_inv[0] = jac[3];
-    jac_inv[1] = -jac[1];
-    jac_inv[2] = -jac[2];
-    jac_inv[3] = jac[0];
-    double inv_det = 1. / (jac[0]*jac[3] - jac[1]*jac[2]);
-    for (int i=0; i < 4; i++)
-      jac_inv[i] *= inv_det;
-  }
-
-  // Equation for cs/T rootfind
   void cs_T_eqn(
           Parcel &parcel,
           double log10cs,
