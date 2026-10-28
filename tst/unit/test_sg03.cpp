@@ -36,6 +36,7 @@
 //////// Include ////////
 //// Local ////
 #include "disk1d.hpp"
+#include "sg03.hpp"
 
 //// Third Party ////
 #include <catch2/catch_test_macros.hpp>

@@ -38,6 +38,7 @@
 //// Local ////
 #include "constants.hpp"
 #include "disk1d.hpp"
+#include "sg03.hpp"
 #include "opacity.hpp"
 //// Third Party ////
 //// Standard Library ////
