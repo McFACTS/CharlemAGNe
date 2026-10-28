@@ -70,6 +70,8 @@ struct Parcel {
     double Teff = 0.0;
     // Mdotprime
     double Mdotprime = 0.0;
+    // Mdot (for TQM05)
+    double Mdot = 0.0;
     // Midplane temperature
     double T = 0.0;
     // Sound speed
@@ -88,6 +90,8 @@ struct Parcel {
     double Q = 0.0;
     // Scale height
     double h = 0.0;
+    // Star formation efficiency
+    double eta = 0.0;
 
     //// Constructor
     Parcel(double r_cyl) : r_cyl(r_cyl) {};

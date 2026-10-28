@@ -83,7 +83,40 @@ public:
         radius_outer_(radius_outer),
         radius_inner_(radius_inner),
         mdot_outer_(mdot_outer),
-        opac_(opac_name, opac_path, opac_id) {}
+        opac_(opac_name, opac_path, opac_id) {
+    // Cache the velocity dispersion
+    velocity_dispersion_ = GetVelocityDispersion();
+    // Generate quantities for the outer disk radius
+    const double AngularVelocityOuter = GetAngularVelocity(GetRadiusOuter());
+    const double StarFormationOuter = std::sqrt((2. * M_SQRT2) * GetMDotOuter() *
+      G_SI / (GetTransportEfficiency() * (
+        AngularVelocityOuter * AngularVelocityOuter * AngularVelocityOuter *
+        GetRadiusOuter() * GetRadiusOuter() * GetRadiusOuter())));
+    const double TemperatureOuter = std::sqrt(
+      StarFormationOuter * GetVelocityDispersion() * GetVelocityDispersion() /
+      GetRadiusOuter()
+    ) * std::sqrt(std::sqrt(
+      (3. * C_SI) / (
+        8. * M_SQRT2 * M_PI * G_SI * STEFAN_BOLTZMANN
+      )
+    ));
+    const double RhoOuter = AngularVelocityOuter * AngularVelocityOuter / (
+      M_SQRT2 * M_PI * G_SI);
+    const double AspectRatioOuter = GetRadiusOuter() * StarFormationOuter / (
+      2.0 * M_SQRT2);
+    const double MDotMax = 8. * M_PI * RhoOuter * AspectRatioOuter * 
+      GetVelocityDispersion() * GetVelocityDispersion()  * GetRadiusOuter() /
+      (C_SI * GetRadiativeEfficiency());
+    
+    // Check mdot against mdot max
+    if (GetMDotOuter() > MDotMax) {
+        printf(
+            "Cannot set MDotOuter (%g) greater than MDotMax (%g)!\n",
+            GetMDotOuter(), MDotMax
+        );
+        throw std::runtime_error("See stdout message!");
+    }
+  }
 
   const PAGNCombined& opac() const { return opac_; }
 
@@ -116,19 +149,6 @@ public:
     );
   }
 
-  /* Effective temperature to the fourth power */
-  double GetEffectiveTemperature4(double r, double angular_velocity) const {
-    return 3.0 * GetMDotOuter() * (1.0 - std::sqrt(GetRadiusInner() / r)) * angular_velocity * angular_velocity / (8.0 * M_PI * STEFAN_BOLTZMANN);
-  }
-  /* Effective temperature */
-  double GetEffectiveTemperature(double r, double angular_velocity) const {
-    return std::sqrt(
-        std::sqrt(
-            GetEffectiveTemperature4(r, angular_velocity)
-        )
-    );
-  }
-
   /// Solve for T and rho in a 2D rootfind
   ///
   /// For a 2D Newton's method, X_{i + 1} = X_{i} - J^{-1} f(X_{i})
@@ -138,6 +158,7 @@ public:
         double r,
         double log10T,
         double log10rho,
+        double mdot_local,
         const int iter_max = 30,
         const double tol = 1.e-5
     ) {
@@ -146,8 +167,14 @@ public:
 
     // Fill things outside of the hot loop
     out.omega = GetAngularVelocity(r);
-    out.Teff = GetEffectiveTemperature(r, out.omega);
-    out.Mdotprime = GetMDotOuter() * (1. - std::sqrt(GetRadiusInner() / r));
+    out.Mdot = mdot_local;
+    out.Mdotprime = out.Mdot * (1. - std::sqrt(GetRadiusInner() / r));
+    out.Teff = std::sqrt(
+      std::sqrt(
+        3.0 * out.Mdotprime * out.omega * out.omega / 
+          (8.0 * M_PI * STEFAN_BOLTZMANN)
+      )
+    );
 
     double fn_pressure, fn_radiation;
     double jac_inv[4] = {0.};
@@ -177,7 +204,7 @@ public:
     if (!out.converged) {out.steps = iter_max;}
 
     // Fill Q / h
-    //out.Q = out.omega * out.omega / (2.0 * M_PI * G_SI * out.rho);
+    out.Q = out.omega * out.omega / (M_SQRT2 * M_PI * G_SI * out.rho);
     return out;
     
   }
@@ -211,7 +238,7 @@ private:
         parcel.kappa = opac_.eval(parcel.rho, parcel.T);
         //printf("kappa: %g\n", kappa);
 
-        parcel.h = std::sqrt(GetMDotOuter() / (
+        parcel.h = std::sqrt(parcel.Mdot / (
             4.0 * M_PI * parcel.r_cyl * parcel.omega * 
             parcel.rho * GetTransportEfficiency()
           )
@@ -259,7 +286,7 @@ private:
         // TODO move out of solve
         parcel.rho = parcel.omega * parcel.omega / (M_SQRT2 * M_PI * G_SI);
         parcel.h = std::sqrt(
-            GetMDotOuter() / (
+            parcel.Mdot / (
                 4.0 * M_PI * parcel.r_cyl * parcel.omega * parcel.rho * 
                     GetTransportEfficiency()
             )
