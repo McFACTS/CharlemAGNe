@@ -1,5 +1,5 @@
 /*
- *  File: disk1d.hpp
+ *  File: tqm05.hpp
  *
  *  BSD 3-Clause License
  *
@@ -87,24 +87,24 @@ public:
     // Cache the velocity dispersion
     velocity_dispersion_ = GetVelocityDispersion();
     // Generate quantities for the outer disk radius
-    const double AngularVelocityOuter = GetAngularVelocity(GetRadiusOuter());
-    const double StarFormationOuter = std::sqrt((2. * M_SQRT2) * GetMDotOuter() *
+    angular_velocity_outer_ = GetAngularVelocity(GetRadiusOuter());
+    star_formation_outer_ = std::sqrt((2. * M_SQRT2) * GetMDotOuter() *
       G_SI / (GetTransportEfficiency() * (
-        AngularVelocityOuter * AngularVelocityOuter * AngularVelocityOuter *
+        angular_velocity_outer_ * angular_velocity_outer_ * angular_velocity_outer_ *
         GetRadiusOuter() * GetRadiusOuter() * GetRadiusOuter())));
-    const double TemperatureOuter = std::sqrt(
-      StarFormationOuter * GetVelocityDispersion() * GetVelocityDispersion() /
+    temperature_outer_ = std::sqrt(
+      star_formation_outer_ * GetVelocityDispersion() * GetVelocityDispersion() /
       GetRadiusOuter()
     ) * std::sqrt(std::sqrt(
       (3. * C_SI) / (
         8. * M_SQRT2 * M_PI * G_SI * STEFAN_BOLTZMANN
       )
     ));
-    const double RhoOuter = AngularVelocityOuter * AngularVelocityOuter / (
+    rho_outer_ = angular_velocity_outer_ * angular_velocity_outer_ / (
       M_SQRT2 * M_PI * G_SI);
-    const double AspectRatioOuter = GetRadiusOuter() * StarFormationOuter / (
+    aspect_ratio_outer_ = GetRadiusOuter() * star_formation_outer_ / (
       2.0 * M_SQRT2);
-    const double MDotMax = 8. * M_PI * RhoOuter * AspectRatioOuter * 
+    const double MDotMax = 8. * M_PI * rho_outer_ * aspect_ratio_outer_ * 
       GetVelocityDispersion() * GetVelocityDispersion()  * GetRadiusOuter() /
       (C_SI * GetRadiativeEfficiency());
     
@@ -208,6 +208,68 @@ public:
     return out;
     
   }
+  /// Solve for T and eta in a 2D rootfind
+  ///
+  /// For a 2D Newton's method, X_{i + 1} = X_{i} - J^{-1} f(X_{i})
+  /// where here f(X_{i}) has rows which are the pressure term and the radiation term
+  /// which are both being minimized.
+  Parcel solve_T_eta(
+        double r,
+        double log10T,
+        double log10eta,
+        double mdot_local,
+        const int iter_max = 30,
+        const double tol = 1.e-5
+    ) {
+    // Construct Parcel
+    Parcel out = Parcel(r);
+
+    // Fill things outside of the hot loop
+    out.omega = GetAngularVelocity(r);
+    out.Mdot = mdot_local;
+    out.Mdotprime = out.Mdot * (1. - std::sqrt(GetRadiusInner() / r));
+    out.rho = out.omega * out.omega / (M_SQRT2 * M_PI * G_SI);
+    out.h = std::sqrt(
+      out.Mdot / (
+        4.0 * M_PI * r * out.omega * out.rho * 
+          GetTransportEfficiency()
+      )
+    );
+    // Sound speed
+    out.cs = out.h * out.omega;
+
+    double fn_pressure, fn_radiation;
+    double jac_inv[4] = {0.};
+    for (int iter=0; iter < iter_max; iter++) {
+      // Call the function here so we don't do it twice
+      calc_inv_jacobian<&TQM05::T_eta_eqn>(
+        *this,
+        out,
+        jac_inv,
+        log10T, log10eta,
+        fn_pressure, fn_radiation
+      );
+      double rhs_T = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
+      double rhs_eta  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
+
+      // stop. We're all done here.
+      if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol) {
+        out.converged = true;
+        out.steps = iter;
+        break;
+      }
+      // continue iterating
+      log10T -= rhs_T;
+      log10eta -= rhs_eta;
+    }
+    // Update steps
+    if (!out.converged) {out.steps = iter_max;}
+
+    // Fill Q / h
+    out.Q = out.omega * out.omega / (M_SQRT2 * M_PI * G_SI * out.rho);
+    return out;
+    
+  }
 private:
   /* Privates of things in constructor */
   double smbh_mass_;
@@ -219,6 +281,11 @@ private:
   double radius_inner_;
   double radius_outer_;
   double mdot_outer_;
+  double angular_velocity_outer_;
+  double star_formation_outer_;
+  double temperature_outer_;
+  double rho_outer_;
+  double aspect_ratio_outer_;
   PAGNCombined opac_;
 
   // Equation for T / rho rootfind
@@ -281,22 +348,11 @@ private:
   ) {
 
         parcel.T = std::exp(log10T * M_LN10);
-        double eta = std::exp(log10eta * M_LN10);
+        parcel.eta = std::exp(log10eta * M_LN10);
         double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
-        // TODO move out of solve
-        parcel.rho = parcel.omega * parcel.omega / (M_SQRT2 * M_PI * G_SI);
-        parcel.h = std::sqrt(
-            parcel.Mdot / (
-                4.0 * M_PI * parcel.r_cyl * parcel.omega * parcel.rho * 
-                    GetTransportEfficiency()
-            )
-        );
 
         parcel.kappa = opac_.eval(parcel.rho, parcel.T);
         //printf("kappa: %g\n", kappa);
-
-        // TODO move out of loop
-        parcel.cs = parcel.h * parcel.omega;
 
         parcel.tauV = parcel.kappa * parcel.rho * parcel.h;
         //printf("tauV: %g\n", tauV);
@@ -311,18 +367,17 @@ private:
         // Follow pAGN conventions
         double factorT = parcel.T * KBOLTZMANN / AMU;
         fn_pressure = 1.0 + 
-            (2.0 * parcel.h * eta * parcel.omega * GetRadiativeEfficiency() * C_SI)
+            (2.0 * parcel.h * parcel.eta * parcel.omega * GetRadiativeEfficiency() * C_SI)
             *
             (((parcel.tauV / 2.0) + GetSupernovaPressure()) / factorT) -
             (parcel.cs * parcel.cs / factorT);
         double factor_Teff = STEFAN_BOLTZMANN * Teff4;
-        fn_radiation = 1.0 - parcel.rho * parcel.h * parcel.omega * eta * GetRadiativeEfficiency()
+        fn_radiation = 1.0 - parcel.rho * parcel.h * parcel.omega
+            * parcel.eta * GetRadiativeEfficiency()
             * C_SI * C_SI / factor_Teff -
             3.0 * parcel.omega * parcel.omega * parcel.Mdotprime / (8.  * M_PI * factor_Teff);
         //printf("fn_radiation: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
         //printf("fn_pressure: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
         //throw std::runtime_error("Crash!\n");
-
-        // TODO set eta?
   }
 };
