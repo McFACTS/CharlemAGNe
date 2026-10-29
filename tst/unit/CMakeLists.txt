@@ -22,8 +22,9 @@ set(CHARLES_TEST_INCLUDE_DIRS
 
 set(CHARLES_UNIT_TEST_SOURCES
   catch2_define.cpp
-  test_sg03.cpp
   test_constants.cpp
+  test_sg03.cpp
+  test_tqm05.cpp
 )
 
 add_executable(charlemagne_unit_tests ${CHARLES_UNIT_TEST_SOURCES})

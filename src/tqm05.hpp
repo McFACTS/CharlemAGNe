@@ -149,6 +149,11 @@ public:
     );
   }
 
+  double GetAngularVelocityOuter() const { return angular_velocity_outer_; }
+  double GetStarFormationOuter() const { return star_formation_outer_; }
+  double GetTemperatureOuter() const { return temperature_outer_; }
+  double GetRhoOuter() const { return rho_outer_; }
+  double GetAspectRatioOuter() const { return aspect_ratio_outer_; }
   /// Solve for T and rho in a 2D rootfind
   ///
   /// For a 2D Newton's method, X_{i + 1} = X_{i} - J^{-1} f(X_{i})
@@ -205,6 +210,7 @@ public:
 
     // Fill Q / h
     out.Q = out.omega * out.omega / (M_SQRT2 * M_PI * G_SI * out.rho);
+    out.star_formation = out.Q <= 1.0;
     return out;
     
   }
@@ -225,6 +231,7 @@ public:
     Parcel out = Parcel(r);
 
     // Fill things outside of the hot loop
+    out.star_formation = true;
     out.omega = GetAngularVelocity(r);
     out.Mdot = mdot_local;
     out.Mdotprime = out.Mdot * (1. - std::sqrt(GetRadiusInner() / r));
