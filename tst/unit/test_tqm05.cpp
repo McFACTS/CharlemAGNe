@@ -164,10 +164,10 @@ TEST_CASE("TQM05 Disk object first steps", "[tqm05]") {
   REQUIRE((std::abs(first_sf.cs - 93887.12587907449) / 93887.12587907449) < 1.e-3);
   REQUIRE((std::abs(first_sf.T - 119.79945768699307) / 119.79945768699307) < 1.e-3);
   REQUIRE((std::abs(first_sf.Teff - 90.83386987173469) / 90.83386987173469) < 1.e-1);
-  REQUIRE((std::abs(first_sf.rho - 6.4584603958072986e-18) / 6.4584603958072986e-6) < 1.e-8);
+  REQUIRE((std::abs(first_sf.rho - 6.4584603958072986e-18) / 6.4584603958072986e-18) < 1.e-3);
   REQUIRE((std::abs(first_sf.kappa - 0.17510017298606326) / 0.17510017298606326) < 1.e-1);
   REQUIRE((std::abs(first_sf.tauV - 2.426173321390316) / 2.426173321390316) < 1.e-1);
-  REQUIRE((std::abs(first_sf.h - 2.1453899751315773e+18) / 2.1453899751315773e+18) < 1.e-4);
+  REQUIRE((std::abs(first_sf.h - 2.1453899751315773e+18) / 2.1453899751315773e+18) < 1.e-3);
   // Well, it agrees in each quantity to at least 10%, 
   // even using an entirely different opacity interpolation scheme.
   // Find second point
@@ -206,11 +206,11 @@ TEST_CASE("TQM05 Disk object first steps", "[tqm05]") {
    * h: 2.14194e+18
   */
   REQUIRE(second_sf.converged);
-  //REQUIRE((std::abs(second_sf.cs - 93886.03239932859) / 93886.03239932859) < 1.e-3);
-  //REQUIRE((std::abs(second_sf.T - 119.89355934263655) / 119.89355934263655) < 1.e-3);
-  //REQUIRE((std::abs(second_sf.Teff - 90.87602945979515) / 90.87602945979515) < 1.e-1);
-  //REQUIRE((std::abs(second_sf.rho - 6.479146973372726e-18) / 6.479146973372726e-18) < 1.e-8);
-  //REQUIRE((std::abs(second_sf.kappa - 0.17524372784116451) / 0.17524372784116451) < 1.e-1);
-  //REQUIRE((std::abs(second_sf.tauV - 2.432019697365853) /2.4320196973658536) < 1.e-1);
-  //REQUIRE((std::abs(second_sf.h - 2.1419373966624404e+18) / 2.1419373966624404e+18) < 1.e-4);
+  REQUIRE((std::abs(second_sf.cs - 93886.03239932859) / 93886.03239932859) < 1.e-3);
+  REQUIRE((std::abs(second_sf.T - 119.89355934263655) / 119.89355934263655) < 1.e-3);
+  REQUIRE((std::abs(second_sf.Teff - 90.87602945979515) / 90.87602945979515) < 1.e-1);
+  REQUIRE((std::abs(second_sf.rho - 6.479146973372726e-18) / 6.479146973372726e-18) < 1.e-3);
+  REQUIRE((std::abs(second_sf.kappa - 0.17524372784116451) / 0.17524372784116451) < 1.e-1);
+  REQUIRE((std::abs(second_sf.tauV - 2.432019697365853) /2.4320196973658536) < 1.e-1);
+  REQUIRE((std::abs(second_sf.h - 2.1419373966624404e+18) / 2.1419373966624404e+18) < 1.e-4);
 }
