@@ -117,7 +117,7 @@ TEST_CASE("TQM05 Disk object defaults", "[tqm05]") {
   REQUIRE((std::abs(disk.GetSFEfficiencyOuter() - 0.07389095846905776) / 0.07389095846905776) < 1.e-1);
 }
 
-TEST_CASE("TQM05 Disk object outer disk radius", "[tqm05]") {
+TEST_CASE("TQM05 Disk object first steps", "[tqm05]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
       throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
@@ -132,13 +132,44 @@ TEST_CASE("TQM05 Disk object outer disk radius", "[tqm05]") {
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
   auto disk = TQM05(opac_name, opac_path, opac_id);
   // Find point
-  Parcel first_no_sf = disk.solve_T_rho(
+  Parcel first_sf = disk.solve_T_eta(
         6.167141351355161e+18,
-        1.93088819, // log10_T
-        -15.04406584, // log10_rho
+        std::log10(disk.GetTemperatureOuter()),
+        std::log10(disk.GetSFEfficiencyOuter()),
         disk.GetMDotOuter(),
-        1,
+        30,
         1.e-5
   );
-  REQUIRE(first_no_sf.converged);
+  REQUIRE(first_sf.converged);
+  REQUIRE((std::abs(disk.GetSFEfficiencyOuter() - 0.07389095846905776) / 0.07389095846905776) < 1.e-1);
+  REQUIRE(first_sf.converged);
+  // pAGN
+  // cs: 93887.12587907449
+  // T: 119.79945768699307
+  // Teff: 90.83386987173469
+  // rho: 6.4584603958072986e-18
+  // kappa: 0.17510017298606326
+  // tauV: 2.426173321390316
+  // eta: 0.07074697050876151
+  // h: 2.1453899751315773e+18
+  //
+  // main.cpp
+  // r_cyl: 6.16714e+18
+  // cs: 93900
+  // T: 119.786
+  // Teff: 89.7629
+  // rho: 6.45845e-18
+  // kappa: 0.190705
+  // tauV: 2.64276
+  // Q: 1
+  // h: 2.14569e+18
+  REQUIRE((std::abs(first_sf.cs - 93887.12587907449) / 93887.12587907449) < 1.e-3);
+  REQUIRE((std::abs(first_sf.T - 119.79945768699307) / 119.79945768699307) < 1.e-3);
+  REQUIRE((std::abs(first_sf.Teff - 90.83386987173469) / 90.83386987173469) < 1.e-1);
+  REQUIRE((std::abs(first_sf.rho - 6.4584603958072986e-18) / 6.4584603958072986e-6) < 1.e-8);
+  REQUIRE((std::abs(first_sf.kappa - 0.17510017298606326) / 0.17510017298606326) < 1.e-1);
+  REQUIRE((std::abs(first_sf.tauV - 2.426173321390316) / 2.426173321390316) < 1.e-1);
+  REQUIRE((std::abs(first_sf.h - 2.1453899751315773e+18) / 2.1453899751315773e+18) < 1.e-4);
+  // Well, it agrees in each quantity to at least 10%, 
+  // even using an entirely different opacity interpolation scheme.
 }

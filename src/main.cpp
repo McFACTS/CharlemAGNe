@@ -112,6 +112,7 @@ int main(int argc, char *argv[]) {
   
   // Find point
   Parcel first_sf = disk.solve_T_eta(
+        6.167141351355161e+18,
         std::log10(disk.GetTemperatureOuter()),
         std::log10(disk.GetSFEfficiencyOuter()),
         disk.GetMDotOuter(),
