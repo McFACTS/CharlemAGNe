@@ -82,7 +82,7 @@ public:
   std::string GetName() const { return name_; }
 
   // Return the value of the opacity
-  double eval(double rho_si, double temp) {
+  double eval(double rho_si, double temp) const {
     //const double logRopac = std::log10(rho_si) - 3.0 * std::log10(temp) + 15.0;
     const double fake_rho = (rho_si / (temp * temp * temp)) * 1.e15;
     return 0.1 * mean_opac_cgs_.RosselandMeanAbsorptionCoefficient(fake_rho, temp) / fake_rho;

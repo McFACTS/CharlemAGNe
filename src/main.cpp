@@ -96,6 +96,10 @@ int main(int argc, char *argv[]) {
   printf("Temperature outer: %g\n", disk.GetTemperatureOuter());
   printf("Density outer: %g\n", disk.GetRhoOuter());
   printf("Aspect ratio outer: %g\n", disk.GetAspectRatioOuter());
+  printf("Kappa outer: %g\n", disk.GetKappaOuter());
+  printf("TauV outer: %g\n", disk.GetTauVOuter());
+  printf("Teff4 outer: %g\n", disk.GetTeff4Outer());
+  printf("SFEfficiency outer: %g\n", disk.GetSFEfficiencyOuter());
   // printf("disk eddington_ratio: %g\n", disk.GetEddingtonRatio());
   // printf("disk alpha: %g\n", disk.GetAlpha());
   // printf("disk Mdot: %g\n", disk.GetMDot());
@@ -107,25 +111,24 @@ int main(int argc, char *argv[]) {
   // printf("Teff4 (%g r_g) = %g\n", r_800, Teff4);
   
   // Find point
-  Parcel first_no_sf = disk.solve_T_rho(
-        6.167141351355161e+18,
-        1.93088819, // log10_T
-        -15.04406584, // log10_rho
+  Parcel first_sf = disk.solve_T_eta(
+        std::log10(disk.GetTemperatureOuter()),
+        std::log10(disk.GetSFEfficiencyOuter()),
         disk.GetMDotOuter(),
-        1,
+        30,
         1.e-5
   );
-  printf("first_no_sf converged: %d\n", first_no_sf.converged);
-  printf("first_no_sf steps: %d\n", first_no_sf.steps);
-  printf("r_cyl: %g\n", first_no_sf.r_cyl);
-  printf("cs: %g\n", first_no_sf.cs);
-  printf("T: %g\n", first_no_sf.T);
-  printf("Teff: %g\n", first_no_sf.Teff);
-  printf("rho: %g\n", first_no_sf.rho);
-  printf("kappa: %g\n", first_no_sf.kappa);
-  printf("tauV: %g\n", first_no_sf.tauV);
-  printf("Q: %g\n", first_no_sf.Q);
-  printf("h: %g\n", first_no_sf.h);
+  printf("first_sf converged: %d\n", first_sf.converged);
+  printf("first_sf steps: %d\n", first_sf.steps);
+  printf("r_cyl: %g\n", first_sf.r_cyl);
+  printf("cs: %g\n", first_sf.cs);
+  printf("T: %g\n", first_sf.T);
+  printf("Teff: %g\n", first_sf.Teff);
+  printf("rho: %g\n", first_sf.rho);
+  printf("kappa: %g\n", first_sf.kappa);
+  printf("tauV: %g\n", first_sf.tauV);
+  printf("Q: %g\n", first_sf.Q);
+  printf("h: %g\n", first_sf.h);
   // /* setup xguess */
   // double xguess_a = std::log10(omega * r_800 * 1.e-2);
   // double xguess_b = std::log10(Teff);// + 1.6;

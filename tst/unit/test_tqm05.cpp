@@ -111,6 +111,10 @@ TEST_CASE("TQM05 Disk object defaults", "[tqm05]") {
   REQUIRE((std::abs(disk.GetTemperatureOuter() - 120.75098750027597) / 120.75098750027597) < 1.e-3);
   REQUIRE((std::abs(disk.GetRhoOuter() - 6.4584603958072986e-18) / 6.4584603958072986e-18) < 1.e-3);
   REQUIRE((std::abs(disk.GetAspectRatioOuter() - 2.1470801741235356e+18) / 2.1470801741235356e+18) < 1.e-3);
+  REQUIRE((std::abs(disk.GetKappaOuter() - 0.17684028668423085) / 0.17684028668423085) < 1.e-1);
+  REQUIRE((std::abs(disk.GetTauVOuter() - 2.37789229981872) / 2.37789229981872) < 1.e-1);
+  REQUIRE((std::abs(disk.GetTeff4Outer() - 71015968.52973816) / 71015968.52973816) < 1.e-1);
+  REQUIRE((std::abs(disk.GetSFEfficiencyOuter() - 0.07389095846905776) / 0.07389095846905776) < 1.e-1);
 }
 
 TEST_CASE("TQM05 Disk object outer disk radius", "[tqm05]") {

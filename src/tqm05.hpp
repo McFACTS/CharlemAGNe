@@ -154,6 +154,26 @@ public:
   double GetTemperatureOuter() const { return temperature_outer_; }
   double GetRhoOuter() const { return rho_outer_; }
   double GetAspectRatioOuter() const { return aspect_ratio_outer_; }
+  double GetKappaOuter() const {
+    return opac_.eval(GetRhoOuter(),GetTemperatureOuter());
+  }
+  double GetTauVOuter() const {
+    return GetKappaOuter() * GetVelocityDispersion() * GetVelocityDispersion()
+      * GetStarFormationOuter() / (2.0 * M_PI * G_SI * GetRadiusOuter());
+  }
+  double GetTeff4Outer() const {
+    return (4./3.) * GetTemperatureOuter() * GetTemperatureOuter()
+      * GetTemperatureOuter() * GetTemperatureOuter() / (
+        GetTauVOuter() + (2. / (3. * GetTauVOuter())) + (4. / 3.)
+      );
+  }
+  double GetSFEfficiencyOuter() const {
+    return 2.0 * STEFAN_BOLTZMANN * GetTeff4Outer() / (
+      C_SI * C_SI * GetRadiativeEfficiency()
+      * 2. * GetRhoOuter() * GetAspectRatioOuter() * GetAngularVelocityOuter()
+    );
+  }
+
   /// Solve for T and rho in a 2D rootfind
   ///
   /// For a 2D Newton's method, X_{i + 1} = X_{i} - J^{-1} f(X_{i})
