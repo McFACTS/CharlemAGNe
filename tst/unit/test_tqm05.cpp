@@ -168,6 +168,7 @@ TEST_CASE("TQM05 Disk object first steps", "[tqm05]") {
   REQUIRE((std::abs(first_sf.kappa - 0.17510017298606326) / 0.17510017298606326) < 1.e-1);
   REQUIRE((std::abs(first_sf.tauV - 2.426173321390316) / 2.426173321390316) < 1.e-1);
   REQUIRE((std::abs(first_sf.h - 2.1453899751315773e+18) / 2.1453899751315773e+18) < 1.e-3);
+  REQUIRE((std::abs(first_sf.eta - 0.07074697050876151) / 0.07074697050876151) < 1.e-1);
   // Well, it agrees in each quantity to at least 10%, 
   // even using an entirely different opacity interpolation scheme.
   // Find second point
@@ -213,4 +214,63 @@ TEST_CASE("TQM05 Disk object first steps", "[tqm05]") {
   REQUIRE((std::abs(second_sf.kappa - 0.17524372784116451) / 0.17524372784116451) < 1.e-1);
   REQUIRE((std::abs(second_sf.tauV - 2.432019697365853) /2.4320196973658536) < 1.e-1);
   REQUIRE((std::abs(second_sf.h - 2.1419373966624404e+18) / 2.1419373966624404e+18) < 1.e-4);
+  REQUIRE((std::abs(first_sf.eta - 0.07065281725968725) / 0.07065281725968725) < 1.e-1);
+}
+
+TEST_CASE("TQM05 Disk object no sf step", "[tqm05]") {
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+  auto disk = TQM05(opac_name, opac_path, opac_id);
+  // Find point
+  // Try a solve with no star formation
+  Parcel no_sf = disk.solve_T_rho(
+    2285812867742.8877,
+    std::log10(240555.264243547),
+    std::log10(6.558288583390488e-10),
+    1.406323456972877e+23,
+    30,
+    1.e-5
+  );
+  REQUIRE(no_sf.converged);
+  /*
+  pAGN:
+  R: 2285812867742.8877
+  Mdot: 1.406323456972877e+23
+  cs: 35177765.141558014
+  T: 240791.1076947123
+  Teff: 105559.22962529745
+  rho: 6.594353356182405e-10
+  kappa: 0.049933921917359105
+  tauV: 34.74818464029484
+  eta: 0.0
+  h: 1055271545158.8575
+
+  main.cpp:
+  r_cyl: 2.28581e+12
+  cs: 1.51148e+07
+  T: 240790
+  Teff: 105559
+  rho: 3.57187e-09
+  kappa: 0.0214548
+  tauV: 34.7476
+  Q: 1.04913e+09
+  h: 4.53425e+11
+  */
+  //REQUIRE((std::abs(no_sf.cs - 35177765.141558014) / 35177765.141558014) < 1.e-3);
+  REQUIRE((std::abs(no_sf.T - 240791.1076947123) / 240791.1076947123) < 1.e-3);
+  REQUIRE((std::abs(no_sf.Teff - 105559.22962529745) / 105559.22962529745) < 1.e-3);
+  //REQUIRE((std::abs(no_sf.rho - 6.594353356182405e-10) / 6.594353356182405e-10) < 1.e-3);
+  //REQUIRE((std::abs(no_sf.kappa - 0.049933921917359105) / 0.049933921917359105) < 1.e-1);
+  REQUIRE((std::abs(no_sf.tauV - 34.74818464029484) / 34.74818464029484) < 1.e-3);
+  //REQUIRE((std::abs(no_sf.h - 1055271545158.8575) / 1055271545158.8575) < 1.e-3);
 }
