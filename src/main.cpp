@@ -130,6 +130,28 @@ int main(int argc, char *argv[]) {
   printf("tauV: %g\n", first_sf.tauV);
   printf("Q: %g\n", first_sf.Q);
   printf("h: %g\n", first_sf.h);
+
+  // Find second point
+  Parcel second_sf = disk.solve_T_eta(
+    6.157431703601016e+18,
+    std::log10(first_sf.T),
+    std::log10(first_sf.eta),
+    2.0163459832179886e+25,
+    30,
+    1.e-5
+  );
+  printf("second_sf converged: %d\n", second_sf.converged);
+  printf("second_sf steps: %d\n", second_sf.steps);
+  printf("r_cyl: %g\n", second_sf.r_cyl);
+  printf("cs: %g\n", second_sf.cs);
+  printf("T: %g\n", second_sf.T);
+  printf("Teff: %g\n", second_sf.Teff);
+  printf("rho: %g\n", second_sf.rho);
+  printf("kappa: %g\n", second_sf.kappa);
+  printf("tauV: %g\n", second_sf.tauV);
+  printf("Q: %g\n", second_sf.Q);
+  printf("h: %g\n", second_sf.h);
+
   // /* setup xguess */
   // double xguess_a = std::log10(omega * r_800 * 1.e-2);
   // double xguess_b = std::log10(Teff);// + 1.6;
