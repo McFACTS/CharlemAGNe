@@ -277,7 +277,95 @@ public:
         out.h = out.cs / out.omega;
     }
     return out;
-    
+  }
+
+  Profile WalkDisk(
+    std::vector<double> r_cyl,
+    const int iter_max_first = 1000,
+    const int iter_max = 30,
+    const double tol = 1.e-5
+  ) {
+    // Initialize out
+    Profile out = Profile(r_cyl);
+    // Initialize things we might reuse
+    bool star_formation = false;
+    double omega = GetAngularVelocity(r_cyl[0]);
+    double Teff = GetEffectiveTemperature(r_cyl[0], omega);
+    Parcel prev;
+    Parcel cur;
+    // Enter loop
+    for (size_t iter=0; iter < r_cyl.size(); iter++) {
+      //
+      if (iter == 0) {
+        cur = solve_cs_T(
+            r_cyl[iter],
+            std::log10(omega * r_cyl[iter] * 1.e-2),
+            std::log10(Teff),
+            iter_max_first,
+            tol
+        );
+      } else {
+        if (!star_formation) {
+          cur = solve_cs_T(
+              r_cyl[iter],
+              std::log10(prev.cs),
+              std::log10(prev.Teff),
+              iter_max,
+              tol
+          );
+          if (cur.Q <= 1.0) {
+            star_formation = true;
+          } else if (!cur.converged) {
+            printf(
+                "iter: %d; r_cyl=%g\n", 
+                iter,
+                r_cyl[iter] / GetRg()
+            );
+            throw std::runtime_error("Failed to converge disk!\n");
+          }
+        }
+        // Not a bug that this is separate check.
+        if (star_formation) {
+          cur = solve_Teff_T(
+            r_cyl[iter],
+            std::log10(prev.Teff),
+            std::log10(prev.T),
+            (prev.Q <= 1.0) ? iter_max : iter_max_first,
+            tol
+          );
+        }
+      }
+      // We have constructed cur; let's update our profiles
+      out.converged[iter]       = cur.converged;
+      out.steps[iter]           = cur.steps;
+      out.star_formation[iter]  = star_formation;
+      out.omega[iter]           = cur.omega;
+      out.Teff[iter]            = cur.Teff;
+      out.Mdotprime[iter]       = cur.Mdotprime;
+      out.Mdot[iter]            = cur.Mdot;
+      out.T[iter]               = cur.T;
+      out.cs[iter]              = cur.cs;
+      out.rho[iter]             = cur.rho;
+      out.kappa[iter]           = cur.kappa;
+      out.tauV[iter]            = cur.tauV;
+      out.PPgas[iter]           = cur.PPgas;
+      out.PPrad[iter]           = cur.PPrad;
+      out.opacfac[iter]         = cur.opacfac;
+      out.Q[iter]               = cur.Q;
+      out.h[iter]               = cur.h;
+      out.eta[iter]             = cur.eta;
+
+      // Profile specific things
+      out.dr_cyl[iter] = (iter == 0) ? 0.0 : cur.r_cyl - out.r_cyl[iter-1];
+      out.dA[iter] = out.dr_cyl[iter] * M_PI * 4.0 * cur.r_cyl;
+      out.dV[iter] = out.dA[iter] * cur.h;
+      out.mass_disk[iter] = out.dV[iter] * cur.rho;
+      out.Mdot_sf[iter] = 0.0;
+
+      // Update loop
+      prev = cur;
+    }
+    return out;
   }
 
 

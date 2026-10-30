@@ -97,7 +97,56 @@ struct Parcel {
     Parcel(double r_cyl) : r_cyl(r_cyl) {};
 };
 
-#define HOT_LOOP_ARGS Parcel& state, double logX0, double logX1, double &cost0, double &cost1
+/// A profile of gas
+struct Profile {
+    //// Members 
+    // If we successfully solved the disk at this radius
+    std::vector<bool> converged;
+    // Number of steps iterated
+    std::vector<int> steps;
+    // Star formation flag
+    std::vector<bool> star_formation;
+    // The distance from the axis of the disk to the point
+    std::vector<double> r_cyl;
+    // The angular velocity
+    std::vector<double> omega;
+    // Effective temperature
+    std::vector<double> Teff;
+    // Mdotprime
+    std::vector<double> Mdotprime;
+    // Mdot (for TQM05)
+    std::vector<double> Mdot;
+    // Midplane temperature
+    std::vector<double> T;
+    // Sound speed
+    std::vector<double> cs;
+    // density
+    std::vector<double> rho;
+    // opacity
+    std::vector<double> kappa;
+    std::vector<double> tauV;
+    // pressure
+    std::vector<double> PPgas;
+    std::vector<double> PPrad;
+    // opacfac
+    std::vector<double> opacfac;
+    // Toomre instability
+    std::vector<double> Q;
+    // Scale height
+    std::vector<double> h;
+    // Star formation efficiency
+    std::vector<double> eta;
+
+    //// Profile specific things
+    std::vector<double> dr_cyl;
+    std::vector<double> dA;
+    std::vector<double> dV;
+    std::vector<double> mass_disk;
+    std::vector<double> Mdot_sf;
+
+    //// Constructor
+    Profile(std::vector<double> r_cyl) : r_cyl(r_cyl) {};
+};
 
 //// Disks ////
 class Disk1D {
