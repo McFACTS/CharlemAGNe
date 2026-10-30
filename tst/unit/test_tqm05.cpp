@@ -266,11 +266,13 @@ TEST_CASE("TQM05 Disk object no sf step", "[tqm05]") {
   Q: 1.04913e+09
   h: 4.53425e+11
   */
-  //REQUIRE((std::abs(no_sf.cs - 35177765.141558014) / 35177765.141558014) < 1.e-3);
   REQUIRE((std::abs(no_sf.T - 240791.1076947123) / 240791.1076947123) < 1.e-3);
   REQUIRE((std::abs(no_sf.Teff - 105559.22962529745) / 105559.22962529745) < 1.e-3);
+  REQUIRE((std::abs(no_sf.tauV - 34.74818464029484) / 34.74818464029484) < 1.e-3);
+  // This is way off the edge of the opacity table, 
+  //  so this is how pAGN and singularity-opac extrapolate differently.
+  //REQUIRE((std::abs(no_sf.cs - 35177765.141558014) / 35177765.141558014) < 1.e-3);
   //REQUIRE((std::abs(no_sf.rho - 6.594353356182405e-10) / 6.594353356182405e-10) < 1.e-3);
   //REQUIRE((std::abs(no_sf.kappa - 0.049933921917359105) / 0.049933921917359105) < 1.e-1);
-  REQUIRE((std::abs(no_sf.tauV - 34.74818464029484) / 34.74818464029484) < 1.e-3);
   //REQUIRE((std::abs(no_sf.h - 1055271545158.8575) / 1055271545158.8575) < 1.e-3);
 }
