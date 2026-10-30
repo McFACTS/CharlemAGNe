@@ -289,6 +289,7 @@ public:
     Profile out = Profile(r_cyl);
     // Initialize things we might reuse
     bool star_formation = false;
+    bool switched_solve = false;
     double omega = GetAngularVelocity(r_cyl[0]);
     double Teff = GetEffectiveTemperature(r_cyl[0], omega);
     Parcel prev;
@@ -309,28 +310,32 @@ public:
           cur = solve_cs_T(
               r_cyl[iter],
               std::log10(prev.cs),
-              std::log10(prev.Teff),
+              std::log10(prev.T),
               iter_max,
               tol
           );
-          if (cur.Q <= 1.0) {
-            star_formation = true;
-          } else if (!cur.converged) {
+          // Catch non-converged
+          if (!cur.converged) {
             printf(
-                "iter: %d; r_cyl=%g\n", 
+                "iter: %zu; r_cyl=%g\n", 
                 iter,
                 r_cyl[iter] / GetRg()
             );
             throw std::runtime_error("Failed to converge disk!\n");
+          }
+          // 
+          if (cur.Q <= 1.0) {
+            star_formation = true;
+            switched_solve = true;
           }
         }
         // Not a bug that this is separate check.
         if (star_formation) {
           cur = solve_Teff_T(
             r_cyl[iter],
-            std::log10(prev.Teff),
-            std::log10(prev.T),
-            (prev.Q <= 1.0) ? iter_max : iter_max_first,
+            std::log10(switched_solve ? cur.Teff : prev.Teff),
+            std::log10(switched_solve ? cur.T : prev.T),
+            switched_solve ? iter_max : iter_max_first,
             tol
           );
         }

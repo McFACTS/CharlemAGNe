@@ -63,7 +63,7 @@ struct Parcel {
     // Star formation flag
     bool star_formation = false;
     // The distance from the axis of the disk to the point
-    double r_cyl;
+    double r_cyl = 0.0;
     // The angular velocity
     double omega = 0.0;
     // Effective temperature
@@ -94,7 +94,8 @@ struct Parcel {
     double eta = 0.0;
 
     //// Constructor
-    Parcel(double r_cyl) : r_cyl(r_cyl) {};
+    Parcel() = default;
+    explicit Parcel(double r_cyl) : r_cyl(r_cyl) {};
 };
 
 /// A profile of gas
@@ -145,7 +146,34 @@ struct Profile {
     std::vector<double> Mdot_sf;
 
     //// Constructor
-    Profile(std::vector<double> r_cyl) : r_cyl(r_cyl) {};
+    Profile(std::vector<double> r_cyl) : r_cyl(r_cyl) {
+      const size_t n = r_cyl.size();
+      // Non doubles
+      converged.assign(n, false);
+      steps.assign(n, 0);
+      star_formation.assign(n, false);
+      // Doubles
+      omega.resize(n);
+      Teff.resize(n);
+      Mdotprime.resize(n);
+      Mdot.resize(n);
+      T.resize(n);
+      cs.resize(n);
+      rho.resize(n);
+      kappa.resize(n);
+      tauV.resize(n);
+      PPgas.resize(n);
+      PPrad.resize(n);
+      opacfac.resize(n);
+      Q.resize(n);
+      h.resize(n);
+      eta.resize(n);
+      dr_cyl.resize(n);
+      dA.resize(n);
+      dV.resize(n);
+      mass_disk.resize(n);
+      Mdot_sf.resize(n);
+    };
 };
 
 //// Disks ////
