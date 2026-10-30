@@ -41,6 +41,7 @@
 #include "sg03.hpp"
 #include "tqm05.hpp"
 #include "opacity.hpp"
+#include "utils.hpp"
 //// Third Party ////
 //// Standard Library ////
 #include <cstdio>
@@ -71,98 +72,56 @@ int main(int argc, char *argv[]) {
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+  std::FILE* sg03_csv = std::fopen("./charlemagne_sg03.csv", "w");
 
   // setup disk
-  auto disk = TQM05(
+  auto disk = SG03(
     opac_name,
     opac_path,
     opac_id
   );
-
-  //tests
-  /* accessors will have it. setters will not. */
-  printf("TQM05 disk modl\n");
-  printf("disk smbh_mass: %g\n", disk.GetSMBHMassSolar());
-  printf("velocity_dispersion (sigma): %g\n", disk.GetVelocityDispersion());
-  printf("radiative efficiency (epsilon): %g\n", disk.GetRadiativeEfficiency());
-  printf("transport efficiency (m): %g\n", disk.GetTransportEfficiency());
-  printf("supernova pressure (xi): %g\n", disk.GetSupernovaPressure());
-  printf("disk X: %g\n", disk.GetX());
-  printf("MDotOuter: %g\n", disk.GetMDotOuter());
-  printf("Inner radius: %g\n", disk.GetRadiusInner());
-  printf("Outer radius: %g\n", disk.GetRadiusOuter());
-  printf("Angular velocity outer (omega): %g\n", disk.GetAngularVelocityOuter());
-  printf("Star Formation (fg0): %g\n", disk.GetStarFormationOuter());
-  printf("Temperature outer: %g\n", disk.GetTemperatureOuter());
-  printf("Density outer: %g\n", disk.GetRhoOuter());
-  printf("Aspect ratio outer: %g\n", disk.GetAspectRatioOuter());
-  printf("Kappa outer: %g\n", disk.GetKappaOuter());
-  printf("TauV outer: %g\n", disk.GetTauVOuter());
-  printf("Teff4 outer: %g\n", disk.GetTeff4Outer());
-  printf("SFEfficiency outer: %g\n", disk.GetSFEfficiencyOuter());
+  // r_space
+  const double rmin = 6.0 * disk.GetRg();
+  const double rmax = 1.e7 * disk.GetRg();
+  const double npts = 1.e4;
+  std::vector<double> r_space = geomspace(rmin, rmax, npts);
+  auto tic = std::chrono::high_resolution_clock::now();
+  Profile sg03_profile = disk.WalkDisk(r_space);
+  auto toc = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
+  printf("Solved disk in %g s\n", duration.count() / 1.e9);
+  fprintf(sg03_csv, "#iter, converged, steps, star_formation, omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
+  for (size_t i = 0; i < npts; i++) {
+    fprintf(
+        sg03_csv,
+        "%lu %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+        i,
+        sg03_profile.converged[i],
+        sg03_profile.steps[i],
+        sg03_profile.star_formation[i],
+        sg03_profile.omega[i],
+        sg03_profile.Teff[i],
+        sg03_profile.Mdotprime[i],
+        sg03_profile.Mdot[i],
+        sg03_profile.T[i],
+        sg03_profile.cs[i],
+        sg03_profile.rho[i],
+        sg03_profile.kappa[i],
+        sg03_profile.tauV[i],
+        sg03_profile.PPgas[i],
+        sg03_profile.PPrad[i],
+        sg03_profile.opacfac[i],
+        sg03_profile.Q[i],
+        sg03_profile.h[i],
+        sg03_profile.eta[i],
+        sg03_profile.dr_cyl[i],
+        sg03_profile.dA[i],
+        sg03_profile.dV[i],
+        sg03_profile.mass_disk[i],
+        sg03_profile.Mdot_sf[i]
+    );
+  }
+  std::fclose(sg03_csv);
   
-  // Find point
-  Parcel first_sf = disk.solve_T_eta(
-        6.167141351355161e+18,
-        std::log10(disk.GetTemperatureOuter()),
-        std::log10(disk.GetSFEfficiencyOuter()),
-        disk.GetMDotOuter(),
-        30,
-        1.e-5
-  );
-  printf("first_sf converged: %d\n", first_sf.converged);
-  printf("first_sf steps: %d\n", first_sf.steps);
-  printf("r_cyl: %g\n", first_sf.r_cyl);
-  printf("cs: %g\n", first_sf.cs);
-  printf("T: %g\n", first_sf.T);
-  printf("Teff: %g\n", first_sf.Teff);
-  printf("rho: %g\n", first_sf.rho);
-  printf("kappa: %g\n", first_sf.kappa);
-  printf("tauV: %g\n", first_sf.tauV);
-  printf("Q: %g\n", first_sf.Q);
-  printf("h: %g\n", first_sf.h);
-
-  // Find second point
-  Parcel second_sf = disk.solve_T_eta(
-    6.157431703601016e+18,
-    std::log10(first_sf.T),
-    std::log10(first_sf.eta),
-    2.0163459832179886e+25,
-    30,
-    1.e-5
-  );
-  printf("second_sf converged: %d\n", second_sf.converged);
-  printf("second_sf steps: %d\n", second_sf.steps);
-  printf("r_cyl: %g\n", second_sf.r_cyl);
-  printf("cs: %g\n", second_sf.cs);
-  printf("T: %g\n", second_sf.T);
-  printf("Teff: %g\n", second_sf.Teff);
-  printf("rho: %g\n", second_sf.rho);
-  printf("kappa: %g\n", second_sf.kappa);
-  printf("tauV: %g\n", second_sf.tauV);
-  printf("Q: %g\n", second_sf.Q);
-  printf("h: %g\n", second_sf.h);
-
-  // Try a solve with no star formation
-  Parcel no_sf = disk.solve_T_rho(
-    2285812867742.8877,
-    std::log10(240555.264243547),
-    std::log10(6.558288583390488e-10),
-    1.406323456972877e+23,
-    30,
-    1.e-5
-  );
-  printf("no_sf converged: %d\n", no_sf.converged);
-  printf("no_sf steps: %d\n", no_sf.steps);
-  printf("r_cyl: %g\n", no_sf.r_cyl);
-  printf("cs: %g\n", no_sf.cs);
-  printf("T: %g\n", no_sf.T);
-  printf("Teff: %g\n", no_sf.Teff);
-  printf("rho: %g\n", no_sf.rho);
-  printf("kappa: %g\n", no_sf.kappa);
-  printf("tauV: %g\n", no_sf.tauV);
-  printf("Q: %g\n", no_sf.Q);
-  printf("h: %g\n", no_sf.h);
-
   return 0;
 }
