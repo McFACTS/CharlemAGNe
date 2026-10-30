@@ -297,6 +297,97 @@ public:
     return out;
     
   }
+
+  Profile WalkDisk(
+    std::vector<double> r_cyl,
+    const int iter_max_first = 1000,
+    const int iter_max = 30,
+    const double tol = 1.e-5
+  ) {
+    // Initialize output profile
+    Profile out = Profile(r_cyl);
+
+    // State tracking
+    bool star_formation = false;
+    bool prev_star_formation = false;
+    double mdot_sf_accumulated = 0.0;
+    Parcel prev;
+    Parcel cur;
+
+    // Walk from outer to inner radius
+    for (size_t iter = r_cyl.size() - 1; iter >= 0; iter--) {
+      double r = r_cyl[iter];
+      // Always try no-SF solver first
+      cur = solve_T_rho(
+        r,
+        std::log10((iter == r_cyl.size() - 1) ? GetTemperatureOuter() : prev.T),
+        std::log10((iter == r_cyl.size() - 1) ? GetRhoOuter() : prev.rho),
+        (iter == r_cyl.size()-1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
+        (iter == r_cyl.size() - 1) ? iter_max_first : iter_max,
+        tol
+      );
+      // Check for Star formation
+      if (cur.Q <= 1.0) {
+        star_formation = true;
+        // Try SF solver
+        cur = solve_T_eta(
+          r,
+          std::log10((iter == r_cyl.size()-1) ? GetTemperatureOuter() : prev.T),
+          std::log10((iter == r_cyl.size()-1) ? GetSFEfficiencyOuter() : prev.eta),
+          (iter==r_cyl.size()-1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
+          (!prev_star_formation) ? iter_max_first : iter_max,
+          tol
+        );
+
+        // Now we need to check for a crash unconditionally
+        if (!cur.converged) {
+          printf("iter: %zu; r_cyl=%g\n", iter, r / GetRg());
+          throw std::runtime_error("Failed to converge disk!\n");
+        }
+      } else if (!cur.converged) {
+        // No star formation is correct, and we failed to converge
+        // Crash
+        printf("iter: %zu; r_cyl=%g\n", iter, r / GetRg());
+        throw std::runtime_error("Failed to converge disk!\n");
+      } else {
+        // No star formation. No crash.
+        star_formation = false;
+      }
+      // We have constructed cur; let's update our profiles
+      out.converged[iter]       = cur.converged;
+      out.steps[iter]           = cur.steps;
+      out.star_formation[iter]  = star_formation;
+      out.omega[iter]           = cur.omega;
+      out.Teff[iter]            = cur.Teff;
+      out.Mdotprime[iter]       = cur.Mdotprime;
+      out.Mdot[iter]            = cur.Mdot;
+      out.T[iter]               = cur.T;
+      out.cs[iter]              = cur.cs;
+      out.rho[iter]             = cur.rho;
+      out.kappa[iter]           = cur.kappa;
+      out.tauV[iter]            = cur.tauV;
+      out.PPgas[iter]           = cur.PPgas;
+      out.PPrad[iter]           = cur.PPrad;
+      out.opacfac[iter]         = cur.opacfac;
+      out.Q[iter]               = cur.Q;
+      out.h[iter]               = cur.h;
+      out.eta[iter]             = cur.eta;
+
+      // Profile specific things
+      out.dr_cyl[iter] = (iter == 0) ? 0.0 : cur.r_cyl - out.r_cyl[iter-1];
+      out.dA[iter] = out.dr_cyl[iter] * M_PI * 4.0 * cur.r_cyl;
+      out.dV[iter] = out.dA[iter] * cur.h;
+      out.mass_disk[iter] = out.dV[iter] * cur.rho;
+      out.Mdot_sf[iter] = out.mass_disk[iter] * cur.omega * cur.eta;
+      mdot_sf_accumulated += out.Mdot_sf[iter];
+
+      // Update loop
+      prev = cur;
+      prev_star_formation = star_formation;
+    }
+  return out;
+  }
+
 private:
   /* Privates of things in constructor */
   double smbh_mass_;
