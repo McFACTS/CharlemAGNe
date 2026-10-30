@@ -310,7 +310,6 @@ public:
     // State tracking
     bool star_formation = false;
     bool prev_star_formation = false;
-    double mdot_sf_accumulated = 0.0;
     Parcel prev;
     Parcel cur;
 
@@ -326,6 +325,12 @@ public:
         (iter == r_cyl.size() - 1) ? iter_max_first : iter_max,
         tol
       );
+      if (!cur.converged) {
+        // No star formation is correct, and we failed to converge
+        // Crash
+        printf("iter: %zu; r_cyl=%g\n", iter, r / GetRg());
+        throw std::runtime_error("Failed to converge disk!\n");
+      }
       // Check for Star formation
       if (cur.Q <= 1.0) {
         star_formation = true;
@@ -333,22 +338,16 @@ public:
         cur = solve_T_eta(
           r,
           std::log10((iter == r_cyl.size()-1) ? GetTemperatureOuter() : prev.T),
-          std::log10((iter == r_cyl.size()-1) ? GetSFEfficiencyOuter() : prev.eta),
+          std::log10((iter == r_cyl.size()-1) ? GetSFEfficiencyOuter() : (prev.eta > 1e-8) ? prev.eta : 1e-8),
           (iter==r_cyl.size()-1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
           (!prev_star_formation) ? iter_max_first : iter_max,
           tol
         );
-
         // Now we need to check for a crash unconditionally
         if (!cur.converged) {
           printf("iter: %zu; r_cyl=%g\n", iter, r / GetRg());
           throw std::runtime_error("Failed to converge disk!\n");
         }
-      } else if (!cur.converged) {
-        // No star formation is correct, and we failed to converge
-        // Crash
-        printf("iter: %zu; r_cyl=%g\n", iter, r / GetRg());
-        throw std::runtime_error("Failed to converge disk!\n");
       } else {
         // No star formation. No crash.
         star_formation = false;
@@ -379,7 +378,6 @@ public:
       out.dV[iter] = out.dA[iter] * cur.h;
       out.mass_disk[iter] = out.dV[iter] * cur.rho;
       out.Mdot_sf[iter] = out.mass_disk[iter] * cur.omega * cur.eta;
-      mdot_sf_accumulated += out.Mdot_sf[iter];
 
       // Update loop
       prev = cur;
