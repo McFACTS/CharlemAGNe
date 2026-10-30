@@ -296,7 +296,6 @@ public:
     Parcel cur;
     // Enter loop
     for (size_t iter=0; iter < r_cyl.size(); iter++) {
-      //
       if (iter == 0) {
         cur = solve_cs_T(
             r_cyl[iter],
@@ -335,9 +334,18 @@ public:
             r_cyl[iter],
             std::log10(switched_solve ? cur.Teff : prev.Teff),
             std::log10(switched_solve ? cur.T : prev.T),
-            switched_solve ? iter_max : iter_max_first,
+            switched_solve ? iter_max_first : iter_max,
             tol
           );
+          // Catch non-converged
+          if (!cur.converged) {
+            printf(
+                "iter: %zu; r_cyl=%g\n", 
+                iter,
+                r_cyl[iter] / GetRg()
+            );
+            throw std::runtime_error("Failed to converge disk!\n");
+          }
         }
       }
       // We have constructed cur; let's update our profiles

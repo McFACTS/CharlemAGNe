@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
   );
   // r_space
   const double rmin = 6.0 * disk.GetRg();
-  const double rmax = 1.e7 * disk.GetRg();
+  const double rmax = 2.e7 * disk.GetRg();
   const double npts = 1.e4;
   std::vector<double> r_space = geomspace(rmin, rmax, npts);
   auto tic = std::chrono::high_resolution_clock::now();
@@ -90,15 +90,16 @@ int main(int argc, char *argv[]) {
   auto toc = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
   printf("Solved disk in %g s\n", duration.count() / 1.e9);
-  fprintf(sg03_csv, "#iter, converged, steps, star_formation, omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
+  fprintf(sg03_csv, "#iter, converged, steps, star_formation, r_cyl[R_g], omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
   for (size_t i = 0; i < npts; i++) {
     fprintf(
         sg03_csv,
-        "%lu %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+        "%lu %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
         i,
-        sg03_profile.converged[i],
+        (int)sg03_profile.converged[i],
         sg03_profile.steps[i],
-        sg03_profile.star_formation[i],
+        (int)sg03_profile.star_formation[i],
+        sg03_profile.r_cyl[i] / disk.GetRg(),
         sg03_profile.omega[i],
         sg03_profile.Teff[i],
         sg03_profile.Mdotprime[i],
