@@ -311,24 +311,26 @@ public:
     bool star_formation = false;
     bool prev_star_formation = false;
     Parcel prev;
+    Parcel prev_no_sf;
     Parcel cur;
 
     // Walk from outer to inner radius
-    for (size_t iter = r_cyl.size() - 1; iter >= 0; iter--) {
+    for (int iter = static_cast<int>(r_cyl.size()) - 1; iter >= 0; iter--) {
       double r = r_cyl[iter];
       // Always try no-SF solver first
       cur = solve_T_rho(
         r,
-        std::log10((iter == r_cyl.size() - 1) ? GetTemperatureOuter() : prev.T),
-        std::log10((iter == r_cyl.size() - 1) ? GetRhoOuter() : prev.rho),
+        std::log10((iter == r_cyl.size() - 1) ? GetTemperatureOuter() : prev_no_sf.T),
+        std::log10((iter == r_cyl.size() - 1) ? GetRhoOuter() : prev_no_sf.rho),
         (iter == r_cyl.size()-1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
         (iter == r_cyl.size() - 1) ? iter_max_first : iter_max,
         tol
       );
+      prev_no_sf = cur;
       if (!cur.converged) {
         // No star formation is correct, and we failed to converge
         // Crash
-        printf("iter: %zu; r_cyl=%g\n", iter, r / GetRg());
+        printf("iter: %d; r_cyl=%g\n", iter, r / GetRg());
         throw std::runtime_error("Failed to converge disk!\n");
       }
       // Check for Star formation
@@ -345,7 +347,7 @@ public:
         );
         // Now we need to check for a crash unconditionally
         if (!cur.converged) {
-          printf("iter: %zu; r_cyl=%g\n", iter, r / GetRg());
+          printf("iter: %d; r_cyl=%g\n", iter, r / GetRg());
           throw std::runtime_error("Failed to converge disk!\n");
         }
       } else {
@@ -373,7 +375,7 @@ public:
       out.eta[iter]             = cur.eta;
 
       // Profile specific things
-      out.dr_cyl[iter] = (iter == 0) ? 0.0 : cur.r_cyl - out.r_cyl[iter-1];
+      out.dr_cyl[iter] = (iter == 0) ? 0.0 : out.r_cyl[iter+1] - cur.r_cyl;
       out.dA[iter] = out.dr_cyl[iter] * M_PI * 4.0 * cur.r_cyl;
       out.dV[iter] = out.dA[iter] * cur.h;
       out.mass_disk[iter] = out.dV[iter] * cur.rho;
