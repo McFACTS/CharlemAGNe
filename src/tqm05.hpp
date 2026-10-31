@@ -310,38 +310,34 @@ public:
     // State tracking
     bool star_formation = false;
     bool prev_star_formation = false;
+    const int n = static_cast<int>(r_cyl.size());
     Parcel prev;
-    Parcel prev_no_sf;
     Parcel cur;
 
     // Walk from outer to inner radius
-    for (int iter = static_cast<int>(r_cyl.size()) - 1; iter >= 0; iter--) {
-      double r = r_cyl[iter];
+    for (int iter = n - 1; iter >= 0; iter--) {
+      const double r = r_cyl[iter];
+      const bool first = (iter == n - 1);
+      const double mdot_local = first ? GetMDotOuter() :
+        prev.Mdot - out.Mdot_sf[iter + 1];
       // Always try no-SF solver first
       cur = solve_T_rho(
         r,
-        std::log10((iter == r_cyl.size() - 1) ? GetTemperatureOuter() : prev_no_sf.T),
-        std::log10((iter == r_cyl.size() - 1) ? GetRhoOuter() : prev_no_sf.rho),
-        (iter == r_cyl.size()-1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
-        (iter == r_cyl.size() - 1) ? iter_max_first : iter_max,
+        std::log10(first ? GetTemperatureOuter() : prev.T),
+        std::log10(first ? GetRhoOuter() : prev.rho),
+        mdot_local,
+        iter_max,
         tol
       );
-      prev_no_sf = cur;
-      if (!cur.converged) {
-        // No star formation is correct, and we failed to converge
-        // Crash
-        printf("iter: %d; r_cyl=%g\n", iter, r / GetRg());
-        throw std::runtime_error("Failed to converge disk!\n");
-      }
       // Check for Star formation
       if (cur.Q <= 1.0) {
         star_formation = true;
         // Try SF solver
         cur = solve_T_eta(
           r,
-          std::log10((iter == r_cyl.size()-1) ? GetTemperatureOuter() : prev.T),
-          std::log10((iter == r_cyl.size()-1) ? GetSFEfficiencyOuter() : (prev.eta > 1e-8) ? prev.eta : 1e-8),
-          (iter==r_cyl.size()-1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
+          std::log10(first ? GetTemperatureOuter() : prev.T),
+          std::log10(first ? GetSFEfficiencyOuter() : (prev.eta > 1e-8) ? prev.eta : 1e-8),
+          ( iter== n - 1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
           (!prev_star_formation) ? iter_max_first : iter_max,
           tol
         );
@@ -350,6 +346,11 @@ public:
           printf("iter: %d; r_cyl=%g\n", iter, r / GetRg());
           throw std::runtime_error("Failed to converge disk!\n");
         }
+      } else if (!cur.converged) {
+        // No star formation is correct, and we failed to converge
+        // Crash
+        printf("iter: %d; r_cyl=%g\n", iter, r / GetRg());
+        throw std::runtime_error("Failed to converge disk!\n");
       } else {
         // No star formation. No crash.
         star_formation = false;
@@ -375,7 +376,7 @@ public:
       out.eta[iter]             = cur.eta;
 
       // Profile specific things
-      out.dr_cyl[iter] = (iter == 0) ? 0.0 : out.r_cyl[iter+1] - cur.r_cyl;
+      out.dr_cyl[iter] = first ? 0.0 : out.r_cyl[iter+1] - cur.r_cyl;
       out.dA[iter] = out.dr_cyl[iter] * M_PI * 4.0 * cur.r_cyl;
       out.dV[iter] = out.dA[iter] * cur.h;
       out.mass_disk[iter] = out.dV[iter] * cur.rho;
