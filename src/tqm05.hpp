@@ -298,7 +298,7 @@ public:
     
   }
 
-  Profile WalkDisk(
+  Profile SolveDisk(
     std::vector<double> r_cyl,
     const int iter_max_first = 1000,
     const int iter_max = 30,
@@ -311,6 +311,9 @@ public:
     bool star_formation = false;
     bool prev_star_formation = false;
     const int n = static_cast<int>(r_cyl.size());
+    if (n < 2) {
+      throw std::runtime_error("Must have at least two shells!\n");
+    }
     Parcel prev;
     Parcel cur;
 
