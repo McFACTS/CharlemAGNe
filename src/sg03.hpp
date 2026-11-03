@@ -287,7 +287,7 @@ public:
               opts_warm
           );
           // 
-          if (!(std::isfinite(cur.Q)) && cur.Q <= 1.0) {
+          if (!(std::isfinite(cur.Q) && cur.Q > 1.0)) {
             star_formation = true;
             switched_solve = true;
           }
