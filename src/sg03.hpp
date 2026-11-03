@@ -349,6 +349,7 @@ public:
     return out;
   }
 
+  // Later format for WalkDisk
   Profile SolveDisk(
     double rmin = 6.0,
     double rmax = 1.e7,
@@ -362,6 +363,52 @@ public:
       npts
     );
     return WalkDisk(r_cyl);
+  }
+
+  // Write disk
+  void WriteDisk(
+    const char* fname,
+    double rmin = 6.0,
+    double rmax = 1.e7,
+    int npts = 10000,
+    const SolverOpts& opts = {}
+  ) {
+    // Solve the disk
+    Profile sg03 = SolveDisk(rmin, rmax, npts, opts);
+    std::FILE* sg03_out = std::fopen(fname, "w");
+    fprintf(sg03_out, "#iter, converged, steps, star_formation, r_cyl[R_g], omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
+    for (size_t i = 0; i < sg03.r_cyl.size(); i++) {
+      fprintf(
+        sg03_out,
+        "%lu %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+        i,
+        (int)sg03.converged[i],
+        sg03.steps[i],
+        (int)sg03.star_formation[i],
+        sg03.r_cyl[i] / GetRg(),
+        sg03.omega[i],
+        sg03.Teff[i],
+        sg03.Mdotprime[i],
+        sg03.Mdot[i],
+        sg03.T[i],
+        sg03.cs[i],
+        sg03.rho[i],
+        sg03.kappa[i],
+        sg03.tauV[i],
+        sg03.PPgas[i],
+        sg03.PPrad[i],
+        sg03.opacfac[i],
+        sg03.Q[i],
+        sg03.h[i],
+        sg03.eta[i],
+        sg03.dr_cyl[i],
+        sg03.dA[i],
+        sg03.dV[i],
+        sg03.mass_disk[i],
+        sg03.Mdot_sf[i]
+      );
+    }
+  std::fclose(sg03_out);
   }
 
 private:

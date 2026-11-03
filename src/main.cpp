@@ -72,8 +72,8 @@ int main(int argc, char *argv[]) {
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
-  std::FILE* sg03_csv = std::fopen("./charlemagne_sg03.csv", "w");
 
+  // setup disk
   // setup disk
   auto disk = SG03(
     opac_name,
@@ -81,43 +81,9 @@ int main(int argc, char *argv[]) {
     opac_id
   );
   auto tic = std::chrono::high_resolution_clock::now();
-  Profile sg03_profile = disk.SolveDisk();
+  disk.WriteDisk("./charlemagne_sg03.csv");
   auto toc = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
   printf("Solved disk in %g s\n", duration.count() / 1.e9);
-  fprintf(sg03_csv, "#iter, converged, steps, star_formation, r_cyl[R_g], omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
-  for (size_t i = 0; i < sg03_profile.r_cyl.size(); i++) {
-    fprintf(
-        sg03_csv,
-        "%lu %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-        i,
-        (int)sg03_profile.converged[i],
-        sg03_profile.steps[i],
-        (int)sg03_profile.star_formation[i],
-        sg03_profile.r_cyl[i] / disk.GetRg(),
-        sg03_profile.omega[i],
-        sg03_profile.Teff[i],
-        sg03_profile.Mdotprime[i],
-        sg03_profile.Mdot[i],
-        sg03_profile.T[i],
-        sg03_profile.cs[i],
-        sg03_profile.rho[i],
-        sg03_profile.kappa[i],
-        sg03_profile.tauV[i],
-        sg03_profile.PPgas[i],
-        sg03_profile.PPrad[i],
-        sg03_profile.opacfac[i],
-        sg03_profile.Q[i],
-        sg03_profile.h[i],
-        sg03_profile.eta[i],
-        sg03_profile.dr_cyl[i],
-        sg03_profile.dA[i],
-        sg03_profile.dV[i],
-        sg03_profile.mass_disk[i],
-        sg03_profile.Mdot_sf[i]
-    );
-  }
-  std::fclose(sg03_csv);
-  
   return 0;
 }
