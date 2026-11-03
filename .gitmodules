@@ -4,3 +4,6 @@
 [submodule "external/singularity-opac"]
 	path = external/singularity-opac
 	url = https://github.com/lanl/singularity-opac.git
+[submodule "external/cminpack"]
+	path = external/cminpack
+	url = https://github.com/devernay/cminpack.git

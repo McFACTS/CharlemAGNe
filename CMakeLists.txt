@@ -25,6 +25,10 @@ set(SINGULARITY_USE_HDF5 ON CACHE BOOL "" FORCE)
 # Build Singularity-opac
 add_subdirectory(external/singularity-opac)
 
+# cminpack: C port of MINPACK (for lmdif/lmder) rootfinders 
+# (consistent with SciPy/pAGN).
+add_subdirectory(external/cminpack)
+
 # Build CharlemAGNe
 add_subdirectory(src)
 
