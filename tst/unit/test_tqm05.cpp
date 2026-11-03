@@ -136,9 +136,7 @@ TEST_CASE("TQM05 Disk object first steps", "[tqm05]") {
         6.167141351355161e+18,
         std::log10(disk.GetTemperatureOuter()),
         std::log10(disk.GetSFEfficiencyOuter()),
-        disk.GetMDotOuter(),
-        30,
-        1.e-5
+        disk.GetMDotOuter()
   );
   REQUIRE(first_sf.converged);
   // pAGN
@@ -176,9 +174,7 @@ TEST_CASE("TQM05 Disk object first steps", "[tqm05]") {
     6.157431703601016e+18,
     std::log10(first_sf.T),
     std::log10(first_sf.eta),
-    2.0163459832179886e+25,
-    30,
-    1.e-5
+    2.0163459832179886e+25
   );
   /* Second  test
    * pAGN
@@ -237,9 +233,7 @@ TEST_CASE("TQM05 Disk object no sf step", "[tqm05]") {
     2285812867742.8877,
     std::log10(240555.264243547),
     std::log10(6.558288583390488e-10),
-    1.406323456972877e+23,
-    30,
-    1.e-5
+    1.406323456972877e+23
   );
   REQUIRE(no_sf.converged);
   /*

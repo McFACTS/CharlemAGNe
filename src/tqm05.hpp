@@ -290,6 +290,8 @@ public:
     }
     Parcel prev;
     Parcel cur;
+    const SolverOpts opts_first{iter_max_first, tol, tol};
+    const SolverOpts opts_warm{iter_max, tol, tol};
 
     // Walk from outer to inner radius
     for (int iter = n - 1; iter >= 0; iter--) {
@@ -303,8 +305,7 @@ public:
         std::log10(first ? GetTemperatureOuter() : prev.T),
         std::log10(first ? GetRhoOuter() : prev.rho),
         mdot_local,
-        iter_max,
-        tol
+        !(prev_star_formation) ? opts_first : opts_warm
       );
       // Check for Star formation
       if (cur.Q <= 1.0) {
@@ -315,8 +316,7 @@ public:
           std::log10(first ? GetTemperatureOuter() : prev.T),
           std::log10(first ? GetSFEfficiencyOuter() : (prev.eta > 1e-8) ? prev.eta : 1e-8),
           ( iter== n - 1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
-          (!prev_star_formation) ? iter_max_first : iter_max,
-          tol
+          !(prev_star_formation) ? opts_first : opts_warm
         );
         // Now we need to check for a crash unconditionally
         if (!cur.converged) {
