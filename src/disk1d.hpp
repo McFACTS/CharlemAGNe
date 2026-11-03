@@ -180,12 +180,12 @@ struct Profile {
 //// Solver options ////
 struct SolverOpts {
   int maxfev = 200;         // Function evaluations
-  double ftol = 1.e-5;        // relative f(x) reduction
-  double xtol = 1.e-5;        // relative step size (dx)
+  double ftol = 1.e-8;      // relative f(x) reduction
+  double xtol = 1.e-4;      // relative step size (dx)
   double gtol = 0.0;        // Orthogonality test
   double epsfcn = 1.e-5;    // Step size for estimating Jacobian
   double factor = 0.1;      // initial "trust-region" boundary.
-  double conv_tol = 1.e-1; // Check if we converged
+  double conv_tol = 1.e-1;  // Check if we converged
 };
 
 //// wrapper ////
@@ -218,34 +218,6 @@ public:
   Disk1D() {}
 
 protected:
-  template<auto HotLoop, class D>
-  void calc_inv_jacobian(
-    D& self,
-    Parcel &parcel,
-    double jac_inv[4],
-    double log10X0,
-    double log10X1,
-    double &cost0, 
-    double &cost1
-  ) {
-    constexpr double eps = 1e-5;
-    double cost0_m0, cost1_m0, cost0_m1, cost1_m1;
-    (self.*HotLoop)(parcel, log10X0 - eps, log10X1, cost0_m0, cost1_m0);
-    (self.*HotLoop)(parcel, log10X0, log10X1 - eps, cost0_m1, cost1_m1);
-    (self.*HotLoop)(parcel, log10X0, log10X1, cost0, cost1);
-
-    double jac[4] = {(cost0 - cost0_m0) / eps, (cost0 - cost0_m1) / eps,
-                     (cost1 - cost1_m0) / eps, (cost1 - cost1_m1) / eps};
-    // Analytic inverse
-    jac_inv[0] = jac[3];
-    jac_inv[1] = -jac[1];
-    jac_inv[2] = -jac[2];
-    jac_inv[3] = jac[0];
-    double inv_det = 1. / (jac[0]*jac[3] - jac[1]*jac[2]);
-    for (int i=0; i < 4; i++)
-      jac_inv[i] *= inv_det;
-  }
-
   // Run cminpack lmdif on the 2D hot loop
   template<auto HotLoop, class D>
   int solve_lmdif(

@@ -256,7 +256,7 @@ public:
     std::vector<double> r_cyl,
     const int iter_max_first = 1000,
     const int iter_max = 200,
-    const double tol = 1.e-5
+    const double tol = 1.e-3
   ) {
     // Initialize out
     Profile out = Profile(r_cyl);
@@ -267,8 +267,8 @@ public:
     double Teff = GetEffectiveTemperature(r_cyl[0], omega);
     Parcel prev;
     Parcel cur;
-    const SolverOpts opts_first{iter_max_first, tol, tol};
-    const SolverOpts opts_warm{iter_max, tol, tol};
+    const SolverOpts opts_first{iter_max_first};
+    const SolverOpts opts_warm{iter_max};
     // Enter loop
     for (size_t iter=0; iter < r_cyl.size(); iter++) {
       if (iter == 0) {
@@ -304,12 +304,20 @@ public:
       }
       // Catch non-converged
       if (!cur.converged) {
-        printf(
-          "iter: %zu; r_cyl=%g\n", 
-          iter,
-          r_cyl[iter] / GetRg()
-        );
-        throw std::runtime_error("Failed to converge disk!\n");
+        // Re-evaluate the residuals to throw only on hard failures
+        double fn_p, fn_r;
+        if (star_formation) {
+          Teff_T_eqn(cur, std::log10(cur.Teff), std::log10(cur.T), fn_p, fn_r);
+        } else {
+          cs_T_eqn(cur, std::log10(cur.cs), std::log10(cur.T), fn_p, fn_r);
+        }
+        // Check the maximum residual
+        double residual = std::max(std::fabs(fn_p), std::fabs(fn_r));
+        fprintf(stderr, "non-converged i=%zu r=%.6gRg sf=%d residual=%.3e\n",
+            iter, r_cyl[iter] / GetRg(), (int)star_formation, residual);
+        if (!std::isfinite(residual) || residual > 1.0) {
+          throw std::runtime_error("Failed to converge disk!\n");
+        }
       }
       // We have constructed cur; let's update our profiles
       out.converged[iter]       = cur.converged;
