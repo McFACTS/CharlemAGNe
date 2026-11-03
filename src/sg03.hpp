@@ -39,6 +39,7 @@
 #include "constants.hpp"
 #include "opacity.hpp"
 #include "disk1d.hpp"
+#include "utils.hpp"
 //// Third Party ////
 //// Standard Library ////
 #include <cmath>
@@ -348,6 +349,20 @@ public:
     return out;
   }
 
+  Profile SolveDisk(
+    double rmin = 6.0,
+    double rmax = 1.e7,
+    int npts = 10000,
+    const SolverOpts& opts = {}
+  ) {
+    // Initialize radii
+    std::vector<double> r_cyl = geomspace(
+      rmin * GetRg(),
+      rmax * GetRg(),
+      npts
+    );
+    return WalkDisk(r_cyl);
+  }
 
 private:
   /* Privates of things in constructor */
