@@ -260,17 +260,16 @@ protected:
     double diag[n], fjac[m * n], qtf[n];
     double wa1[n], wa2[n], wa3[n], wa4[n];
     int ipvt[n];
-    int info = 0;
     diag[0] = diag[1] = 1.0; // mode=1 user-supplied scaling
     // Create the initial state by running LmdifCtx onece for the guess
     LmdifCtx<HotLoop, D> ctx{&self, &parcel};
     // Do the solve
-    lmdif(
+    int info = lmdif(
       lmdif_fcn<HotLoop, D>,
       &ctx,
       m, n, x, fvec,
       opts.ftol, opts.xtol, opts.gtol, opts.maxfev, opts.epsfcn,
-      diag, 1 /*mode*/, opts.factor, 0 /*nprint*/, &info, &nfev,
+      diag, 1 /*mode*/, opts.factor, 0 /*nprint*/, &nfev,
       fjac, m /*ldfjac*/, ipvt, qtf, wa1, wa2, wa3, wa4
     );
     return info;

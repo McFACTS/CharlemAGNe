@@ -157,8 +157,7 @@ public:
         double r,
         double log10cs = 0.0,
         double log10T = 0.0,
-        const int iter_max = 30,
-        const double tol = 1.e-5
+        const SolverOpts& opts = {}
     ) {
     // Construct Parcel
     Parcel out = Parcel(r);
@@ -175,32 +174,19 @@ public:
         log10T = std::log10(out.Teff);
     }
 
+    // Current guess
+    double cur[2] = {log10cs, log10T};
+    int nfev = 0; // number of evaluations
+    // Run the solver
+    solve_lmdif<&SG03::cs_T_eqn>(*this, out, cur, opts, nfev);
+    // evaluate on the point where it lands
     double fn_pressure, fn_radiation;
-    double jac_inv[4] = {0.};
-    for (int iter=0; iter < iter_max; iter++) {
-      // Call the function here so we don't do it twice
-      calc_inv_jacobian<&SG03::cs_T_eqn>(
-        *this,
-        out,
-        jac_inv,
-        log10cs, log10T,
-        fn_pressure, fn_radiation
-      );
-      double rhs_cs = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
-      double rhs_T  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
-
-      // stop. We're all done here.
-      if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol) {
-        out.converged = true;
-        out.steps = iter;
-        break;
-      }
-      // continue iterating
-      log10cs -= rhs_cs;
-      log10T -= rhs_T;
-    }
-    // Update steps
-    if (!out.converged) {out.steps = iter_max;}
+    cs_T_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
+    // Check for errors
+    out.converged = std::isfinite(fn_pressure) && std::isfinite(fn_radiation)
+      && std::abs(fn_pressure) < opts.ftol
+      && std::abs(fn_radiation) < opts.ftol;
+    out.steps = nfev;
 
     // Fill Q / h
     out.Q = out.omega * out.omega / (2.0 * M_PI * G_SI * out.rho);
@@ -221,8 +207,7 @@ public:
         double r,
         double log10Teff,
         double log10T,
-        const int iter_max = 30,
-        const double tol = 1.e-5
+        const SolverOpts& opts = {}
     ) {
     // Construct Parcel
     Parcel out = Parcel(r);
@@ -245,32 +230,20 @@ public:
           1.0/3.0
         );
     }
-    double fn_pressure, fn_radiation;
-    double jac_inv[4] = {0.};
-    for (int iter=0; iter < iter_max; iter++) {
-      // Call the function here so we don't do it twice
-      calc_inv_jacobian<&SG03::Teff_T_eqn>(
-        *this,
-        out,
-        jac_inv,
-        log10Teff, log10T,
-        fn_pressure, fn_radiation
-      );
-      double rhs_Teff = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
-      double rhs_T  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
 
-      // stop. We're all done here.
-      if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol) {
-        out.converged = true;
-        out.steps = iter;
-        break;
-      }
-      // continue iterating
-      log10Teff -= rhs_Teff;
-      log10T -= rhs_T;
-    }
-    // Update steps
-    if (!out.converged) {out.steps = iter_max;}
+    // current guess
+    double cur[2] = {log10Teff, log10T};
+    int nfev = 0;
+    // Solve
+    solve_lmdif<&SG03::Teff_T_eqn>(*this, out, cur, opts, nfev);
+    // evaluate on the point where it lands
+    double fn_pressure, fn_radiation;
+    Teff_T_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
+    // Check for errors
+    out.converged = std::isfinite(fn_pressure) && std::isfinite(fn_radiation)
+      && std::abs(fn_pressure) < opts.ftol
+      && std::abs(fn_radiation) < opts.ftol;
+    out.steps = nfev;
 
     // Fill Q / h
     if (out.converged) {
@@ -282,7 +255,7 @@ public:
   Profile WalkDisk(
     std::vector<double> r_cyl,
     const int iter_max_first = 1000,
-    const int iter_max = 30,
+    const int iter_max = 200,
     const double tol = 1.e-5
   ) {
     // Initialize out
@@ -294,6 +267,8 @@ public:
     double Teff = GetEffectiveTemperature(r_cyl[0], omega);
     Parcel prev;
     Parcel cur;
+    const SolverOpts opts_first{iter_max_first, tol, tol};
+    const SolverOpts opts_warm{iter_max, tol, tol};
     // Enter loop
     for (size_t iter=0; iter < r_cyl.size(); iter++) {
       if (iter == 0) {
@@ -301,8 +276,7 @@ public:
             r_cyl[iter],
             std::log10(omega * r_cyl[iter] * 1.e-2),
             std::log10(Teff),
-            iter_max_first,
-            tol
+            opts_first
         );
       } else {
         if (!star_formation) {
@@ -310,20 +284,10 @@ public:
               r_cyl[iter],
               std::log10(prev.cs),
               std::log10(prev.T),
-              iter_max,
-              tol
+              opts_warm
           );
-          // Catch non-converged
-          if (!cur.converged) {
-            printf(
-                "iter: %zu; r_cyl=%g\n", 
-                iter,
-                r_cyl[iter] / GetRg()
-            );
-            throw std::runtime_error("Failed to converge disk!\n");
-          }
           // 
-          if (cur.Q <= 1.0) {
+          if (!(std::isfinite(cur.Q) && cur.Q <= 1.0)) {
             star_formation = true;
             switched_solve = true;
           }
@@ -334,19 +298,18 @@ public:
             r_cyl[iter],
             std::log10(switched_solve ? cur.Teff : prev.Teff),
             std::log10(switched_solve ? cur.T : prev.T),
-            switched_solve ? iter_max_first : iter_max,
-            tol
+            switched_solve ? opts_first : opts_warm
           );
-          // Catch non-converged
-          if (!cur.converged) {
-            printf(
-                "iter: %zu; r_cyl=%g\n", 
-                iter,
-                r_cyl[iter] / GetRg()
-            );
-            throw std::runtime_error("Failed to converge disk!\n");
-          }
         }
+      }
+      // Catch non-converged
+      if (!cur.converged) {
+        printf(
+          "iter: %zu; r_cyl=%g\n", 
+          iter,
+          r_cyl[iter] / GetRg()
+        );
+        throw std::runtime_error("Failed to converge disk!\n");
       }
       // We have constructed cur; let's update our profiles
       out.converged[iter]       = cur.converged;
