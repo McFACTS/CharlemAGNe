@@ -254,9 +254,9 @@ public:
 
   Profile WalkDisk(
     std::vector<double> r_cyl,
-    const int iter_max_first = 1000,
+    const double xtol = 1.e-4,
     const int iter_max = 200,
-    const double tol = 1.e-3
+    const int iter_max_first = 1000
   ) {
     // Initialize out
     Profile out = Profile(r_cyl);
@@ -267,8 +267,8 @@ public:
     double Teff = GetEffectiveTemperature(r_cyl[0], omega);
     Parcel prev;
     Parcel cur;
-    const SolverOpts opts_first{iter_max_first};
-    const SolverOpts opts_warm{iter_max};
+    const SolverOpts opts_first{iter_max_first, xtol};
+    const SolverOpts opts_warm{iter_max, xtol};
     // Enter loop
     for (size_t iter=0; iter < r_cyl.size(); iter++) {
       if (iter == 0) {

@@ -180,8 +180,8 @@ struct Profile {
 //// Solver options ////
 struct SolverOpts {
   int maxfev = 200;         // Function evaluations
-  double ftol = 1.e-8;      // relative f(x) reduction
   double xtol = 1.e-4;      // relative step size (dx)
+  double ftol = 1.e-8;      // relative f(x) reduction
   double gtol = 0.0;        // Orthogonality test
   double epsfcn = 1.e-5;    // Step size for estimating Jacobian
   double factor = 0.1;      // initial "trust-region" boundary.
