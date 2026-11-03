@@ -185,7 +185,7 @@ struct SolverOpts {
   double gtol = 0.0;        // Orthogonality test
   double epsfcn = 1.e-5;    // Step size for estimating Jacobian
   double factor = 0.1;      // initial "trust-region" boundary.
-  double conv_tol = 1.e-2; // Check if we converged
+  double conv_tol = 1.e-1; // Check if we converged
 };
 
 //// wrapper ////
