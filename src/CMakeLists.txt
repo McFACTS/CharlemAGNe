@@ -18,4 +18,5 @@ add_executable(${EXE_NAME} ${EXE_NAME_SRC})
 target_link_libraries(${EXE_NAME} 
 PUBLIC
     singularity-opac::flags
+    cminpack
 )

@@ -39,6 +39,7 @@
 #include "constants.hpp"
 #include "opacity.hpp"
 //// Third Party ////
+#include <cminpack.h> // for lmdif/lmder root finders
 //// Standard Library ////
 #include <cmath>
 #include <cstdio>
@@ -176,6 +177,39 @@ struct Profile {
     };
 };
 
+//// Solver options ////
+struct SolverOpts {
+  int maxfev = 200;         // Function evaluations
+  double ftol = 1.e-5;        // relative f(x) reduction
+  double xtol = 1.e-5;        // relative step size (dx)
+  double gtol = 0.0;        // Orthogonality test
+  double epsfcn = 1.e-5;    // Step size for estimating Jacobian
+  double factor = 0.1;      // initial "trust-region" boundary.
+};
+
+//// wrapper ////
+// This is for passing the parcel through to the hot loop function
+template<auto HotLoop, class D>
+struct LmdifCtx {
+    D* self; // D as in disk
+    Parcel* parcel;
+};
+
+template<auto HotLoop, class D>
+int lmdif_fcn(
+    void* p,
+    int /*m*/,
+    int /*n*/,
+    const double* x,
+    double* fvec,
+    int /*iflag*/) {
+  // Define a LmdifCtx using the templated types
+  auto* ctx = static_cast<LmdifCtx<HotLoop, D>*>(p);
+  // This is a call of the HotLoop function
+  (ctx->self->*HotLoop)(*ctx->parcel, x[0], x[1], fvec[0], fvec[1]);
+  return 0;
+}
+
 //// Disks ////
 class Disk1D {
 public:
@@ -211,6 +245,34 @@ protected:
       jac_inv[i] *= inv_det;
   }
 
-  // Equation for cs/T rootfind
+  // Run cminpack lmdif on the 2D hot loop
+  template<auto HotLoop, class D>
+  int solve_lmdif(
+    D& self,
+    Parcel& parcel,
+    double x[2],
+    const SolverOpts& opts,
+    int& nfev) {
+    // These are all 2D problems
+    constexpr int m = 2, n = 2;
+    // Variables that cminpack needs
+    double fvec[m];
+    double diag[n], fjac[m * n], qtf[n];
+    double wa1[n], wa2[n], wa3[n], wa4[n];
+    int ipvt[n];
+    diag[0] = diag[1] = 1.0; // mode=1 user-supplied scaling
+    // Create the initial state by running LmdifCtx onece for the guess
+    LmdifCtx<HotLoop, D> ctx{&self, &parcel};
+    // Do the solve
+    int info = lmdif(
+      lmdif_fcn<HotLoop, D>,
+      &ctx,
+      m, n, x, fvec,
+      opts.ftol, opts.xtol, opts.gtol, opts.maxfev, opts.epsfcn,
+      diag, 1 /*mode*/, opts.factor, 0 /*nprint*/, &nfev,
+      fjac, m /*ldfjac*/, ipvt, qtf, wa1, wa2, wa3, wa4
+    );
+    return info;
+    }
 };
 

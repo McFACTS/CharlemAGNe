@@ -35,6 +35,7 @@ target_link_libraries(charlemagne_unit_tests
   PRIVATE
     Catch2::Catch2
     singularity-opac::flags
+    cminpack
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
