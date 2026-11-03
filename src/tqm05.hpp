@@ -184,8 +184,7 @@ public:
         double log10T,
         double log10rho,
         double mdot_local,
-        const int iter_max = 30,
-        const double tol = 1.e-5
+        const SolverOpts& opts = {}
     ) {
     // Construct Parcel
     Parcel out = Parcel(r);
@@ -201,32 +200,20 @@ public:
       )
     );
 
-    double fn_pressure, fn_radiation;
-    double jac_inv[4] = {0.};
-    for (int iter=0; iter < iter_max; iter++) {
-      // Call the function here so we don't do it twice
-      calc_inv_jacobian<&TQM05::T_rho_eqn>(
-        *this,
-        out,
-        jac_inv,
-        log10T, log10rho,
-        fn_pressure, fn_radiation
-      );
-      double rhs_T = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
-      double rhs_rho  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
+    // current guess
+    double cur[2] = {log10T, log10rho};
+    int nfev = 0;
+    // Run solver
+    solve_lmdif<&TQM05::T_rho_eqn>(*this, out, cur, opts, nfev);
 
-      // stop. We're all done here.
-      if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol) {
-        out.converged = true;
-        out.steps = iter;
-        break;
-      }
-      // continue iterating
-      log10T -= rhs_T;
-      log10rho -= rhs_rho;
-    }
-    // Update steps
-    if (!out.converged) {out.steps = iter_max;}
+    // Re-evaluate the final point
+    double fn_pressure, fn_radiation;
+    T_rho_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
+    // Assign outputs
+    out.converged = std::isfinite(fn_pressure) && std::isfinite(fn_radiation)
+      && std::abs(fn_pressure) < opts.conv_tol
+      && std::abs(fn_radiation) < opts.conv_tol;
+    out.steps = nfev;
 
     // Fill Q / h
     out.Q = out.omega * out.omega / (M_SQRT2 * M_PI * G_SI * out.rho);
@@ -244,8 +231,7 @@ public:
         double log10T,
         double log10eta,
         double mdot_local,
-        const int iter_max = 30,
-        const double tol = 1.e-5
+        const SolverOpts& opts = {}
     ) {
     // Construct Parcel
     Parcel out = Parcel(r);
@@ -265,32 +251,20 @@ public:
     // Sound speed
     out.cs = out.h * out.omega;
 
-    double fn_pressure, fn_radiation;
-    double jac_inv[4] = {0.};
-    for (int iter=0; iter < iter_max; iter++) {
-      // Call the function here so we don't do it twice
-      calc_inv_jacobian<&TQM05::T_eta_eqn>(
-        *this,
-        out,
-        jac_inv,
-        log10T, log10eta,
-        fn_pressure, fn_radiation
-      );
-      double rhs_T = jac_inv[0] * fn_pressure + jac_inv[1] * fn_radiation;
-      double rhs_eta  = jac_inv[2] * fn_pressure + jac_inv[3] * fn_radiation;
+    // current guess
+    double cur[2] = {log10T, log10eta};
+    int nfev = 0;
+    // Run solver
+    solve_lmdif<&TQM05::T_eta_eqn>(*this, out, cur, opts, nfev);
 
-      // stop. We're all done here.
-      if (std::abs(fn_pressure) < tol && std::abs(fn_radiation) < tol) {
-        out.converged = true;
-        out.steps = iter;
-        break;
-      }
-      // continue iterating
-      log10T -= rhs_T;
-      log10eta -= rhs_eta;
-    }
-    // Update steps
-    if (!out.converged) {out.steps = iter_max;}
+    // Re-evaluate final point
+    double fn_pressure, fn_radiation;
+    T_eta_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
+    // Assign outputs
+    out.converged = std::isfinite(fn_pressure) && std::isfinite(fn_radiation)
+      && std::abs(fn_pressure) < opts.conv_tol
+      && std::abs(fn_radiation) < opts.conv_tol;
+    out.steps = nfev;
 
     // Fill Q / h
     out.Q = out.omega * out.omega / (M_SQRT2 * M_PI * G_SI * out.rho);
@@ -410,6 +384,7 @@ private:
   double aspect_ratio_outer_;
   PAGNCombined opac_;
 
+protected:
   // Equation for T / rho rootfind
   void T_rho_eqn(
           Parcel &parcel,

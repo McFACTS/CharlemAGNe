@@ -184,8 +184,8 @@ public:
     cs_T_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Check for errors
     out.converged = std::isfinite(fn_pressure) && std::isfinite(fn_radiation)
-      && std::abs(fn_pressure) < opts.ftol
-      && std::abs(fn_radiation) < opts.ftol;
+      && std::abs(fn_pressure) < opts.conv_tol
+      && std::abs(fn_radiation) < opts.conv_tol;
     out.steps = nfev;
 
     // Fill Q / h
@@ -241,8 +241,8 @@ public:
     Teff_T_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Check for errors
     out.converged = std::isfinite(fn_pressure) && std::isfinite(fn_radiation)
-      && std::abs(fn_pressure) < opts.ftol
-      && std::abs(fn_radiation) < opts.ftol;
+      && std::abs(fn_pressure) < opts.conv_tol
+      && std::abs(fn_radiation) < opts.conv_tol;
     out.steps = nfev;
 
     // Fill Q / h
@@ -287,7 +287,7 @@ public:
               opts_warm
           );
           // 
-          if (!(std::isfinite(cur.Q) && cur.Q <= 1.0)) {
+          if (!(std::isfinite(cur.Q)) && cur.Q <= 1.0) {
             star_formation = true;
             switched_solve = true;
           }
@@ -355,6 +355,7 @@ private:
   double radiative_efficiency_;
   PAGNCombined opac_;
 
+protected:
   void cs_T_eqn(
           Parcel &parcel,
           double log10cs,
