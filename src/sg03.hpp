@@ -254,9 +254,7 @@ public:
 
   Profile WalkDisk(
     std::vector<double> r_cyl,
-    const double xtol = 1.e-4,
-    const int iter_max = 200,
-    const int iter_max_first = 1000
+    const SolverOpts& opts = {}
   ) {
     // Initialize out
     Profile out = Profile(r_cyl);
@@ -267,8 +265,6 @@ public:
     double Teff = GetEffectiveTemperature(r_cyl[0], omega);
     Parcel prev;
     Parcel cur;
-    const SolverOpts opts_first{iter_max_first, xtol};
-    const SolverOpts opts_warm{iter_max, xtol};
     // Enter loop
     for (size_t iter=0; iter < r_cyl.size(); iter++) {
       if (iter == 0) {
@@ -276,7 +272,7 @@ public:
             r_cyl[iter],
             std::log10(omega * r_cyl[iter] * 1.e-2),
             std::log10(Teff),
-            opts_first
+            opts
         );
       } else {
         if (!star_formation) {
@@ -284,7 +280,7 @@ public:
               r_cyl[iter],
               std::log10(prev.cs),
               std::log10(prev.T),
-              opts_warm
+              opts
           );
           // 
           if (!(std::isfinite(cur.Q) && cur.Q > 1.0)) {
@@ -298,7 +294,7 @@ public:
             r_cyl[iter],
             std::log10(switched_solve ? cur.Teff : prev.Teff),
             std::log10(switched_solve ? cur.T : prev.T),
-            switched_solve ? opts_first : opts_warm
+            opts
           );
         }
       }
