@@ -50,12 +50,12 @@
 //////// Setup /////////
 using namespace constants;
 
+// We are trying to replicate np.geomspace
 inline std::vector<double> geomspace(
     double start,
     double stop,
     size_t num,
     bool endpoint = true) {
-  // We are trying to replicate np.geomspace
   // Initialize output
   std::vector<double> out;
   if (num == 0) return out;

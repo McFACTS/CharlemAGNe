@@ -47,7 +47,6 @@
 #include <utility>
 #include <string>
 
-
 //////// Setup /////////
 using namespace constants;
 

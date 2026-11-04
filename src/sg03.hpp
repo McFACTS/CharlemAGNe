@@ -59,11 +59,15 @@ public:
    * Fun fact, Cecilia Payne-Gaposchkin came up with the X/Y/Z
    * mass abundance labels, and she
    * determined that stars are mostly hydrogen and helium.
+   * @param opac_name The name of the opacity table in the sp5 file
+   * @param opac_path The path to the sp5 file
+   * @param opac_id The ID field of the opacity table in the sp5 file
    * @param smbh_mass Schwarzschild radius
    * @param eddington_ratio Fraction of Eddington Luminosity
    * @param alpha Shakura-Sunyaev viscosity parameter
-   * @param X_mass_fraction Schwarzschild radius
+   * @param X_mass_fraction Hydrogen abundance
    * @param radiative_efficiency The radiative efficiency
+   * @param viscosity_switch Switch for alpha/beta disk assumptions
   */
   SG03(
       std::string opac_name,
@@ -122,10 +126,6 @@ public:
      *  Schwarzschild radius = 2 Rg */
     return GetRg() / (2.0 * GetRadiativeEfficiency());
   }
-
-  /* These are the things
-   *
-  */
 
   /* angular_velocity (omega; from Kepler) */
   double GetAngularVelocity(double r) const {
@@ -253,6 +253,10 @@ public:
     return out;
   }
 
+  // Walk through a list of given r_cyl values and return the requested
+  // disk profiles
+  // It doesn't make sense to write this one for TQM because it's more
+  //  truly an ODE.
   Profile WalkDisk(
     std::vector<double> r_cyl,
     const SolverOpts& opts = {}
@@ -349,7 +353,7 @@ public:
     return out;
   }
 
-  // Later format for WalkDisk
+  // Take radii and options instead of vector; Same format as TQM.
   Profile SolveDisk(
     double rmin = 6.0,
     double rmax = 1.e7,
@@ -365,7 +369,7 @@ public:
     return WalkDisk(r_cyl);
   }
 
-  // Write disk
+  // Write disk to file
   void WriteDisk(
     const char* fname,
     double rmin = 6.0,
@@ -442,27 +446,20 @@ protected:
         //printf("rho: %g\n", rho);
 
         parcel.kappa = opac_.eval(parcel.rho, parcel.T);
-        //printf("kappa: %g\n", kappa);
 
         parcel.tauV = parcel.kappa * parcel.rho * parcel.cs / parcel.omega;
-        //printf("tauV: %g\n", tauV);
 
         parcel.PPgas = (KBOLTZMANN / AMU) * parcel.T / cs2;
-        //printf("PPgas: %g\n", PPgas);
         parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 / (parcel.rho * cs2);
-        //printf("PPrad: %g\n", PPrad);
 
         // Rewritten as dimensionless, dividing by cs2
         fn_pressure = parcel.PPgas + parcel.PPrad - 1;
         // Same, dividing by Teff4
         parcel.opacfac = (0.375 * parcel.tauV + 0.5 + 0.25 / parcel.tauV);
-        //printf("opacfac: %g\n", opacfac);
         double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
         double T4ratio = Teff4 / T4;
         double Rr = T4ratio * parcel.opacfac;
         fn_radiation = Rr - 1;
-        //printf("fn_pressure: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
-        //throw std::runtime_error("Crash!\n");
   }
 
   // Equation for Teff/T rootfind
@@ -484,26 +481,19 @@ protected:
         double cs2 = parcel.cs * parcel.cs;
 
         parcel.kappa = opac_.eval(parcel.rho, parcel.T);
-        //printf("kappa: %g\n", kappa);
 
         parcel.tauV = parcel.kappa * parcel.rho * parcel.cs / parcel.omega;
-        //printf("tauV: %g\n", tauV);
 
         parcel.PPgas = (KBOLTZMANN / AMU) * parcel.T / cs2;
-        //printf("PPgas: %g\n", PPgas);
         parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 / (parcel.rho * cs2);
-        //printf("PPrad: %g\n", PPrad);
 
         // Rewritten as dimensionless, dividing by cs2
         fn_pressure = parcel.PPgas + parcel.PPrad - 1;
         // Same, dividing by Teff4
         parcel.opacfac = (0.375 * parcel.tauV + 0.5 + 0.25 / parcel.tauV);
-        //printf("opacfac: %g\n", opacfac);
         double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
         double T4ratio = Teff4 / T4;
         double Rr = T4ratio * parcel.opacfac;
         fn_radiation = Rr - 1;
-        //printf("fn_pressure: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
-        //throw std::runtime_error("Crash!\n");
   }
 };

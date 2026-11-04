@@ -56,11 +56,18 @@ using namespace constants;
 class TQM05 : public Disk1D {
 public:
   /* Constructor for TQM05
+   * @param opac_name The name of the opacity table in the sp5 file
+   * @param opac_path The path to the sp5 file
+   * @param opac_id The ID field of the opacity table in the sp5 file
    * @param smbh_mass Schwarzschild radius
-   * @param eddington_ratio Fraction of Eddington Luminosity
-   * @param alpha Shakura-Sunyaev viscosity parameter
-   * @param X_mass_fraction Schwarzschild radius
-   * @param radiative_efficiency The radiative efficiency
+   * @param velocity_dispersion the 'sigma' describing stellar velocity disp
+   * @param radiative_efficiency  radiative efficeincy of star formation
+   * @param transport_efficiency The fraction of the local sound speed which conveys angular momentum transport efficiency.
+   * @param supernova_pressure Fraction of pressure from supernovae in rad pressure
+   * @param X_mass_fraction Hydrogen abundance
+   * @param radius_inner The inner radius (R_g) of the disk
+   * @param radius_outer The largest radius forwhich accretion rate may be constant
+   * @param mdot_outer The accretion rate at radius_outer
   */
   TQM05(
       std::string opac_name,
@@ -273,6 +280,8 @@ public:
     
   }
 
+
+  // Construct a 1D TQM disk and solve along it to return profiles
   Profile SolveDisk(
     double rmin = 6.0, // Rg
     double rmax = 0.0, // Rg
@@ -396,7 +405,7 @@ public:
   return out;
   }
 
-  // Write disk
+  // Write disk to file
   void WriteDisk(
     const char* fname,
     double rmin = 6.0,
@@ -476,7 +485,6 @@ protected:
         double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
 
         parcel.kappa = opac_.eval(parcel.rho, parcel.T);
-        //printf("kappa: %g\n", kappa);
 
         parcel.h = std::sqrt(parcel.Mdot / (
             4.0 * M_PI * parcel.r_cyl * parcel.omega * 
@@ -487,10 +495,8 @@ protected:
         parcel.cs = parcel.h * parcel.omega;
 
         parcel.tauV = parcel.kappa * parcel.rho * parcel.h;
-        //printf("tauV: %g\n", tauV);
 
         parcel.opacfac = 0.75 * (parcel.tauV + (4./3.) + ((2./3.) / parcel.tauV));
-        //printf("opacfac: %g\n", opacfac);
         
         // Handle rad cost
         double T4ratio = Teff4 / T4;
@@ -499,16 +505,12 @@ protected:
 
         parcel.PPgas = (KBOLTZMANN / AMU) * parcel.T / 
             (parcel.cs * parcel.cs);
-        //printf("PPgas: %g\n", PPgas);
         parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN * Teff4 / (
             C_SI * parcel.rho * parcel.cs * parcel.cs
         );
-        //printf("PPrad: %g\n", PPrad);
 
         // Rewritten as dimensionless, dividing by cs2
         fn_pressure = parcel.PPgas + parcel.PPrad - 1;
-        //printf("fn_pressure: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
-        //throw std::runtime_error("Crash!\n");
   }
 
   // Equation for T / eta rootfind
@@ -525,13 +527,10 @@ protected:
         double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
 
         parcel.kappa = opac_.eval(parcel.rho, parcel.T);
-        //printf("kappa: %g\n", kappa);
 
         parcel.tauV = parcel.kappa * parcel.rho * parcel.h;
-        //printf("tauV: %g\n", tauV);
 
         parcel.opacfac = 0.75 * (parcel.tauV + (4./3.) + ((2./3.) / parcel.tauV));
-        //printf("opacfac: %g\n", opacfac);
         
         // Handle rad cost
         double Teff4 = T4 / parcel.opacfac;
@@ -549,8 +548,5 @@ protected:
             * parcel.eta * GetRadiativeEfficiency()
             * C_SI * C_SI / factor_Teff -
             3.0 * parcel.omega * parcel.omega * parcel.Mdotprime / (8.  * M_PI * factor_Teff);
-        //printf("fn_radiation: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
-        //printf("fn_pressure: %g; fn_rad: %g\n", fn_pressure, fn_radiation);
-        //throw std::runtime_error("Crash!\n");
   }
 };
