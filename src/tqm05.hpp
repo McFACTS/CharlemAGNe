@@ -61,12 +61,12 @@ public:
    * @param opac_id The ID field of the opacity table in the sp5 file
    * @param smbh_mass Schwarzschild radius
    * @param velocity_dispersion the 'sigma' describing stellar velocity disp
-   * @param radiative_efficiency  radiative efficeincy of star formation
+   * @param radiative_efficiency  radiative efficiency of star formation
    * @param transport_efficiency The fraction of the local sound speed which conveys angular momentum transport efficiency.
    * @param supernova_pressure Fraction of pressure from supernovae in rad pressure
    * @param X_mass_fraction Hydrogen abundance
    * @param radius_inner The inner radius (R_g) of the disk
-   * @param radius_outer The largest radius forwhich accretion rate may be constant
+   * @param radius_outer The largest radius for which accretion rate may be constant
    * @param mdot_outer The accretion rate at radius_outer
   */
   TQM05(

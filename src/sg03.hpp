@@ -366,7 +366,7 @@ public:
       rmax * GetRg(),
       npts
     );
-    return WalkDisk(r_cyl);
+    return WalkDisk(r_cyl, opts);
   }
 
   // Write disk to file
