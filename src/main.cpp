@@ -74,7 +74,6 @@ int main(int argc, char *argv[]) {
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
 
   // setup disk
-  // setup disk
   auto disk = SG03(
     opac_name,
     opac_path,
@@ -84,6 +83,19 @@ int main(int argc, char *argv[]) {
   disk.WriteDisk("./charlemagne_sg03.csv");
   auto toc = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
-  printf("Solved disk in %g s\n", duration.count() / 1.e9);
+  printf("Solved SG03 disk in %g s\n", duration.count() / 1.e9);
+  return 0;
+
+  // Run TQM disk
+  auto disk = TQM05(
+    opac_name,
+    opac_path,
+    opac_id
+  );
+  auto tic = std::chrono::high_resolution_clock::now();
+  disk.WriteDisk("./charlemagne_tqm05.csv");
+  auto toc = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
+  printf("Solved TQM05 disk in %g s\n", duration.count() / 1.e9);
   return 0;
 }
