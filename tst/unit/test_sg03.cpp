@@ -294,3 +294,51 @@ TEST_CASE("SG03 Disk annulus (inner, SF on, viscosity_flag false)", "[sg03]") {
     // h: 1.727047e+12
     REQUIRE((std::abs(parcel.h - 1.727047e+12)/1.727047e+12) < 1.e-3);
 }
+
+TEST_CASE("SG03 Default solve doesn't crash", "[sg03]") {
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+  // setup disk
+  auto sg03_disk = SG03(opac_name ,opac_path, opac_id);
+  auto sg03_profile = sg03_disk.SolveDisk();
+}
+
+TEST_CASE("SG03 Standard options converges", "[sg03]") {
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+  // setup disk
+  auto sg03_disk = SG03(opac_name ,opac_path, opac_id);
+  auto opts = SolverOpts(
+    200 /*maxfev*/,
+    1.e-5 /*xtol*/,
+    1.e-8 /*ftol*/,
+    0.0 /*gtol*/,
+    1.e-7 /*epsfcn*/,
+    0.1 /*factor*/,
+    0.1 /*conv_tol*/
+  );
+  auto sg03_profile = sg03_disk.SolveDisk(6.0, 2.e7, 10000, opts);
+  for (size_t i = 0; i < sg03_profile.r_cyl.size(); i++) {
+    REQUIRE(sg03_profile.converged[i]);
+  }
+}

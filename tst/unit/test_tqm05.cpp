@@ -270,3 +270,51 @@ TEST_CASE("TQM05 Disk object no sf step", "[tqm05]") {
   //REQUIRE((std::abs(no_sf.kappa - 0.049933921917359105) / 0.049933921917359105) < 1.e-1);
   //REQUIRE((std::abs(no_sf.h - 1055271545158.8575) / 1055271545158.8575) < 1.e-3);
 }
+
+TEST_CASE("TQM05 Default solve doesn't crash", "[tqm05]") {
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+  // setup disk
+  auto tqm05_disk = TQM05(opac_name ,opac_path, opac_id);
+  auto tqm05_profile = tqm05_disk.SolveDisk();
+}
+
+TEST_CASE("TQM05 Standard options converges", "[tqm05]") {
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+  // setup disk
+  auto tqm05_disk = TQM05(opac_name ,opac_path, opac_id);
+  auto opts = SolverOpts(
+    200 /*maxfev*/,
+    1.e-5 /*xtol*/,
+    1.e-8 /*ftol*/,
+    0.0 /*gtol*/,
+    1.e-7 /*epsfcn*/,
+    0.1 /*factor*/,
+    2.0 /*conv_tol*/
+  );
+  auto tqm05_profile = tqm05_disk.SolveDisk(6.0, 0.0, 10000, opts);
+  for (size_t i = 0; i < tqm05_profile.r_cyl.size(); i++) {
+    REQUIRE(tqm05_profile.converged[i]);
+  }
+}
