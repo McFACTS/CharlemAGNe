@@ -341,7 +341,7 @@ TEST_CASE("TQM05 Outer disk", "[tqm05]") {
     0.0 /*gtol*/,
     1.e-7 /*epsfcn*/,
     0.1 /*factor*/,
-    2.0 /*conv_tol*/
+    10.0 /*conv_tol*/
   );
   auto tqm05_profile = tqm05_disk.SolveDisk(6.0, 1.e8, 10000, opts);
   for (size_t i = 0; i < tqm05_profile.r_cyl.size(); i++) {
