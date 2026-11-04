@@ -38,7 +38,7 @@ build:
     - dnf -y install epel-release
     - dnf -y install cmake hdf5-devel hdf5-static
   script:
-    - cmake -DCHARLES_BUILD_TESTS=ON -B build/ && cmake --build build/ -j6
+    - make tests
   artifacts:
     paths:
       - build/
