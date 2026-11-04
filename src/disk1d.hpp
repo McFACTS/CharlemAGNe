@@ -183,7 +183,7 @@ struct SolverOpts {
   double xtol = 1.e-4;      // relative step size (dx)
   double ftol = 1.e-8;      // relative f(x) reduction
   double gtol = 0.0;        // Orthogonality test
-  double epsfcn = 1.e-5;    // Step size for estimating Jacobian
+  double epsfcn = 1.e-7;    // Step size for estimating Jacobian
   double factor = 0.1;      // initial "trust-region" boundary.
   double conv_tol = 1.e-1;  // Check if we converged
 };

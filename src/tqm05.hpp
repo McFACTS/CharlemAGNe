@@ -39,6 +39,7 @@
 #include "constants.hpp"
 #include "opacity.hpp"
 #include "disk1d.hpp"
+#include "utils.hpp"
 //// Third Party ////
 //// Standard Library ////
 #include <cmath>
@@ -217,7 +218,7 @@ public:
 
     // Fill Q / h
     out.Q = out.omega * out.omega / (M_SQRT2 * M_PI * G_SI * out.rho);
-    out.star_formation = out.Q <= 1.0;
+    out.star_formation = !(std::isfinite(out.Q)) || (out.Q <= 1.0);
     return out;
     
   }
@@ -273,30 +274,52 @@ public:
   }
 
   Profile SolveDisk(
-    std::vector<double> r_cyl,
-    const int iter_max_first = 1000,
-    const int iter_max = 30,
-    const double tol = 1.e-5
+    double rmin = 6.0, // Rg
+    double rmax = 0.0, // Rg
+    int npts = 10000,
+    const SolverOpts& opts = {}
   ) {
+    // Convert rmin to SI
+    rmin = rmin * GetRg();
+    // Check for default rmax
+    if (rmax == 0.0) {
+      rmax = GetRadiusOuter();
+    } else {
+      rmax = rmax * GetRg();
+    }
+    // Check rmax is >= outer radius
+    if (rmax < GetRadiusOuter()) {
+      throw std::runtime_error("rmax must be >= outer disk radius!\n");
+    }
+    // Check number of points
+    if (npts < 2) {
+      throw std::runtime_error("Must have at least two shells!\n");
+    }
+    // Get r_edges
+    // Initialize radii
+    const std::vector<double> r_edge = geomspace(
+      rmin * GetRg(),
+      rmax * GetRg(),
+      npts + 1
+    );
+    // Initialize centers
+    std::vector<double> r_centers(npts);
+    for (std::size_t i = 0; i + 1 < r_edge.size(); i++) {
+       r_centers[i] = 0.5 * (r_edge[i] + r_edge[i + 1]);
+    }
     // Initialize output profile
-    Profile out = Profile(r_cyl);
+    Profile out = Profile(r_centers);
 
     // State tracking
     bool star_formation = false;
     bool prev_star_formation = false;
-    const int n = static_cast<int>(r_cyl.size());
-    if (n < 2) {
-      throw std::runtime_error("Must have at least two shells!\n");
-    }
     Parcel prev;
     Parcel cur;
-    const SolverOpts opts_first{iter_max_first, tol, tol};
-    const SolverOpts opts_warm{iter_max, tol, tol};
 
     // Walk from outer to inner radius
-    for (int iter = n - 1; iter >= 0; iter--) {
-      const double r = r_cyl[iter];
-      const bool first = (iter == n - 1);
+    for (int iter = npts - 1; iter >= 0; iter--) {
+      const double r = r_centers[iter];
+      const bool first = (iter == npts - 1);
       const double mdot_local = first ? GetMDotOuter() :
         prev.Mdot - out.Mdot_sf[iter + 1];
       // Always try no-SF solver first
@@ -305,32 +328,39 @@ public:
         std::log10(first ? GetTemperatureOuter() : prev.T),
         std::log10(first ? GetRhoOuter() : prev.rho),
         mdot_local,
-        !(prev_star_formation) ? opts_first : opts_warm
+        opts
       );
       // Check for Star formation
-      if (cur.Q <= 1.0) {
+      if (!(std::isfinite(cur.Q)) || (cur.Q <= 1.0)) {
         star_formation = true;
         // Try SF solver
         cur = solve_T_eta(
           r,
           std::log10(first ? GetTemperatureOuter() : prev.T),
           std::log10(first ? GetSFEfficiencyOuter() : (prev.eta > 1e-8) ? prev.eta : 1e-8),
-          ( iter== n - 1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
-          !(prev_star_formation) ? opts_first : opts_warm
+          ( iter== npts - 1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
+          opts
         );
-        // Now we need to check for a crash unconditionally
-        if (!cur.converged) {
-          printf("iter: %d; r_cyl=%g\n", iter, r / GetRg());
-          throw std::runtime_error("Failed to converge disk!\n");
-        }
-      } else if (!cur.converged) {
-        // No star formation is correct, and we failed to converge
-        // Crash
-        printf("iter: %d; r_cyl=%g\n", iter, r / GetRg());
-        throw std::runtime_error("Failed to converge disk!\n");
       } else {
         // No star formation. No crash.
         star_formation = false;
+      }
+      // Catch non-converged
+      if (!cur.converged) {
+        // Re-evaluate the residuals to throw only on hard failures
+        double fn_p, fn_r;
+        if (star_formation) {
+          T_eta_eqn(cur, std::log10(cur.T), std::log10(cur.eta), fn_p, fn_r);
+        } else {
+          T_rho_eqn(cur, std::log10(cur.T), std::log10(cur.rho), fn_p, fn_r);
+        }
+        // Check the maximum residual
+        double residual = std::max(std::fabs(fn_p), std::fabs(fn_r));
+        fprintf(stderr, "non-converged i=%d r=%.6gRg sf=%d residual=%.3e\n",
+            iter, cur.r_cyl / GetRg(), (int)star_formation, residual);
+        if (!std::isfinite(residual) || residual > 1.0) {
+          throw std::runtime_error("Failed to converge disk!\n");
+        }
       }
       // We have constructed cur; let's update our profiles
       out.converged[iter]       = cur.converged;
@@ -353,7 +383,7 @@ public:
       out.eta[iter]             = cur.eta;
 
       // Profile specific things
-      out.dr_cyl[iter] = first ? 0.0 : out.r_cyl[iter+1] - cur.r_cyl;
+      out.dr_cyl[iter] = r_edge[iter+1] - r_edge[iter];
       out.dA[iter] = out.dr_cyl[iter] * M_PI * 4.0 * cur.r_cyl;
       out.dV[iter] = out.dA[iter] * cur.h;
       out.mass_disk[iter] = out.dV[iter] * cur.rho;
@@ -364,6 +394,52 @@ public:
       prev_star_formation = star_formation;
     }
   return out;
+  }
+
+  // Write disk
+  void WriteDisk(
+    const char* fname,
+    double rmin = 6.0,
+    double rmax = 0.0,
+    int npts = 10000,
+    const SolverOpts& opts = {}
+  ) {
+    // Solve the disk
+    Profile tqm05 = SolveDisk(rmin, rmax, npts, opts);
+    std::FILE* tqm05_out = std::fopen(fname, "w");
+    fprintf(tqm05_out, "#iter, converged, steps, star_formation, r_cyl[R_g], omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
+    for (size_t i = 0; i < tqm05.r_cyl.size(); i++) {
+      fprintf(
+        tqm05_out,
+        "%lu %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+        i,
+        (int)tqm05.converged[i],
+        tqm05.steps[i],
+        (int)tqm05.star_formation[i],
+        tqm05.r_cyl[i] / GetRg(),
+        tqm05.omega[i],
+        tqm05.Teff[i],
+        tqm05.Mdotprime[i],
+        tqm05.Mdot[i],
+        tqm05.T[i],
+        tqm05.cs[i],
+        tqm05.rho[i],
+        tqm05.kappa[i],
+        tqm05.tauV[i],
+        tqm05.PPgas[i],
+        tqm05.PPrad[i],
+        tqm05.opacfac[i],
+        tqm05.Q[i],
+        tqm05.h[i],
+        tqm05.eta[i],
+        tqm05.dr_cyl[i],
+        tqm05.dA[i],
+        tqm05.dV[i],
+        tqm05.mass_disk[i],
+        tqm05.Mdot_sf[i]
+      );
+    }
+  std::fclose(tqm05_out);
   }
 
 private:
