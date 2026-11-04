@@ -218,12 +218,8 @@ public:
     double fn_pressure, fn_radiation;
     T_rho_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Assign outputs
-    if (std::isfinite(fn_pressure) && std::isfinite(fn_radiation)) {
-      out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
-      if (out.max_residual < opts.conv_tol) {
-        out.converged = true;
-      }
-    }
+    out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
+    out.converged = std::isfinite(out.max_residual) && (out.max_residual < opts.conv_tol);
     out.steps = nfev;
 
     // Fill Q / h
@@ -272,12 +268,8 @@ public:
     double fn_pressure, fn_radiation;
     T_eta_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Assign outputs
-    if (std::isfinite(fn_pressure) && std::isfinite(fn_radiation)) {
-      out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
-      if (out.max_residual < opts.conv_tol) {
-        out.converged = true;
-      }
-    }
+    out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
+    out.converged = std::isfinite(out.max_residual) && (out.max_residual < opts.conv_tol);
     out.steps = nfev;
 
     // Fill Q / h
@@ -324,6 +316,7 @@ public:
     out.eta = Sigmastar / (2 * out.rho * out.h * out.omega);
     // Don't crash please
     out.converged = true;
+    out.max_residual = 0.0;
     return out;
   }
 

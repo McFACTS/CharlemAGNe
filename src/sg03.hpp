@@ -185,12 +185,8 @@ public:
     double fn_pressure, fn_radiation;
     cs_T_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Check for errors
-    if (std::isfinite(fn_pressure) && std::isfinite(fn_radiation)) {
-      out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
-      if (out.max_residual < opts.conv_tol) {
-        out.converged = true;
-      }
-    }
+    out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
+    out.converged = std::isfinite(out.max_residual) && (out.max_residual < opts.conv_tol);
     out.steps = nfev;
 
     // Fill Q / h
@@ -248,12 +244,8 @@ public:
     double fn_pressure, fn_radiation;
     Teff_T_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Check for errors
-    if (std::isfinite(fn_pressure) && std::isfinite(fn_radiation)) {
-      out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
-      if (out.max_residual < opts.conv_tol) {
-        out.converged = true;
-      }
-    }
+    out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
+    out.converged = std::isfinite(out.max_residual) && (out.max_residual < opts.conv_tol);
     out.steps = nfev;
 
     // Fill Q / h
