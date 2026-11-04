@@ -58,6 +58,7 @@ struct Parcel {
     //// Members 
     // If we successfully solved the disk at this radius
     bool converged = false;
+    double max_residual = -1.0;
     // Number of steps iterated
     int steps = 0;
     // Star formation flag
@@ -103,6 +104,7 @@ struct Profile {
     //// Members 
     // If we successfully solved the disk at this radius
     std::vector<bool> converged;
+    std::vector<double> max_residual;
     // Number of steps iterated
     std::vector<int> steps;
     // Star formation flag
@@ -150,6 +152,7 @@ struct Profile {
       const size_t n = r_cyl.size();
       // Non doubles
       converged.assign(n, false);
+      max_residual.assign(n, -1.0);
       steps.assign(n, 0);
       star_formation.assign(n, false);
       // Doubles

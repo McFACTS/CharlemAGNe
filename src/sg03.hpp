@@ -166,6 +166,7 @@ public:
     // Fill things outside of the hot loop
     out.omega = GetAngularVelocity(r);
     out.Teff = GetEffectiveTemperature(r, out.omega);
+    out.Mdot = GetMDot();
     out.Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
     // Check arguments for rootfind guess
     if (log10cs == 0.0) {
@@ -184,13 +185,17 @@ public:
     double fn_pressure, fn_radiation;
     cs_T_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Check for errors
-    out.converged = std::isfinite(fn_pressure) && std::isfinite(fn_radiation)
-      && std::abs(fn_pressure) < opts.conv_tol
-      && std::abs(fn_radiation) < opts.conv_tol;
+    if (std::isfinite(fn_pressure) && std::isfinite(fn_radiation)) {
+      out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
+      if (out.max_residual < opts.conv_tol) {
+        out.converged = true;
+      }
+    }
     out.steps = nfev;
 
     // Fill Q / h
     out.Q = out.omega * out.omega / (2.0 * M_PI * G_SI * out.rho);
+    out.star_formation = std::isfinite(out.Q) && (out.Q <= 1.0);
     out.h = out.cs / out.omega;
     return out;
     
@@ -216,11 +221,13 @@ public:
     // Fill things outside of the hot loop
     out.omega = GetAngularVelocity(r);
     out.Teff = GetEffectiveTemperature(r, out.omega);
+    out.Mdot = GetMDot();
     out.Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
     // The guess is not optional for this one.
 
     // We know Q and rho by fiat
     out.Q = 1.0;
+    out.star_formation = true;
     out.rho = out.omega * out.omega / (2.0 * M_PI * G_SI);
 
     // We may or may not know cs by fiat
@@ -241,9 +248,12 @@ public:
     double fn_pressure, fn_radiation;
     Teff_T_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Check for errors
-    out.converged = std::isfinite(fn_pressure) && std::isfinite(fn_radiation)
-      && std::abs(fn_pressure) < opts.conv_tol
-      && std::abs(fn_radiation) < opts.conv_tol;
+    if (std::isfinite(fn_pressure) && std::isfinite(fn_radiation)) {
+      out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
+      if (out.max_residual < opts.conv_tol) {
+        out.converged = true;
+      }
+    }
     out.steps = nfev;
 
     // Fill Q / h
@@ -305,23 +315,16 @@ public:
       }
       // Catch non-converged
       if (!cur.converged) {
-        // Re-evaluate the residuals to throw only on hard failures
-        double fn_p, fn_r;
-        if (star_formation) {
-          Teff_T_eqn(cur, std::log10(cur.Teff), std::log10(cur.T), fn_p, fn_r);
-        } else {
-          cs_T_eqn(cur, std::log10(cur.cs), std::log10(cur.T), fn_p, fn_r);
-        }
         // Check the maximum residual
-        double residual = std::max(std::fabs(fn_p), std::fabs(fn_r));
         fprintf(stderr, "non-converged i=%zu r=%.6gRg sf=%d residual=%.3e\n",
-            iter, r_cyl[iter] / GetRg(), (int)star_formation, residual);
-        if (!std::isfinite(residual) || residual > 10.0) {
+            iter, r_cyl[iter] / GetRg(), (int)star_formation, cur.max_residual);
+        if (!std::isfinite(cur.max_residual) || cur.max_residual > 10.0) {
           throw std::runtime_error("Failed to converge disk!\n");
         }
       }
       // We have constructed cur; let's update our profiles
       out.converged[iter]       = cur.converged;
+      out.max_residual[iter]    = cur.max_residual;
       out.steps[iter]           = cur.steps;
       out.star_formation[iter]  = star_formation;
       out.omega[iter]           = cur.omega;
@@ -379,14 +382,20 @@ public:
   ) {
     // Solve the disk
     Profile sg03 = SolveDisk(rmin, rmax, npts, opts);
+    // open a file
     std::FILE* sg03_out = std::fopen(fname, "w");
-    fprintf(sg03_out, "#iter, converged, steps, star_formation, r_cyl[R_g], omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
+    if (!sg03_out) {
+      throw::std::runtime_error(std::string("WriteDisk cannot open '")
+        + fname + "': " + std::strerror(errno));
+    }
+    fprintf(sg03_out, "#iter, converged, max_residual, steps, star_formation, r_cyl[R_g], omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
     for (size_t i = 0; i < sg03.r_cyl.size(); i++) {
       fprintf(
         sg03_out,
-        "%lu %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+        "%lu %d %g %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
         i,
         (int)sg03.converged[i],
+        sg03.max_residual[i],
         sg03.steps[i],
         (int)sg03.star_formation[i],
         sg03.r_cyl[i] / GetRg(),

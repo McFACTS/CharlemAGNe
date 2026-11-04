@@ -218,9 +218,12 @@ public:
     double fn_pressure, fn_radiation;
     T_rho_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Assign outputs
-    out.converged = std::isfinite(fn_pressure) && std::isfinite(fn_radiation)
-      && std::abs(fn_pressure) < opts.conv_tol
-      && std::abs(fn_radiation) < opts.conv_tol;
+    if (std::isfinite(fn_pressure) && std::isfinite(fn_radiation)) {
+      out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
+      if (out.max_residual < opts.conv_tol) {
+        out.converged = true;
+      }
+    }
     out.steps = nfev;
 
     // Fill Q / h
@@ -269,9 +272,12 @@ public:
     double fn_pressure, fn_radiation;
     T_eta_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Assign outputs
-    out.converged = std::isfinite(fn_pressure) && std::isfinite(fn_radiation)
-      && std::abs(fn_pressure) < opts.conv_tol
-      && std::abs(fn_radiation) < opts.conv_tol;
+    if (std::isfinite(fn_pressure) && std::isfinite(fn_radiation)) {
+      out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
+      if (out.max_residual < opts.conv_tol) {
+        out.converged = true;
+      }
+    }
     out.steps = nfev;
 
     // Fill Q / h
@@ -400,24 +406,17 @@ public:
         }
         // Catch non-converged
         if (!cur.converged) {
-          // Re-evaluate the residuals to throw only on hard failures
-          double fn_p, fn_r;
-          if (star_formation) {
-            T_eta_eqn(cur, std::log10(cur.T), std::log10(cur.eta), fn_p, fn_r);
-          } else {
-            T_rho_eqn(cur, std::log10(cur.T), std::log10(cur.rho), fn_p, fn_r);
-          }
           // Check the maximum residual
-          double residual = std::max(std::fabs(fn_p), std::fabs(fn_r));
           fprintf(stderr, "non-converged i=%d r=%.6gRg sf=%d residual=%.3e\n",
-            iter, cur.r_cyl / GetRg(), (int)star_formation, residual);
-          if (!std::isfinite(residual) || residual > 10.0) {
+            iter, cur.r_cyl / GetRg(), (int)star_formation, cur.max_residual);
+          if (!std::isfinite(cur.max_residual) || cur.max_residual > 10.0) {
             throw std::runtime_error("Failed to converge disk!\n");
           }
         }
       }
       // We have constructed cur; let's update our profiles
       out.converged[iter]       = cur.converged;
+      out.max_residual[iter]    = cur.max_residual;
       out.steps[iter]           = cur.steps;
       out.star_formation[iter]  = star_formation;
       out.omega[iter]           = cur.omega;
@@ -460,14 +459,20 @@ public:
   ) {
     // Solve the disk
     Profile tqm05 = SolveDisk(rmin, rmax, npts, opts);
+    // open a file
     std::FILE* tqm05_out = std::fopen(fname, "w");
-    fprintf(tqm05_out, "#iter, converged, steps, star_formation, r_cyl[R_g], omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
+    if (!tqm05_out) {
+      throw::std::runtime_error(std::string("WriteDisk cannot open '")
+        + fname + "': " + std::strerror(errno));
+    }
+    fprintf(tqm05_out, "#iter, converged, max_residual, steps, star_formation, r_cyl[R_g], omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
     for (size_t i = 0; i < tqm05.r_cyl.size(); i++) {
       fprintf(
         tqm05_out,
-        "%lu %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+        "%lu %d %g %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
         i,
         (int)tqm05.converged[i],
+        tqm05.max_residual[i],
         tqm05.steps[i],
         (int)tqm05.star_formation[i],
         tqm05.r_cyl[i] / GetRg(),
