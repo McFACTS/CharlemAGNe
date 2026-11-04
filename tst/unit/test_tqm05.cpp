@@ -318,3 +318,33 @@ TEST_CASE("TQM05 Standard options converges", "[tqm05]") {
     REQUIRE(tqm05_profile.converged[i]);
   }
 }
+
+TEST_CASE("TQM05 Outer disk", "[tqm05]") {
+  if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+  }
+  if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
+      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+  }
+  std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
+  std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
+  int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
+  // setup disk
+  auto tqm05_disk = TQM05(opac_name ,opac_path, opac_id);
+  auto opts = SolverOpts(
+    200 /*maxfev*/,
+    1.e-5 /*xtol*/,
+    1.e-8 /*ftol*/,
+    0.0 /*gtol*/,
+    1.e-7 /*epsfcn*/,
+    0.1 /*factor*/,
+    2.0 /*conv_tol*/
+  );
+  auto tqm05_profile = tqm05_disk.SolveDisk(6.0, 1.e8, 10000, opts);
+  for (size_t i = 0; i < tqm05_profile.r_cyl.size(); i++) {
+    REQUIRE(tqm05_profile.converged[i]);
+  }
+}

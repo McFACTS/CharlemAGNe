@@ -283,8 +283,6 @@ public:
   Parcel solve_outer(double r) {
     // Construct Parcel
     Parcel out = Parcel(r);
-    // Fill things outside of the hot loop
-    out.star_formation = true;
     // Angular velocity
     out.omega = GetAngularVelocity(r);
     // We define Q this way here
@@ -311,7 +309,7 @@ public:
     // Effective temperature
     out.Teff = std::sqrt(
       std::sqrt(
-        (4.0 / 3.0) * (out.T * out.T * out.T * out.T)  / (out.tauV + (2. / (3. + out.tauV)) + (4./3.))
+        (4.0 / 3.0) * (out.T * out.T * out.T * out.T)  / (out.tauV + (2. / (3. * out.tauV)) + (4./3.))
       )
     );
     // temporary product
@@ -385,7 +383,6 @@ public:
           mdot_local,
           opts
         );
-        first_inside = false;
         // Check for Star formation
         if (!(std::isfinite(cur.Q)) || (cur.Q <= 1.0)) {
           star_formation = true;
@@ -394,7 +391,7 @@ public:
             r,
             std::log10(first_inside ? GetTemperatureOuter() : prev.T),
             std::log10(first_inside ? GetSFEfficiencyOuter() : (prev.eta > 1e-8) ? prev.eta : 1e-8),
-            ( iter== npts - 1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
+            mdot_local,
             opts
           );
         } else {
@@ -444,9 +441,10 @@ public:
       out.dA[iter] = out.dr_cyl[iter] * M_PI * 4.0 * cur.r_cyl;
       out.dV[iter] = out.dA[iter] * cur.h;
       out.mass_disk[iter] = out.dV[iter] * cur.rho;
-      out.Mdot_sf[iter] = out.mass_disk[iter] * cur.omega * cur.eta;
+      out.Mdot_sf[iter] = (r_centers[iter] > GetRadiusOuter()) ? 0.0 : out.mass_disk[iter] * cur.omega * cur.eta;
 
       // Update loop
+      first_inside = false;
       prev = cur;
     }
   return out;
