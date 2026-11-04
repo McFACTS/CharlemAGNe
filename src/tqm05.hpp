@@ -279,6 +279,49 @@ public:
     return out;
     
   }
+  /// Analytic prescription outside Rout
+  Parcel solve_outer(double r) {
+    // Construct Parcel
+    Parcel out = Parcel(r);
+    // Fill things outside of the hot loop
+    out.star_formation = true;
+    // Angular velocity
+    out.omega = GetAngularVelocity(r);
+    // We define Q this way here
+    out.Q = 1.0;
+    // Density
+    out.rho = out.omega * out.omega / (M_SQRT2 * M_PI * G_SI);
+    // Mass loss
+    out.Mdot = GetMDotOuter();
+    // star formation parameter
+    double fg = std::sqrt((2.0 * M_SQRT2 * out.Mdot * G_SI) /
+      (GetTransportEfficiency() * out.omega * out.omega * out.omega * r * r * r));
+    // scale height / aspect ratio
+    out.h = r * fg  / (2.0 * M_SQRT2);
+    // sound speed
+    out.cs = GetVelocityDispersion() * fg / 2.0;
+    // Temperature
+    out.T = std::sqrt(fg * GetVelocityDispersion() * GetVelocityDispersion() / r) *
+	  std::sqrt(std::sqrt(3. * C_SI / (8. * M_SQRT2 * M_PI * G_SI * STEFAN_BOLTZMANN)));
+    // Opacity
+    out.kappa = opac_.eval(out.rho, out.T);
+    // Optical depth
+    out.tauV = out.kappa * GetVelocityDispersion() * GetVelocityDispersion() * fg /
+      (2. * M_PI * G_SI * r);
+    // Effective temperature
+    out.Teff = std::sqrt(
+      std::sqrt(
+        (4.0 / 3.0) * (out.T * out.T * out.T * out.T)  / (out.tauV + (2. / (3. + out.tauV)) + (4./3.))
+      )
+    );
+    // temporary product
+    double Sigmastar = 2. * STEFAN_BOLTZMANN * (out.Teff * out.Teff * out.Teff * out.Teff) / (C_SI * C_SI * GetRadiativeEfficiency());
+    // Star formation efficiency
+    out.eta = Sigmastar / (2 * out.rho * out.h * out.omega);
+    // Don't crash please
+    out.converged = true;
+    return out;
+  }
 
 
   // Construct a 1D TQM disk and solve along it to return profiles
@@ -321,54 +364,59 @@ public:
 
     // State tracking
     bool star_formation = false;
-    bool prev_star_formation = false;
+    bool first_inside = true;
     Parcel prev;
     Parcel cur;
 
     // Walk from outer to inner radius
     for (int iter = npts - 1; iter >= 0; iter--) {
       const double r = r_centers[iter];
-      const bool first = (iter == npts - 1);
-      const double mdot_local = first ? GetMDotOuter() :
+      const double mdot_local = first_inside ? GetMDotOuter() :
         prev.Mdot - out.Mdot_sf[iter + 1];
-      // Always try no-SF solver first
-      cur = solve_T_rho(
-        r,
-        std::log10(first ? GetTemperatureOuter() : prev.T),
-        std::log10(first ? GetRhoOuter() : prev.rho),
-        mdot_local,
-        opts
-      );
-      // Check for Star formation
-      if (!(std::isfinite(cur.Q)) || (cur.Q <= 1.0)) {
-        star_formation = true;
-        // Try SF solver
-        cur = solve_T_eta(
+      // Check for outer disk
+      if (r > GetRadiusOuter()) {
+        cur = solve_outer(r);
+      } else {
+        // Always try no-SF solver first
+        cur = solve_T_rho(
           r,
-          std::log10(first ? GetTemperatureOuter() : prev.T),
-          std::log10(first ? GetSFEfficiencyOuter() : (prev.eta > 1e-8) ? prev.eta : 1e-8),
-          ( iter== npts - 1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
+          std::log10(first_inside ? GetTemperatureOuter() : prev.T),
+          std::log10(first_inside ? GetRhoOuter() : prev.rho),
+          mdot_local,
           opts
         );
-      } else {
-        // No star formation. No crash.
-        star_formation = false;
-      }
-      // Catch non-converged
-      if (!cur.converged) {
-        // Re-evaluate the residuals to throw only on hard failures
-        double fn_p, fn_r;
-        if (star_formation) {
-          T_eta_eqn(cur, std::log10(cur.T), std::log10(cur.eta), fn_p, fn_r);
+        first_inside = false;
+        // Check for Star formation
+        if (!(std::isfinite(cur.Q)) || (cur.Q <= 1.0)) {
+          star_formation = true;
+          // Try SF solver
+          cur = solve_T_eta(
+            r,
+            std::log10(first_inside ? GetTemperatureOuter() : prev.T),
+            std::log10(first_inside ? GetSFEfficiencyOuter() : (prev.eta > 1e-8) ? prev.eta : 1e-8),
+            ( iter== npts - 1) ? GetMDotOuter() : prev.Mdot-out.Mdot_sf[iter + 1],
+            opts
+          );
         } else {
-          T_rho_eqn(cur, std::log10(cur.T), std::log10(cur.rho), fn_p, fn_r);
+          // No star formation. No crash.
+          star_formation = false;
         }
-        // Check the maximum residual
-        double residual = std::max(std::fabs(fn_p), std::fabs(fn_r));
-        fprintf(stderr, "non-converged i=%d r=%.6gRg sf=%d residual=%.3e\n",
+        // Catch non-converged
+        if (!cur.converged) {
+          // Re-evaluate the residuals to throw only on hard failures
+          double fn_p, fn_r;
+          if (star_formation) {
+            T_eta_eqn(cur, std::log10(cur.T), std::log10(cur.eta), fn_p, fn_r);
+          } else {
+            T_rho_eqn(cur, std::log10(cur.T), std::log10(cur.rho), fn_p, fn_r);
+          }
+          // Check the maximum residual
+          double residual = std::max(std::fabs(fn_p), std::fabs(fn_r));
+          fprintf(stderr, "non-converged i=%d r=%.6gRg sf=%d residual=%.3e\n",
             iter, cur.r_cyl / GetRg(), (int)star_formation, residual);
-        if (!std::isfinite(residual) || residual > 10.0) {
-          throw std::runtime_error("Failed to converge disk!\n");
+          if (!std::isfinite(residual) || residual > 10.0) {
+            throw std::runtime_error("Failed to converge disk!\n");
+          }
         }
       }
       // We have constructed cur; let's update our profiles
@@ -400,7 +448,6 @@ public:
 
       // Update loop
       prev = cur;
-      prev_star_formation = star_formation;
     }
   return out;
   }
