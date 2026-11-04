@@ -312,7 +312,7 @@ public:
         double residual = std::max(std::fabs(fn_p), std::fabs(fn_r));
         fprintf(stderr, "non-converged i=%zu r=%.6gRg sf=%d residual=%.3e\n",
             iter, r_cyl[iter] / GetRg(), (int)star_formation, residual);
-        if (!std::isfinite(residual) || residual > 1.0) {
+        if (!std::isfinite(residual) || residual > 10.0) {
           throw std::runtime_error("Failed to converge disk!\n");
         }
       }

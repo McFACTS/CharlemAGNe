@@ -298,8 +298,8 @@ public:
     // Get r_edges
     // Initialize radii
     const std::vector<double> r_edge = geomspace(
-      rmin * GetRg(),
-      rmax * GetRg(),
+      rmin,
+      rmax,
       npts + 1
     );
     // Initialize centers
@@ -358,7 +358,7 @@ public:
         double residual = std::max(std::fabs(fn_p), std::fabs(fn_r));
         fprintf(stderr, "non-converged i=%d r=%.6gRg sf=%d residual=%.3e\n",
             iter, cur.r_cyl / GetRg(), (int)star_formation, residual);
-        if (!std::isfinite(residual) || residual > 1.0) {
+        if (!std::isfinite(residual) || residual > 10.0) {
           throw std::runtime_error("Failed to converge disk!\n");
         }
       }

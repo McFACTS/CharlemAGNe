@@ -50,7 +50,7 @@
 //////// Setup /////////
 using namespace constants;
 
-std::vector<double> geomspace(
+inline std::vector<double> geomspace(
     double start,
     double stop,
     size_t num,
