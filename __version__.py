@@ -1,0 +1,1 @@
+python/charlemagne/__version__.py
