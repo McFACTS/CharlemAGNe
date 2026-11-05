@@ -12,6 +12,16 @@ OPACITY_NAME=pagn_combined
 OPACITY_PATH=${CURDIR}/python/charlemagne/data/pagn_combined.sp5
 OPACITY_ID=1001
 
+### Python build things ###
+WHL=wheelhouse
+LOCAL_WHEELS=local-wheels
+FREETHREADED := $(shell python3 -c "import sysconfig; print(sysconfig.get_config_var('Py_GIL_DISABLED') or 0)")
+ifeq ($(FREETHREADED),1)
+	NOLIMITED	= -Dpython.allow_limited_api=false
+	BUILD_OPTS 	= -C setup-args=$(NOLIMITED)
+	PIP_OPTS	= --config-settings=setup-args=$(NOLIMITED)
+endif
+
 ######## PACKAGE ########
 
 #### Install ####
@@ -40,8 +50,19 @@ version: clean
 	sed --in-place "s/ version: .*/ version: '${VERSION}',/g" meson.build
 	echo "__version__ = '${VERSION}'" > python/charlemagne/__version__.py
 
+$(DIST): clean build version
+	- git add python meson.build __version__.py
+	- git commit
+	python3 -m build $(BUILD_OPTS)
+
+install-dist: $(DIST)
+	python3 -m pip install $(DIST) $(PIP_OPTS)
+
+install: clean version
+	pip install . $(PIP_OPTS)
+
 ######## Tests ########
-tests: build
+#tests: build
 
 ######## Cleanup #########
 clean:
