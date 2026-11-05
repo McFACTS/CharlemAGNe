@@ -17,5 +17,12 @@ inc_dirs = [
 
 incdir = include_directories(inc_dirs)
 
+# Handle cminpack dependency
+cmake = import('cmake')
+cminpack_opts = cmake.subproject_options()
+cminpack_opts.add_cmake_defines({'BUILD_EXAMPLES': 'OFF', 'CMINPACK_PRECISION': 'd'})
+cminpack_proj = cmake.subproject('cminpack', options: cminpack_opts)
+cminpack_dep = cminpack_proj.dependency('cminpack')
+
 # Install Python package
 subdir('python/charlemagne')

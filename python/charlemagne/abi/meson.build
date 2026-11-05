@@ -4,6 +4,6 @@ py.extension_module(
   include_directories: incdir,
   dependencies: [numpy_dep, hdf5_dep, cminpack_dep],
   limited_api: '3.9',
-  subdir: 'charlemagne_abi',
+  subdir: 'charlemagne',
   install: true
 )
