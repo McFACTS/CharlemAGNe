@@ -3,6 +3,8 @@
 all: tests
 
 ######## Settings ########
+VERSION = 0.1.0
+DIST=dist/charlemagne-${VERSION}.tar.gz
 MAX_THREADS=20
 BUILD_DIR=build
 CMAKE_FLAGS=-DCHARLES_BUILD_TESTS=ON -DBUILD_EXAMPLES=OFF
@@ -33,6 +35,10 @@ run: build
 		CHARLEMAGNE_OPACITY_ID=${OPACITY_ID} \
 		./build/src/charlemagne
 
+#### Python ####
+version: clean
+	sed --in-place "s/ version: .*/ version: '${VERSION}',/g" meson.build
+	echo "__version__ = '${VERSION}'" > python/charlemagne/__version__.py
 
 ######## Tests ########
 tests: build
