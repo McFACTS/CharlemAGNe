@@ -7,7 +7,7 @@ MAX_THREADS=20
 BUILD_DIR=build
 CMAKE_FLAGS=-DCHARLES_BUILD_TESTS=ON -DBUILD_EXAMPLES=OFF
 OPACITY_NAME=pagn_combined
-OPACITY_PATH=${CURDIR}/pagn_combined.sp5
+OPACITY_PATH=${CURDIR}/python/charlemagne/data/pagn_combined.sp5
 OPACITY_ID=1001
 
 ######## PACKAGE ########
