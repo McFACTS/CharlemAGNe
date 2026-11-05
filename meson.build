@@ -18,10 +18,14 @@ inc_dirs = [
 incdir = include_directories(inc_dirs)
 
 # Handle cminpack dependency
-cmake = import('cmake')
+cmake = import('cmake') # OK we are using cmake from meson I guess
+# Seems to initialize an options dict
 cminpack_opts = cmake.subproject_options()
 cminpack_opts.add_cmake_defines({'BUILD_EXAMPLES': 'OFF', 'CMINPACK_PRECISION': 'd'})
+cminpack_opts.set_install(false) # Don't install cminpack into libdir_static
+# Set up the targets for meson
 cminpack_proj = cmake.subproject('cminpack', options: cminpack_opts)
+# We depend on this!
 cminpack_dep = cminpack_proj.dependency('cminpack')
 
 # Install Python package

@@ -5,3 +5,4 @@ build/
 charlemagne_sg03.csv
 charlemagne_tqm05.csv
 *.wraplock
+*__pycache__
