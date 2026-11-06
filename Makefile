@@ -37,7 +37,11 @@ build: configure
 
 tests: configure
 	cmake --build ${BUILD_DIR} --target charlemagne_unit_tests -j ${MAX_THREADS}
-	cd ${BUILD_DIR} && ctest --output-on-failure -R '^charlemagne\.unit\.'
+	cd ${BUILD_DIR} && \
+	CHARLEMAGNE_OPACITY_NAME=${OPACITY_NAME} \
+		CHARLEMAGNE_OPACITY_PATH=${OPACITY_PATH} \
+		CHARLEMAGNE_OPACITY_ID=${OPACITY_ID} \
+	ctest --output-on-failure -R '^charlemagne\.unit\.'
 
 run: build
 	CHARLEMAGNE_OPACITY_NAME=${OPACITY_NAME} \

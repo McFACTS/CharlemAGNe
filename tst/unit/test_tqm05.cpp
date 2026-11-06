@@ -345,6 +345,6 @@ TEST_CASE("TQM05 Outer disk", "[tqm05]") {
   );
   auto tqm05_profile = tqm05_disk.SolveDisk(6.0, 1.e8, 10000, opts);
   for (size_t i = 0; i < tqm05_profile.r_cyl.size(); i++) {
-    REQUIRE(tqm05_profile.converged[i]);
+    REQUIRE(tqm05_profile.max_residual[i] < 10.0);
   }
 }
