@@ -195,7 +195,6 @@ static PyObject *abi_solve_sg03(PyObject *, PyObject *args, PyObject *kwargs) {
     // Give it the old charles try
     CHARLES_TRY
     // Check for SG03
-    // TODO disk arguments and solver options
     SG03 disk(
         opac_name, opac_path, opac_id,
         smbh_mass, eddington_ratio, alpha, X_mass_fraction,
@@ -208,6 +207,68 @@ static PyObject *abi_solve_sg03(PyObject *, PyObject *args, PyObject *kwargs) {
 
 // 1D TQM05 disk
 static PyObject *abi_solve_tqm05(PyObject *, PyObject *args, PyObject *kwargs) {
-    PyErr_SetString(PyExc_NotImplementedError, "TQM05 binding not implemented yet");
-    return nullptr;
+    // args
+    std::string opac_name;
+    char *opac_name_ = nullptr;
+    std::string opac_path;
+    char *opac_path_ = nullptr;
+    int opac_id;
+    // kwargs
+    double rmin = 6.0, rmax = 1.0e7;
+    int npts = 1000;
+    double smbh_mass = 1.e8;
+    double velocity_dispersion = 0.0;
+    double radiative_efficiency = 1.e-3;
+    double transport_efficiency = 0.2;
+    double supernova_pressure = 1.0;
+    double X_mass_fraction = 0.7;
+    double radius_inner = 6.0;
+    double radius_outer = 0.0;
+    double mdot_outer = 2.0169e+25;
+    static const char *kwlist[] = {
+        "opac_name", "opac_path", "opac_id",
+        "rmin", "rmax", "npts", 
+        "smbh_mass", "velocity_dispersion", "radiative_efficiency",
+        "transport_efficiency", "supernova_pressure",
+        "X_mass_fraction", "radius_inner", "radius_outer", "mdot_outer",
+        nullptr};
+    // We're looking for the arguments we want to use in this block,
+    //   and assigning their values to the variables we defined.
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssi|ddidddddd", (char **)kwlist,
+        &opac_name_, &opac_path_, &opac_id,
+        &rmin, &rmax, &npts,
+        &smbh_mass,
+        &velocity_dispersion,
+        &radiative_efficiency,
+        &transport_efficiency,
+        &supernova_pressure,
+        &X_mass_fraction,
+        &radius_inner,
+        &radius_outer,
+        &mdot_outer
+      ))
+      return nullptr;
+    if (!opac_name_) return nullptr;
+    if (!opac_path_) return nullptr;
+    opac_name = (std::string)opac_name_;
+    opac_path = (std::string)opac_path_;
+    
+    // Give it the old charles try
+    CHARLES_TRY
+    // Check for TQM05
+    TQM05 disk(
+        opac_name, opac_path, opac_id,
+        smbh_mass,
+        velocity_dispersion,
+        radiative_efficiency,
+        transport_efficiency,
+        supernova_pressure,
+        X_mass_fraction,
+        radius_inner,
+        radius_outer,
+        mdot_outer
+    );
+    auto prof = disk.SolveDisk(rmin, rmax, npts, SolverOpts{});
+    return profile_to_dict(prof);
+    CHARLES_CATCH
 }
