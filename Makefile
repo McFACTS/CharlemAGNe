@@ -1,5 +1,5 @@
 # Declarations
-.PHONY: all init configure build tests run clean
+.PHONY: all init configure build tests run clean version install install-dist pytest
 all: tests
 
 ######## Settings ########
@@ -46,7 +46,7 @@ run: build
 		./build/src/charlemagne
 
 #### Python ####
-version: clean
+version:
 	sed --in-place "s/ version: .*/ version: '${VERSION}',/g" meson.build
 	echo "__version__ = '${VERSION}'" > python/charlemagne/__version__.py
 
@@ -61,8 +61,8 @@ install-dist: $(DIST)
 install: clean version
 	pip install . $(PIP_OPTS)
 
-######## Tests ########
-#tests: build
+pytest: clean tests install-dist
+	pytest
 
 ######## Cleanup #########
 clean:

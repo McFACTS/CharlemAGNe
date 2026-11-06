@@ -234,7 +234,7 @@ static PyObject *abi_solve_tqm05(PyObject *, PyObject *args, PyObject *kwargs) {
         nullptr};
     // We're looking for the arguments we want to use in this block,
     //   and assigning their values to the variables we defined.
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssi|ddidddddd", (char **)kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssi|ddiddddddddd", (char **)kwlist,
         &opac_name_, &opac_path_, &opac_id,
         &rmin, &rmax, &npts,
         &smbh_mass,
