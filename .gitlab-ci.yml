@@ -38,7 +38,7 @@ build:
     - dnf -y install epel-release
     - dnf -y install cmake hdf5-devel hdf5-static
   script:
-    - make tests
+    - make pytest
   artifacts:
     paths:
       - build/
