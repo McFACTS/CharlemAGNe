@@ -13,20 +13,25 @@ add_project_arguments('-DNPY_TARGET_VERSION=NPY_1_19_API_VERSION', language: 'cp
 # Include directories
 inc_dirs = [
     'src',
+    'external/singularity-opac',
+    'external/singularity-opac/utils',
+    'external/singularity-opac/utils/spiner',
+    'external/singularity-opac/utils/ports-of-call',
+    'external/cminpack/include',
 ]
 
 incdir = include_directories(inc_dirs)
 
 # Handle cminpack dependency
-cmake = import('cmake') # OK we are using cmake from meson I guess
-# Seems to initialize an options dict
-cminpack_opts = cmake.subproject_options()
-cminpack_opts.add_cmake_defines({'BUILD_EXAMPLES': 'OFF', 'CMINPACK_PRECISION': 'd'})
-cminpack_opts.set_install(false) # Don't install cminpack into libdir_static
-# Set up the targets for meson
-cminpack_proj = cmake.subproject('cminpack', options: cminpack_opts)
-# We depend on this!
-cminpack_dep = cminpack_proj.dependency('cminpack')
+add_project_arguments('-DSPINER_USE_HDF', '-DCMINPACK_NO_DLL', language: 'cpp')
+cminpack_inc = include_directories('external/cminpack/include')
+cminpack_lib = static_library('cminpack',
+  files(
+  ),
+  include_directories: cminpack_inc,
+  c_args: ['-DCMINPACK_NO_DLL'],
+)
+cminpack_dep = declare_dependency(link_with: cminpack_lib, include_directories: cminpack_inc)
 
 # Install Python package
 subdir('python/charlemagne')

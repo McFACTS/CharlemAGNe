@@ -5,9 +5,8 @@
 // I am proud that I can make and understand this, even with lots of refs.
 //
 // Python / Numpy modules
-#pragma once
-//#include "sg03.hpp"
-//#include "tqm05.hpp"
+#include "sg03.hpp"
+#include "tqm05.hpp"
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
@@ -21,7 +20,7 @@
         PyErr_SetString(PyExc_RuntimeError, e.what());                       \
         return nullptr;                                                      \
     } catch (...) {                                                          \
-        PyError_SetString(PyExc_RuntimeError, "unknown C++ exception");      \
+        PyErr_SetString(PyExc_RuntimeError, "unknown C++ exception");      \
         return nullptr;                                                      \
     }
 
@@ -39,7 +38,7 @@ static PyMethodDef charlemagne_methods[] = {
     {
     "abi_solve_disk",
     abi_solve_disk,
-    METH_VARARGS,
+    (PyCFunction)(void(*)(void))fn, METH_VARARGS, | METH_KEYWORDS
     abi_solve_disk_docstring,
     },
     {NULL, NULL, 0, NULL}
@@ -77,7 +76,7 @@ static PyObject *profile_to_dict(const Profile &p) {
         if (!arr) return false;
         // Copy data into array
         // memcpy should work for doubles
-        std::memcpy(PyArray_DATA((PyArrayObject *)arr), v.data(), n * sizeof(double));
+        std::memcpy(PyArray_DATA((PyArrayObject *)arr), v.data(), npts * sizeof(double));
         // Assign array to dictionary
         PyDict_SetItemString(dict, name, arr);
         // Remove the reference to the array
@@ -91,7 +90,7 @@ static PyObject *profile_to_dict(const Profile &p) {
         if (!arr) return false;
         // Copy data into array
         npy_bool *d = (npy_bool *)PyArray_DATA((PyArrayObject *)arr);
-        for (npy_intp i = 0; i < n; i++) { d[i] = v[i] ? 1 : 0;}
+        for (npy_intp i = 0; i < npts; i++) { d[i] = v[i] ? 1 : 0;}
         // Assign array to dictionary
         PyDict_SetItemString(dict, name, arr);
         // Remove the reference to the array
@@ -101,11 +100,11 @@ static PyObject *profile_to_dict(const Profile &p) {
     // This makes a NumPy array from a vector of ints
     auto add_ints = [&](const char *name, const std::vector<int> &v) -> bool {
         // Make the array or die trying
-        PyObject *arr = PyArray_SimpleNew(1, dims, NPY_BOOL);
+        PyObject *arr = PyArray_SimpleNew(1, dims, NPY_INT);
         if (!arr) return false;
         // Copy data into array
-        npy_intp *d = (npy_intp *)PyArray_DATA((PyArrayObject *)arr);
-        for (npy_intp i = 0; i < n; i++) { d[i] = v[i];}
+        npy_int *d = (npy_int *)PyArray_DATA((PyArrayObject *)arr);
+        for (npy_intp i = 0; i < npts; i++) { d[i] = v[i];}
         // Assign array to dictionary
         PyDict_SetItemString(dict, name, arr);
         // Remove the reference to the array
@@ -117,7 +116,7 @@ static PyObject *profile_to_dict(const Profile &p) {
         !add_bools("converged", p.converged) ||
         !add_doubles("max_residual", p.max_residual) ||
         !add_ints("steps", p.steps) ||
-        !add_bools("star_formation", p.star_formation)
+        !add_bools("star_formation", p.star_formation) ||
         !add_doubles("r_cyl", p.r_cyl) ||
         !add_doubles("omega", p.omega) ||
         !add_doubles("Teff", p.Teff) ||
