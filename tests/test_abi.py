@@ -43,7 +43,8 @@ def test_rmax():
         OPAC_NAME, OPAC_PATH, OPAC_ID,
         rmax=rmax_default*2
     )
-    rmin2, rmax2 = r_cyl.min(), r_cyl.max()
+    r_cyl2 = profile_dict2["r_cyl"]
+    rmin2, rmax2 = r_cyl2.min(), r_cyl2.max()
     rmin2 = rmin2 / (1.e8 * MSUN * G_SI / C_SI**2)
     rmax2 = rmax2 / (1.e8 * MSUN * G_SI / C_SI**2)
     print(rmin2)
