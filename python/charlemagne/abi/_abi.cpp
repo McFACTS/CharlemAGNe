@@ -5,6 +5,7 @@
 // I am proud that I can make and understand this, even with lots of refs.
 //
 // Python / Numpy modules
+#pragma once
 #include "sg03.hpp"
 #include "tqm05.hpp"
 #include <Python.h>
@@ -20,26 +21,35 @@
         PyErr_SetString(PyExc_RuntimeError, e.what());                       \
         return nullptr;                                                      \
     } catch (...) {                                                          \
-        PyErr_SetString(PyExc_RuntimeError, "unknown C++ exception");      \
+        PyErr_SetString(PyExc_RuntimeError, "unknown C++ exception");        \
         return nullptr;                                                      \
     }
 
 /* Define docstrings */
 static char module_docstring[] =
     "Python bindings for CharlemAGNe";
-static char abi_solve_disk_docstring[] =
-    "Solve the disk model using the C++ module; do not persist the disk";
+static char abi_solve_sg03_docstring[] =
+    "Solve the SG03 model using the C++ module; do not persist the disk";
+static char abi_solve_tqm05_docstring[] =
+    "Solve the TQM05 model using the C++ module; do not persist the disk";
 
 /* Forward declarations */
-static PyObject *abi_solve_disk(PyObject *self, PyObject *args, PyObject *kwargs);
+static PyObject *abi_solve_sg03(PyObject *self, PyObject *args, PyObject *kwargs);
+static PyObject *abi_solve_tqm05(PyObject *self, PyObject *args, PyObject *kwargs);
 
 /* Define the methods */
 static PyMethodDef charlemagne_methods[] = {
     {
-    "abi_solve_disk",
-    abi_solve_disk,
+    "abi_solve_sg03",
+    abi_solve_sg03,
     (PyCFunction)(void(*)(void))fn, METH_VARARGS, | METH_KEYWORDS
-    abi_solve_disk_docstring,
+    abi_solve_sg03_docstring,
+    },
+    {
+    "abi_solve_tqm05",
+    abi_solve_tqm05,
+    (PyCFunction)(void(*)(void))fn, METH_VARARGS, | METH_KEYWORDS
+    abi_solve_tqm05_docstring,
     },
     {NULL, NULL, 0, NULL}
 };
@@ -145,40 +155,61 @@ static PyObject *profile_to_dict(const Profile &p) {
     return dict;
 }
 
-// 1D Disks
-static PyObject *abi_solve_disk(PyObject *, PyObject *args, PyObject *kwargs) {
-    const char *model = nullptr;
-    // Define default values for the disk parameters
+// 1D SG03 disk
+static PyObject *abi_solve_sg03(PyObject *, PyObject *args, PyObject *kwargs) {
+    // args
+    std::string opac_name;
+    char *opac_name_ = nullptr;
+    std::string opac_path;
+    char *opac_path_ = nullptr;
+    int opac_id;
+    // kwargs
     double rmin = 6.0, rmax = 1.0e7;
     int npts = 1000;
+    double smbh_mass = 1.0e8;
+    double eddington_ratio = 0.5;
+    double alpha = 0.01;
+    double X_mass_fraction = 0.7;
+    double radiative_efficiency = 0.1;
+    bool viscosity_switch = false;
     // These are 
-    static const char *kwlist[] = {"model", "rmin", "rmax", "npts", nullptr};
+    static const char *kwlist[] = {
+        "opac_name", "opac_path", "opac_id",
+        "rmin", "rmax", "npts", 
+        "smbh_mass", "eddington_ratio", "alpha", "X_mass_fraction",
+        "radiative_efficiency",
+        "viscosity_switch",
+        nullptr};
     // We're looking for the arguments we want to use in this block,
     //   and assigning their values to the variables we defined.
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|ddi", (char **)kwlist,
-        &model, &rmin, &rmax, &npts))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "SSS|ddidddddp", (char **)kwlist,
+        &opac_name_, &opac_path_, &opac_id,
+        &rmin, &rmax, &npts
+        &smbh_mass, &eddington_ratio, &alpha, &X_mass_fraction,
+        &radiative_efficiency, &viscosity_switch,
+      ))
       return nullptr;
+    if (!opac_name_) return nullptr;
+    if (!opac_path_) return nullptr;
+    opac_name == (std::string)opac_name_
+    opac_path == (std::string)opac_path_
     
+    // Give it the old charles try
     CHARLES_TRY
-    Profile out;
     // Check for SG03
-    if (std::string(model) == "sg03") {
-        // TODO disk arguments and solver options
-        SG03 disk;
-        Py_BEGIN_ALLOW_THREADS
-        out = disk.SolveDisk(rmin, rmax, npts, SolverOpts{});
-        Py_END_ALLOW_THREADS
-    // Check for TQM05
-    } else if (std::string(model) == "tqm05") {
-        // TODO disk arguments and solver options
-        TQM05 disk;
-        Py_BEGIN_ALLOW_THREADS
-        out = disk.SolveDisk(rmin, rmax, npts, SolverOpts{});
-        Py_END_ALLOW_THREADS
-    } else {
-        PyErr_SetString(PyExc_ValueError, "model must be 'sg03' or 'tqm05'");
-        return nullptr;
-    }
+    // TODO disk arguments and solver options
+    SG03 disk(
+        opac_name, opac_path, opac_id,
+        smbh_mass, eddington_ratio, alpha, X_mass_fraction,
+        radiative_efficiency, viscosity_switch,
+    );
+    auto prof = disk.SolveDisk(rmin, rmax, npts, SolverOpts{});
     return profile_to_dict(out);
     CHARLES_CATCH
+}
+
+// 1D TQM05 disk
+static PyObject *abi_solve_tqm05(PyObject *, PyObject *args, PyObject *kwargs) {
+    //TODO
+    return nullptr;
 }
