@@ -1,4 +1,5 @@
 project('charlemagne',
+    'c',
     'cpp',
     version: '0.1.0',
     meson_version: '>=1.3.0',
@@ -26,8 +27,7 @@ incdir = include_directories(inc_dirs)
 add_project_arguments('-DSPINER_USE_HDF', '-DCMINPACK_NO_DLL', language: 'cpp')
 cminpack_inc = include_directories('external/cminpack/include')
 cminpack_lib = static_library('cminpack',
-  files(
-  ),
+  run_command('sh', '-c', 'ls external/cminpack/src/*.c', check: true).stdout().strip().split('\n'),
   include_directories: cminpack_inc,
   c_args: ['-DCMINPACK_NO_DLL'],
 )

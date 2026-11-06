@@ -41,14 +41,12 @@ static PyObject *abi_solve_tqm05(PyObject *self, PyObject *args, PyObject *kwarg
 static PyMethodDef charlemagne_methods[] = {
     {
     "abi_solve_sg03",
-    abi_solve_sg03,
-    (PyCFunction)(void(*)(void))fn, METH_VARARGS, | METH_KEYWORDS
+    (PyCFunction)(void(*)(void))abi_solve_sg03, METH_VARARGS | METH_KEYWORDS,
     abi_solve_sg03_docstring,
     },
     {
     "abi_solve_tqm05",
-    abi_solve_tqm05,
-    (PyCFunction)(void(*)(void))fn, METH_VARARGS, | METH_KEYWORDS
+    (PyCFunction)(void(*)(void))abi_solve_tqm05, METH_VARARGS | METH_KEYWORDS,
     abi_solve_tqm05_docstring,
     },
     {NULL, NULL, 0, NULL}
@@ -182,17 +180,17 @@ static PyObject *abi_solve_sg03(PyObject *, PyObject *args, PyObject *kwargs) {
         nullptr};
     // We're looking for the arguments we want to use in this block,
     //   and assigning their values to the variables we defined.
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "SSS|ddidddddp", (char **)kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssi|ddidddddp", (char **)kwlist,
         &opac_name_, &opac_path_, &opac_id,
-        &rmin, &rmax, &npts
+        &rmin, &rmax, &npts,
         &smbh_mass, &eddington_ratio, &alpha, &X_mass_fraction,
-        &radiative_efficiency, &viscosity_switch,
+        &radiative_efficiency, &viscosity_switch
       ))
       return nullptr;
     if (!opac_name_) return nullptr;
     if (!opac_path_) return nullptr;
-    opac_name == (std::string)opac_name_
-    opac_path == (std::string)opac_path_
+    opac_name = (std::string)opac_name_;
+    opac_path = (std::string)opac_path_;
     
     // Give it the old charles try
     CHARLES_TRY
@@ -201,15 +199,15 @@ static PyObject *abi_solve_sg03(PyObject *, PyObject *args, PyObject *kwargs) {
     SG03 disk(
         opac_name, opac_path, opac_id,
         smbh_mass, eddington_ratio, alpha, X_mass_fraction,
-        radiative_efficiency, viscosity_switch,
+        radiative_efficiency, viscosity_switch
     );
     auto prof = disk.SolveDisk(rmin, rmax, npts, SolverOpts{});
-    return profile_to_dict(out);
+    return profile_to_dict(prof);
     CHARLES_CATCH
 }
 
 // 1D TQM05 disk
 static PyObject *abi_solve_tqm05(PyObject *, PyObject *args, PyObject *kwargs) {
-    //TODO
+    PyErr_SetString(PyExc_NotImplementedError, "TQM05 binding not implemented yet");
     return nullptr;
 }
