@@ -50,7 +50,7 @@ build:
 unit:
   stage: unit
   script:
-    make tests
+    cd build && make test
 
 ## Does the abi wheel compile and behave?
 python:
