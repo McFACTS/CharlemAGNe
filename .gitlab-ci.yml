@@ -41,7 +41,7 @@ build:
     - dnf -y install python3-build
     - dnf -y install python3-pytest
   script:
-    - make pytest
+    - make configure
   artifacts:
     paths:
       - build/
@@ -50,13 +50,13 @@ build:
 unit:
   stage: unit
   script:
-    cd build && make test
+    make tests
 
 ## Does the abi wheel compile and behave?
-#python:
-#  stage: tests
-#  script:
-#    make pytest
+python:
+  stage: tests
+  script:
+    make pytest
 
 # tests:
 #   stage: tests
