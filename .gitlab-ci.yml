@@ -37,6 +37,8 @@ build:
     - dnf -y groupinstall "Development Tools"
     - dnf -y install epel-release
     - dnf -y install cmake hdf5-devel hdf5-static
+    - dnf -y install python3-devel python3-numpy
+    - dnf -y install build
   script:
     - make pytest
   artifacts:
