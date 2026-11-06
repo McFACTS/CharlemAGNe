@@ -28,7 +28,7 @@ default:
 stages:
   - build
   - unit
-  # - tests
+  - tests
 
 # Build, obviously overrides script/artifacts
 build:
@@ -39,17 +39,24 @@ build:
     - dnf -y install cmake hdf5-devel hdf5-static
     - dnf -y install python3-devel python3-numpy
     - dnf -y install python3-build
+    - dnf -y install python3-pytest
   script:
-    - make pytest
+    - make tests
   artifacts:
     paths:
       - build/
 
-# Unit tests
+# Unit tests; does the C++ compile and behave?
 unit:
   stage: unit
   script:
-    cd build/ && make test
+    make tests
+
+# Does the abi wheel compile and behave?
+python:
+  stage: tests
+  script:
+    make pytest
 
 # tests:
 #   stage: tests
