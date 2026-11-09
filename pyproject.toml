@@ -20,6 +20,19 @@ build = "cp39-* cp314t-*"
 select = "*t-*"
 config-settings = { setup-args = "-Dpython.allow_limited_api=false" }
 
+[tool.cibuildwheel.macos]
+test-requires = ["pytest"]
+test-command = "pytest {project}/tests -q"
+
+[tool.cibuildwheel.macos.environment]
+MACOSX_DEPLOYMENT_TARGET = "12.1"
+PKG_CONFIG_PATH = "/Users/xevra/miniconda3/envs/py39/lib/pkgconfig"
+LIBRARY_PATH = "/Users/xevra/miniconda3/envs/py39/lib"
+CPATH = "/Users/xevra/miniconda3/envs/py39/include"
+LDFLAGS = ""
+CPPFLAGS = ""
+CXXFLAGS = ""
+
 [project]
 name = "charlemagne"
 dynamic = ["version"]
