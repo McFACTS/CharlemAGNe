@@ -9,3 +9,5 @@ charlemagne_tqm05.csv
 dist/
 *.DS_Store
 local-wheels
+SG03*.png
+SG03*.jpg
