@@ -68,6 +68,19 @@ install: clean version
 pytest: clean tests install-dist
 	pytest
 
+######## Wheel funny buisiness ########
+
+local-wheels: clean
+	mkdir -p $(LOCAL_WHEELS)
+	cibuildwheel --output-dir $(LOCAL_WHEELS)
+	#wget "https://gitlab.com/xevra/charlemagne/-/jobs/artifacts/main/download?job=linux" -O $(LOCAL_WHEELS)/artifacts.zip
+	cd $(LOCAL_WHEELS); unzip artifacts.zip
+	mv $(LOCAL_WHEELS)/$(WHL)/*.whl $(LOCAL_WHEELS)
+	ls $(LOCAL_WHEELS)/artifacts.zip
+	rm $(LOCAL_WHEELS)/artifacts.zip
+	rm -rf $(LOCAL_WHEELS)/$(WHL)
+
+
 ######## Cleanup #########
 clean:
 	rm -rf ${BUILD_DIR}/*
