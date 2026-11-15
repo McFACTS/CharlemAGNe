@@ -158,13 +158,17 @@ class TQM05(Disk1D):
         X_mass_fraction         = TQM05_DEFAULTS["X_mass_fraction"],
         radius_inner            = TQM05_DEFAULTS["radius_inner"],
         radius_outer            = TQM05_DEFAULTS["radius_outer"],
-        mdot_outer              = TQM05_DEFAULTS["mdot_outer"],
+        mdot_outer              = 0.0,
     ):
         """Initialize the TQM05 Disk object
 
         Parameters
         ----------
         """
+        # Check mdot_outer
+        if mdot_outer == 0.0:
+            mdot_outer = TQM05_DEFAULTS["mdot_outer"] * \
+                (smbh_mass / TQM05_DEFAULTS["smbh_mass"])
         # Define the parameters dictionary
         self.params = {
             "rmin"                  : rmin,
