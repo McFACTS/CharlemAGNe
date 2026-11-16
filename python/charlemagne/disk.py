@@ -91,6 +91,10 @@ class Disk1D(ABC):
         """
         return list(self.profile.keys())
 
+    @property
+    def max_residual(self):
+        return self.profile["max_residual"].max()
+
 class SG03(Disk1D):
     """The Standard Sirko-Goodman disk with constant mdot throughout the disk
     """

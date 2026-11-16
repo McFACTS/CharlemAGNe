@@ -41,7 +41,7 @@ def test_sg03_coverage():
                 eddington_ratio=config.eddington,
                 npts=NPTS,
             )
-        print(f"SG03 -- smbh_mass: {config.smbh_mass}; lum: {config.eddington}; max_residual: {sg03['max_residual'].max()}")
+        print(f"SG03 -- smbh_mass: {config.smbh_mass}; lum: {config.eddington}; max_residual: {sg03.max_residual}")
         # Check that there's no NaNs or infs
         for q in PROFILE_FINITE:
             try:
@@ -70,8 +70,8 @@ def test_tqm05_coverage():
         except Exception as exc:
             print(f"Crash: smbh_mass: {config.smbh_mass}; lum: {config.eddington}")
             raise
-        print(f"TQM05 -- smbh_mass: {config.smbh_mass}; lum: {config.eddington}; max_residual: {tqm05['max_residual'].max()}")
-        if tqm05['max_residual'].max() > PASS_THRESHOLD:
+        print(f"TQM05 -- smbh_mass: {config.smbh_mass}; lum: {config.eddington}; max_residual: {tqm05.max_residual}")
+        if tqm05.max_residual > PASS_THRESHOLD:
             n_fail += 1
         # Check that there's no NaNs or infs
         for q in PROFILE_FINITE:
