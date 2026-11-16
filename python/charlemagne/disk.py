@@ -192,11 +192,8 @@ class TQM05(Disk1D):
         # Solve the disk
         self.profile = self._solve_disk()
         # Warn for bad
-        print("Hello World")
-        print("max_residual:", self.max_residual)
-        print("Check", self.max_residual > WARN_RESIDUAL)
         if self.max_residual > WARN_RESIDUAL:
-            print(f"{self.__class__} did not converge! (max residual: {self.max_residual})")
+            warnings.warn(f"{self.__class__} did not converge! (max residual: {self.max_residual})")
 
     def _solve_disk(self):
         """Call the C++ library and solve the disk"""
