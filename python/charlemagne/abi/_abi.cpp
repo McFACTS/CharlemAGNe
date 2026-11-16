@@ -6,9 +6,11 @@
 //
 // Python / Numpy modules
 #pragma once
+#include <Python.h>
+#define CHARLES_LOG_STDOUT(...) PySys_WriteStdout(__VA_ARGS__)
+#define CHARLES_LOG_STDERR(...) PySys_WriteStderr(__VA_ARGS__)
 #include "sg03.hpp"
 #include "tqm05.hpp"
-#include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include <cstring>
