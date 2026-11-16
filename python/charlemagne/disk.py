@@ -31,6 +31,7 @@ TQM05_DEFAULTS = {
     "rmax"                  : 4.178e+7,     # 200 pc for 1.e8 smbh in Rg
     "npts"                  : int(1e4),
     "smbh_mass"             : 1.e8,         # MSUN
+    "double eddington_ratio": 1.23271,
     "velocity_dispersion"   : 0.0,
     "radiative_efficiency"  : 1.e-3,
     "transport_efficiency"  : 0.2,
@@ -38,7 +39,6 @@ TQM05_DEFAULTS = {
     "X_mass_fraction"       : 0.7,
     "radius_inner"          : 6.0,          # 6.0 Rg
     "radius_outer"          : 4.178e+7,     # 200 pc for 1.e8 smbh in Rg
-    "mdot_outer"            : 2.0169e+25,   # 320 MSun/yr in SI
 }
 
 
@@ -151,6 +151,7 @@ class TQM05(Disk1D):
         rmax                    = TQM05_DEFAULTS["rmax"],
         npts                    = TQM05_DEFAULTS["npts"],
         smbh_mass               = TQM05_DEFAULTS["smbh_mass"],
+        eddington_ratio         = TQM05_DEFAULTS["eddington_ratio"],
         velocity_dispersion     = TQM05_DEFAULTS["velocity_dispersion"],
         radiative_efficiency    = TQM05_DEFAULTS["radiative_efficiency"],
         transport_efficiency    = TQM05_DEFAULTS["transport_efficiency"],
@@ -158,23 +159,19 @@ class TQM05(Disk1D):
         X_mass_fraction         = TQM05_DEFAULTS["X_mass_fraction"],
         radius_inner            = TQM05_DEFAULTS["radius_inner"],
         radius_outer            = TQM05_DEFAULTS["radius_outer"],
-        mdot_outer              = 0.0,
     ):
         """Initialize the TQM05 Disk object
 
         Parameters
         ----------
         """
-        # Check mdot_outer
-        if mdot_outer == 0.0:
-            mdot_outer = TQM05_DEFAULTS["mdot_outer"] * \
-                (smbh_mass / TQM05_DEFAULTS["smbh_mass"])
         # Define the parameters dictionary
         self.params = {
             "rmin"                  : rmin,
             "rmax"                  : rmax,
             "npts"                  : npts,
             "smbh_mass"             : smbh_mass,
+            "eddington_ratio"       : eddington_ratio,
             "velocity_dispersion"   : velocity_dispersion,
             "radiative_efficiency"  : radiative_efficiency,
             "transport_efficiency"  : transport_efficiency,
@@ -182,7 +179,6 @@ class TQM05(Disk1D):
             "X_mass_fraction"       : X_mass_fraction,
             "radius_inner"          : radius_inner,
             "radius_outer"          : radius_outer,
-            "mdot_outer"            : mdot_outer,
         }
         # Solve the disk
         self.profile = self._solve_disk()
@@ -195,6 +191,7 @@ class TQM05(Disk1D):
             rmax                    = self.rmax,
             npts                    = self.npts,
             smbh_mass               = self.smbh_mass,
+            eddington_ratio         = self.eddington_ratio,
             velocity_dispersion     = self.velocity_dispersion,
             radiative_efficiency    = self.radiative_efficiency,
             transport_efficiency    = self.transport_efficiency,
@@ -202,5 +199,4 @@ class TQM05(Disk1D):
             X_mass_fraction         = self.X_mass_fraction,
             radius_inner            = self.radius_inner,
             radius_outer            = self.radius_outer,
-            mdot_outer              = self.mdot_outer,
         )

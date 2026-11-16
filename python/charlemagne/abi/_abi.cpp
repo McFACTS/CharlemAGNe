@@ -217,6 +217,7 @@ static PyObject *abi_solve_tqm05(PyObject *, PyObject *args, PyObject *kwargs) {
     double rmin = 6.0, rmax = 1.0e7;
     int npts = 1000;
     double smbh_mass = 1.e8;
+    double eddington_ratio = 1.23271;
     double velocity_dispersion = 0.0;
     double radiative_efficiency = 1.e-3;
     double transport_efficiency = 0.2;
@@ -224,13 +225,12 @@ static PyObject *abi_solve_tqm05(PyObject *, PyObject *args, PyObject *kwargs) {
     double X_mass_fraction = 0.7;
     double radius_inner = 6.0;
     double radius_outer = 0.0;
-    double mdot_outer = 2.0169e+25;
     static const char *kwlist[] = {
         "opac_name", "opac_path", "opac_id",
         "rmin", "rmax", "npts", 
-        "smbh_mass", "velocity_dispersion", "radiative_efficiency",
-        "transport_efficiency", "supernova_pressure",
-        "X_mass_fraction", "radius_inner", "radius_outer", "mdot_outer",
+        "smbh_mass", "eddington_ratio", "velocity_dispersion",
+        "radiative_efficiency", "transport_efficiency", "supernova_pressure",
+        "X_mass_fraction", "radius_inner", "radius_outer",
         nullptr};
     // We're looking for the arguments we want to use in this block,
     //   and assigning their values to the variables we defined.
@@ -238,14 +238,14 @@ static PyObject *abi_solve_tqm05(PyObject *, PyObject *args, PyObject *kwargs) {
         &opac_name_, &opac_path_, &opac_id,
         &rmin, &rmax, &npts,
         &smbh_mass,
+        &eddington_ratio,
         &velocity_dispersion,
         &radiative_efficiency,
         &transport_efficiency,
         &supernova_pressure,
         &X_mass_fraction,
         &radius_inner,
-        &radius_outer,
-        &mdot_outer
+        &radius_outer
       ))
       return nullptr;
     if (!opac_name_) return nullptr;
@@ -259,14 +259,14 @@ static PyObject *abi_solve_tqm05(PyObject *, PyObject *args, PyObject *kwargs) {
     TQM05 disk(
         opac_name, opac_path, opac_id,
         smbh_mass,
+        eddington_ratio,
         velocity_dispersion,
         radiative_efficiency,
         transport_efficiency,
         supernova_pressure,
         X_mass_fraction,
         radius_inner,
-        radius_outer,
-        mdot_outer
+        radius_outer
     );
     auto prof = disk.SolveDisk(rmin, rmax, npts, SolverOpts{});
     return profile_to_dict(prof);
