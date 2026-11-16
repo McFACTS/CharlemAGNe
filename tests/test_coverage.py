@@ -19,7 +19,7 @@ def named_product(**items):
 
 ALL_SMBH_MASS = np.geomspace(1.e5, 1.e10, 16)
 ALL_TQM_MASS = np.geomspace(1.e6, 1.e10, 13)
-ALL_EDDINGTON = np.linspace(0.1, 1.0, 4)
+ALL_EDDINGTON = np.geomspace(0.01, 10.0, 13)
 NUM_SIM = ALL_SMBH_MASS.size * ALL_EDDINGTON.size
 PROFILE_FINITE = ["omega", "Teff", "Mdot", "T", "cs", "rho", "kappa", "tauV", "h", "dr_cyl", "dA", "dV", "mass_disk", "Mdot_sf"]
 
@@ -53,7 +53,7 @@ def test_tqm05_coverage():
     print(f"Running {NUM_SIM} TQM05 disks!")
     tic = time.perf_counter()
     for config in named_product(
-            smbh_mass = ALL_TQM_MASS,
+            smbh_mass = ALL_SMBH_MASS,
             eddington = ALL_EDDINGTON,
         ):
         try:
@@ -61,12 +61,11 @@ def test_tqm05_coverage():
             with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
                 tqm05 = TQM05(
                     smbh_mass=config.smbh_mass,
-                    #eddington_ratio=config.eddington,
+                    eddington_ratio=config.eddington,
                 )
         except Exception as exc:
             print(f"Crash: smbh_mass: {config.smbh_mass}; lum: {config.eddington}")
             raise
-        print(f"smbh_mass: {config.smbh_mass}; lum: {config.eddington}")
         # Check that there's no NaNs or infs
         for q in PROFILE_FINITE:
             try:

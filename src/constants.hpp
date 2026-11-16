@@ -41,4 +41,6 @@ inline constexpr double C_SI = 299792458.0;
 inline constexpr double STEFAN_BOLTZMANN = 5.670374419e-08;
 inline constexpr double KBOLTZMANN = 1.380649e-23;
 inline constexpr double AMU = 1.6605390666050e-27;
+inline constexpr double YEAR_SI = 365.25 * 86400.0;
+inline constexpr double PC_SI =  30856775814913673.0;
 } // namespace constants

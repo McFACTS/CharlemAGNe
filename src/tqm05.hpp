@@ -60,6 +60,7 @@ public:
    * @param opac_path The path to the sp5 file
    * @param opac_id The ID field of the opacity table in the sp5 file
    * @param smbh_mass Schwarzschild radius
+   * @param eddington_ratio Fraction of Eddington Mass Accretion at radius_outer
    * @param velocity_dispersion the 'sigma' describing stellar velocity disp
    * @param radiative_efficiency  radiative efficiency of star formation
    * @param transport_efficiency The fraction of the local sound speed which conveys angular momentum transport efficiency.
@@ -67,22 +68,22 @@ public:
    * @param X_mass_fraction Hydrogen abundance
    * @param radius_inner The inner radius (R_g) of the disk
    * @param radius_outer The largest radius for which accretion rate may be constant
-   * @param mdot_outer The accretion rate at radius_outer
   */
   TQM05(
       std::string opac_name,
       std::string opac_path,
       int opac_id,
       double smbh_mass = 1.e8,
+      double eddington_ratio = 1.23271,
       double velocity_dispersion = 0.0,
       double radiative_efficiency = 1.e-3,
       double transport_efficiency = 0.2,
       double supernova_pressure = 1.0,
       double X_mass_fraction = 0.7,
       double radius_inner = 6.0,
-      double radius_outer = 4.178e+7,
-      double mdot_outer = 2.0169e+25
+      double radius_outer = 4.178e+7
   ): smbh_mass_(smbh_mass * SOLAR_MASS_KG),
+        eddington_ratio_(eddington_ratio),
         velocity_dispersion_(velocity_dispersion),
         radiative_efficiency_(radiative_efficiency),
         transport_efficiency_(transport_efficiency),
@@ -90,7 +91,6 @@ public:
         X_mass_fraction_(X_mass_fraction),
         radius_outer_(radius_outer),
         radius_inner_(radius_inner),
-        mdot_outer_(mdot_outer),
         opac_(opac_name, opac_path, opac_id) {
     // Cache the velocity dispersion
     velocity_dispersion_ = GetVelocityDispersion();
@@ -140,7 +140,7 @@ public:
   double GetTransportEfficiency() const { return transport_efficiency_; }
   double GetSupernovaPressure() const { return supernova_pressure_; }
   double GetX() const { return X_mass_fraction_; }
-  double GetMDotOuter() const { return mdot_outer_; }
+  double GetMDotOuter() const { return GetMDotEddington() * eddington_ratio_; }
 
   /* Rg */
   double GetRg() const {
@@ -180,6 +180,23 @@ public:
       C_SI * C_SI * GetRadiativeEfficiency()
       * 2. * GetRhoOuter() * GetAspectRatioOuter() * GetAngularVelocityOuter()
     );
+  }
+
+  /* Eddington Accretion Rate */
+  double GetMDotEddington() const {
+    /* Electron scattering opacity */
+    /* cm^2 g^-1 * (1 m / 100 cm)^2 * (1 kg / 1000 g)^-1 */
+    double electron_scattering_opacity = 0.2 * (1.0 + GetX()) * 0.1;
+    /* Eddington Luminosity */
+    double eddington_luminosity =
+        4.0 * M_PI * G_SI * C_SI * GetSMBHMass() /
+        electron_scattering_opacity;
+    /* Mdot at Eddington */
+    double mdot_eddington =
+        eddington_luminosity /
+        (GetRadiativeEfficiency() * C_SI * C_SI);
+    /* Mass accretion rate */
+    return mdot_eddington;
   }
 
   /// Solve for T and rho in a 2D rootfind
@@ -497,6 +514,7 @@ public:
 private:
   /* Privates of things in constructor */
   double smbh_mass_;
+  double eddington_ratio_;
   double velocity_dispersion_;
   double radiative_efficiency_;
   double transport_efficiency_;
@@ -504,7 +522,6 @@ private:
   double X_mass_fraction_;
   double radius_inner_;
   double radius_outer_;
-  double mdot_outer_;
   double angular_velocity_outer_;
   double star_formation_outer_;
   double temperature_outer_;
