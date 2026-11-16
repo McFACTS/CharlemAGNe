@@ -50,6 +50,13 @@
 //////// Setup /////////
 using namespace constants;
 
+#ifndef CHARLES_LOG_STDOUT
+#define CHARLES_LOG_STDOUT(...) std::fprintf(stdout, __VA_ARGS__)
+#endif
+#ifndef CHARLES_LOG_STDERR
+#define CHARLES_LOG_STDERR(...) std::fprintf(stderr, __VA_ARGS__)
+#endif
+
 // We are trying to replicate np.geomspace
 inline std::vector<double> geomspace(
     double start,

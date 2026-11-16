@@ -118,7 +118,7 @@ public:
     
     // Check mdot against mdot max
     if (GetMDotOuter() > MDotMax) {
-        printf(
+        CHARLES_LOG_STDERR(
             "Cannot set MDotOuter (%g) greater than MDotMax (%g)!\n",
             GetMDotOuter(), MDotMax
         );
@@ -417,7 +417,7 @@ public:
         // Catch non-converged
         if (!cur.converged) {
           // Check the maximum residual
-          fprintf(stderr, "non-converged i=%d r=%.6gRg sf=%d residual=%.3e\n",
+          CHARLES_LOG_STDERR("non-converged i=%d r=%.6gRg sf=%d residual=%.3e\n",
             iter, cur.r_cyl / GetRg(), (int)star_formation, cur.max_residual);
           if (!std::isfinite(cur.max_residual)) {
             throw std::runtime_error("Failed to converge disk!\n");

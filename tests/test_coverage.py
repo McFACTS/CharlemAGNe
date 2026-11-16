@@ -3,6 +3,7 @@
 #### Standard Library ####
 import collections
 import itertools
+from contextlib import redirect_stdout, redirect_stderr
 import os
 import time
 #### Third Party ####
@@ -32,12 +33,14 @@ def test_sg03_coverage():
         smbh_mass = ALL_SMBH_MASS,
         eddington = ALL_EDDINGTON,
     ):
-        # Construct a disk
-        sg03 = SG03(
-            smbh_mass=config.smbh_mass,
-            eddington_ratio=config.eddington,
-            npts=NPTS,
-        )
+        with open(os.devnull, 'w') as devnull:
+          with redirect_stdout(devnull), redirect_stderr(devnull):
+            # Construct a disk
+            sg03 = SG03(
+                smbh_mass=config.smbh_mass,
+                eddington_ratio=config.eddington,
+                npts=NPTS,
+            )
         print(f"SG03 -- smbh_mass: {config.smbh_mass}; lum: {config.eddington}; max_residual: {sg03.max_residual}")
         # Check that there's no NaNs or infs
         for q in PROFILE_FINITE:
@@ -57,11 +60,13 @@ def test_tqm05_coverage():
             eddington = ALL_EDDINGTON,
         ):
         try:
-            tqm05 = TQM05(
-                smbh_mass=config.smbh_mass,
-                eddington_ratio=config.eddington,
-                npts=NPTS,
-            )
+          with open(os.devnull, 'w') as devnull:
+            with redirect_stdout(devnull), redirect_stderr(devnull):
+                tqm05 = TQM05(
+                    smbh_mass=config.smbh_mass,
+                    eddington_ratio=config.eddington,
+                    npts=NPTS,
+                )
         except Exception as exc:
             print(f"Crash: smbh_mass: {config.smbh_mass}; lum: {config.eddington}")
             raise
