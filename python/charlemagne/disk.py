@@ -31,7 +31,7 @@ TQM05_DEFAULTS = {
     "rmax"                  : 4.178e+7,     # 200 pc for 1.e8 smbh in Rg
     "npts"                  : int(1e4),
     "smbh_mass"             : 1.e8,         # MSUN
-    "double eddington_ratio": 1.23271,
+    "eddington_ratio"       : 1.23271,
     "velocity_dispersion"   : 0.0,
     "radiative_efficiency"  : 1.e-3,
     "transport_efficiency"  : 0.2,
