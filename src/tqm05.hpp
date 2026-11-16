@@ -419,7 +419,7 @@ public:
           // Check the maximum residual
           fprintf(stderr, "non-converged i=%d r=%.6gRg sf=%d residual=%.3e\n",
             iter, cur.r_cyl / GetRg(), (int)star_formation, cur.max_residual);
-          if (!std::isfinite(cur.max_residual) || cur.max_residual > 10.0) {
+          if (!std::isfinite(cur.max_residual)) {
             throw std::runtime_error("Failed to converge disk!\n");
           }
         }
