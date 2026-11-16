@@ -18,10 +18,11 @@ def named_product(**items):
     return itertools.starmap(Options, itertools.product(*items.values()))
 
 ALL_SMBH_MASS = np.geomspace(1.e5, 1.e10, 16)
-ALL_TQM_MASS = np.geomspace(1.e6, 1.e10, 13)
 ALL_EDDINGTON = np.geomspace(0.01, 10.0, 13)
 NUM_SIM = ALL_SMBH_MASS.size * ALL_EDDINGTON.size
 PROFILE_FINITE = ["omega", "Teff", "Mdot", "T", "cs", "rho", "kappa", "tauV", "h", "dr_cyl", "dA", "dV", "mass_disk", "Mdot_sf"]
+PASS_THRESHOLD = 10.0
+NPTS = int(1e4)
 
 ######## Tests ########
 def test_sg03_coverage():
@@ -38,19 +39,21 @@ def test_sg03_coverage():
             sg03 = SG03(
                 smbh_mass=config.smbh_mass,
                 eddington_ratio=config.eddington,
+                npts=NPTS,
             )
+        print(f"SG03 -- smbh_mass: {config.smbh_mass}; lum: {config.eddington}; max_residual: {sg03['max_residual'].max()}")
         # Check that there's no NaNs or infs
         for q in PROFILE_FINITE:
             try:
                 assert np.all(np.isfinite(sg03[q]))
             except AssertionError as exc:
-                print(f"smbh_mass: {config.smbh_mass}; lum: {config.eddington}")
                 raise
     toc = time.perf_counter()
     print(f"SG03 time: {toc-tic:.6f}s")
 
 def test_tqm05_coverage():
     print(f"Running {NUM_SIM} TQM05 disks!")
+    n_fail = 0
     tic = time.perf_counter()
     for config in named_product(
             smbh_mass = ALL_SMBH_MASS,
@@ -62,10 +65,14 @@ def test_tqm05_coverage():
                 tqm05 = TQM05(
                     smbh_mass=config.smbh_mass,
                     eddington_ratio=config.eddington,
+                    npts=NPTS,
                 )
         except Exception as exc:
             print(f"Crash: smbh_mass: {config.smbh_mass}; lum: {config.eddington}")
             raise
+        print(f"TQM05 -- smbh_mass: {config.smbh_mass}; lum: {config.eddington}; max_residual: {tqm05['max_residual'].max()}")
+        if tqm05['max_residual'].max() > PASS_THRESHOLD:
+            n_fail += 1
         # Check that there's no NaNs or infs
         for q in PROFILE_FINITE:
             try:
@@ -74,7 +81,7 @@ def test_tqm05_coverage():
                 print(f"smbh_mass: {config.smbh_mass}; lum: {config.eddington}")
                 raise
     toc = time.perf_counter()
-    print(f"TQM05 time: {toc-tic:.6f}s")
+    print(f"TQM05 time: {toc-tic:.6f}s ({n_fail} sims failed)")
 
 ######## Execution ########
 if __name__ == "__main__":
