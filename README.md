@@ -1,5 +1,31 @@
 # CharlemAGNe: C++ Hydrostatic Annulus Radially Localized Equations Module for Active Galactic NuclEi
 
+This module solves analytic disk models including the
+  [Sirko-Goodman](https://academic.oup.com/mnras/article/341/2/501/1105444) and
+  [Thompson et al.](https://scixplorer.org/abs/2005ApJ...630..167T/abstract) 
+  disks as a function of radius from 
+  the supermassive black hole (SMBH)
+  of an AGN disk.
+There are two reasons for writing this in C++:
+- The intention is that this module will be fast enough to generate a disk
+  in a small fraction of a second. 
+  Prior to this, 
+  [McFACTS](https://github.com/mcfacts/mcfacts)
+  took a comparable amount of time to generate a disk using existing Python
+  implementations and simulate one galaxy for one Myr.
+  A faster disk model will allow for Monte-Carlo sampling of disk properties
+  (such as SMBH mass and eddington rate).
+- I would like to use this module to set up the initial conditions for
+  hydrodyanamics simulations, and those simulations are written in C++
+  (E.g. [KHARMA](https://github.com/parthenon-hpc-lab/kharma/)).
+  In order to set up those initial conditions with the same opacity model
+  which is used in-situ in the simulation, CharlemAGNe itself
+  must use the same opacity module.
+  The Parthenon-based hydro codes I am interested in working with all use
+  [singularity-opac](https://github.com/lanl/singularity-opac).
+  Writing this module in C++ allows me to use singularity-opac, and to include
+  the C++ library in a problem generator for the initial conditions
+  of a KHARMA simulation.
 
 ## Authors and acknowledgment
 
