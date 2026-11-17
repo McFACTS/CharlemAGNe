@@ -36,7 +36,7 @@ CXXFLAGS = ""
 [project]
 name = "charlemagne"
 dynamic = ["version"]
-description = "ChalemAGNe"
+description = "CharlemAGNe"
 authors = [
     {name = "V. Delfavero", email="vdfavero@cita.utoronto.ca"},
 ]
