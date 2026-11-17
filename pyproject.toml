@@ -20,6 +20,11 @@ build = "cp39-* cp314t-*"
 select = "*t-*"
 config-settings = { setup-args = "-Dpython.allow_limited_api=false" }
 
+[tool.cibuildwheel.linux]
+container-engine = "podman"
+test-requires = ["pytest"]
+test-command = "pytest {project}/tests -q"
+
 [tool.cibuildwheel.macos]
 test-requires = ["pytest"]
 test-command = "pytest {project}/tests -q"
