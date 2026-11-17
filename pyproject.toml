@@ -43,7 +43,7 @@ authors = [
 maintainers = [
     {name = "V. Delfavero", email="vdfavero@cita.utoronto.ca"},
 ]
-license = {text = "GPL 3"}
+license = "GPL-3.0-only"
 license-files = ["LICENSE-GPL-3"]
 readme = "README.md"
 requires-python = ">=3.9,<3.15"
