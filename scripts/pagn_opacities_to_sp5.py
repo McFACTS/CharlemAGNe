@@ -97,7 +97,7 @@ if APPLY_MASK:
         assert idx_bad > 2
         # Estimate the slope
         y_here = PAGN_LOGRT_COMBINED_DATA[i][[idx_bad -2, idx_bad - 1]]
-        x_here = PAGN_LOGRT_COMBINED_T[[idx_bad - 2, idx_bad - 1]]
+        x_here = PAGN_LOGRT_COMBINED_R[[idx_bad - 2, idx_bad - 1]]
         m_here = (y_here[1] - y_here[0]) / (x_here[1] - x_here[0])
         # Define a lambda here
         lam_here = lambda rho_here : m_here * (rho_here - x_here[1]) + (y_here[1])
