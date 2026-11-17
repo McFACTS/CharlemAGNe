@@ -38,6 +38,16 @@ This module is a spiritual successor to pAGN:
  [paper](https://academic.oup.com/mnras/article/530/4/3689/7659378?login=true),
  [arxiv](https://arxiv.org/abs/2403.00060).
 
+## A note on the name
+
+With codes like "pAGN" and "AGNostic" in the environment now, it seems
+  like words containing "AGN" with religious tones are a motif the
+  community is sticking with.
+CharlemAGNe fits that motif nicely, and I find a great deal of joy in the pun.
+However, I must include a disclaimer that we do not endorse the actions
+  of the historic figure Charlemagne, nor do we endorse the actions
+  of the Holy Roman Empire.
+
 ## Project Milestones
 
 Reproduce SG03 and TQM05 in a faster C++ code compatible with singularity-opac opacity tables: :white_check_mark:
