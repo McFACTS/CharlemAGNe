@@ -82,7 +82,7 @@ APPLY_MASK = True
 ## Trim data
 if APPLY_MASK:
     _DATA = PAGN_LOGRT_COMBINED_DATA[~CEIL_MASK]
-    for i, log10T in enumerate(LOG10T_GRID):
+    for i, log10T in enumerate(PAGN_LOGRT_COMBINED_T):
         # No extrapolation to be done
         if np.all(~CEIL_MASK[i]):
             continue
@@ -97,12 +97,12 @@ if APPLY_MASK:
         assert idx_bad > 2
         # Estimate the slope
         y_here = PAGN_LOGRT_COMBINED_DATA[i][[idx_bad -2, idx_bad - 1]]
-        x_here = LOG10R_GRID[[idx_bad - 2, idx_bad - 1]]
+        x_here = PAGN_LOGRT_COMBINED_T[[idx_bad - 2, idx_bad - 1]]
         m_here = (y_here[1] - y_here[0]) / (x_here[1] - x_here[0])
         # Define a lambda here
         lam_here = lambda rho_here : m_here * (rho_here - x_here[1]) + (y_here[1])
         # Evaluate the lambda
-        PAGN_LOGRT_COMBINED_DATA[i,ceil_mask_here] = lam_here(LOG10R_GRID[ceil_mask_here])
+        PAGN_LOGRT_COMBINED_DATA[i,ceil_mask_here] = lam_here(PAGN_LOGRT_COMBINED_R[ceil_mask_here])
 else:
     _DATA = PAGN_LOGRT_COMBINED_DATA.flatten()
 _R = _R.flatten()
