@@ -77,17 +77,36 @@ PAGN_LOGRT_COMBINED_R = np.loadtxt(opacity_dir / "logRT_combined_Raxis.dat")
 _R, _T = np.meshgrid(PAGN_LOGRT_COMBINED_R, PAGN_LOGRT_COMBINED_T)
 CEIL = 9.999
 CEIL_MASK = np.isclose(PAGN_LOGRT_COMBINED_DATA, CEIL)
-APPLY_MASK = False
+APPLY_MASK = True
 
 ## Trim data
 if APPLY_MASK:
-    _R = _R[~CEIL_MASK]
-    _T = _T[~CEIL_MASK]
     _DATA = PAGN_LOGRT_COMBINED_DATA[~CEIL_MASK]
+    for i, log10T in enumerate(LOG10T_GRID):
+        # No extrapolation to be done
+        if np.all(~CEIL_MASK[i]):
+            continue
+        # Get the points in this row that are bad
+        ceil_mask_here = CEIL_MASK[i]
+        # Check that all points we need to replace are at the end
+        if np.any(ceil_mask_here[:-1] > ceil_mask_here[1:]):
+            raise RuntimeError("We care about more than the upper bound here")
+        # The index of the first bad element is the sum of the good elements
+        idx_bad = (~ceil_mask_here).sum()
+        # Check that we have at least two good points
+        assert idx_bad > 2
+        # Estimate the slope
+        y_here = PAGN_LOGRT_COMBINED_DATA[i][[idx_bad -2, idx_bad - 1]]
+        x_here = LOG10R_GRID[[idx_bad - 2, idx_bad - 1]]
+        m_here = (y_here[1] - y_here[0]) / (x_here[1] - x_here[0])
+        # Define a lambda here
+        lam_here = lambda rho_here : m_here * (rho_here - x_here[1]) + (y_here[1])
+        # Evaluate the lambda
+        PAGN_LOGRT_COMBINED_DATA[i,ceil_mask_here] = lam_here(LOG10R_GRID[ceil_mask_here])
 else:
-    _R = _R.flatten()
-    _T = _T.flatten()
     _DATA = PAGN_LOGRT_COMBINED_DATA.flatten()
+_R = _R.flatten()
+_T = _T.flatten()
 PAGN_INTERP = scipy.interpolate.RectBivariateSpline(
     PAGN_LOGRT_COMBINED_T,#_T,
     PAGN_LOGRT_COMBINED_R,#_R,
