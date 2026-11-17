@@ -1,5 +1,5 @@
 # Declarations
-.PHONY: all init configure build tests run clean version install install-dist pytest
+.PHONY: all init configure build tests run clean version install install-dist pytest pypi testpypi pypi-wheels testpypi-wheels
 all: tests
 
 ######## Settings ########
@@ -70,6 +70,12 @@ pytest: clean tests install-dist
 
 ######## Wheel funny buisiness ########
 
+testpypi: pytest
+	python3 -m twine upload --repository testpypi $(DIST)
+
+pypi: pytest
+	python3 -m twine upload $(DIST)
+
 local-wheels: clean
 	mkdir -p $(LOCAL_WHEELS)
 	cibuildwheel --output-dir $(LOCAL_WHEELS)
@@ -79,6 +85,12 @@ local-wheels: clean
 	#ls $(LOCAL_WHEELS)/artifacts.zip
 	#rm $(LOCAL_WHEELS)/artifacts.zip
 	#rm -rf $(LOCAL_WHEELS)/$(WHL)
+
+testpypi-wheels: local-wheels
+	python3 -m twine upload --repository testpypi $(LOCAL_WHEELS)/*.whl
+
+pypi-wheels: testpypi-wheels
+	python3 -m twine upload $(LOCAL_WHEELS)/*.whl
 
 
 ######## Cleanup #########
