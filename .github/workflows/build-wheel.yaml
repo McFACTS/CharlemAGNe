@@ -37,7 +37,9 @@ jobs:
       - name: Install build dependencies
         run: |
           dnf -y groupinstall "Development Tools"
-          dnf -y install epel-release cmake hdf5 hdf5-devel hdf5-static
+          dnf -y install epel-release
+          dnf config-manager --set-enabled crb || true
+          dnf -y install cmake hdf5 hdf5-devel hdf5-static
           dnf -y install python3-devel python3-numpy python3-build python3-pytest
       - run: make configure
       - uses: actions/upload-artifact@v4
@@ -56,7 +58,10 @@ jobs:
         with: {name: build-dir, path: build/ }
       - run: |
           dnf -y groupinstall "Development Tools"
-          dnf -y install epel-release cmake hdf5 hdf5-devel python3-devel python3-numpy
+          dnf -y install epel-release
+          dnf config-manager --set-enabled crb || true
+          dnf -y install cmake hdf5 hdf5-devel hdf5-static
+          dnf -y python3-devel python3-numpy
       - run: make tests
 
   pytest:
@@ -72,7 +77,10 @@ jobs:
         with: {name: build-dir, path: build/ }
       - run: |
           dnf -y groupinstall "Development Tools"
-          dnf -y install epel-release cmake hdf5 hdf5-devel python3-devel python3-pip python3-numpy python3-build python3-pytest
+          dnf -y install epel-release
+          dnf config-manager --set-enabled crb || true
+          dnf -y install cmake hdf5 hdf5-devel hdf5-static
+          dnf -y install python3-devel python3-pip python3-numpy python3-build python3-pytest
       - run: make pytest
       - uses: actions/upload-artifact@v4
         with: { name: dist, path: dist/ }
