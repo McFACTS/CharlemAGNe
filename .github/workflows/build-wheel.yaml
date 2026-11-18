@@ -51,8 +51,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with: {name: build-dir, path: build/ }
       - run: |
-        dnf -y groupinstall "Development Tools"
-        dnf -y install epel-release cmake hdf5 hdf5-devel python3-devel python3-numpy
+          dnf -y groupinstall "Development Tools"
+          dnf -y install epel-release cmake hdf5 hdf5-devel python3-devel python3-numpy
       - run: make tests
 
   pytest:
@@ -65,8 +65,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with: {name: build-dir, path: build/ }
       - run: |
-        dnf -y groupinstall "Development Tools"
-        dnf -y install epel-release cmake hdf5 hdf5-devel python3-devel python3-numpy python3-build python3-pytest
+          dnf -y groupinstall "Development Tools"
+          dnf -y install epel-release cmake hdf5 hdf5-devel python3-devel python3-pip python3-numpy python3-build python3-pytest
       - run: make pytest
       - uses: actions/upload-artifact@v4
         with: { name: dist, path: dist/ }
