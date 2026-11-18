@@ -32,8 +32,7 @@ jobs:
       - name: Reinstall git
         run: dnf -y install git
       - uses: actions/checkout@v4
-        with:
-          submodules: true
+        with: { submodules: recursive }
       - name: Install build dependencies
         run: |
           dnf -y groupinstall "Development Tools"
@@ -53,7 +52,7 @@ jobs:
       - name: Reinstall git
         run: dnf -y install git
       - uses: actions/checkout@v4
-        with: {submodules: true }
+        with: { submodules: recursive }
       - uses: actions/download-artifact@v4
         with: {name: build-dir, path: build/ }
       - run: |
@@ -72,7 +71,7 @@ jobs:
       - name: Reinstall git
         run: dnf -y install git
       - uses: actions/checkout@v4
-        with: {submodules: true }
+        with: { submodules: recursive }
       - uses: actions/download-artifact@v4
         with: {name: build-dir, path: build/ }
       - run: |
