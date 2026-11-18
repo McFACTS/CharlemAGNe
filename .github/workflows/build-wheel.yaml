@@ -29,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     container: docker.io/almalinux:10
     steps:
+      - name: Reinstall git
+        run: dnf -y install git
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -46,6 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     container: docker.io/almalinux:10
     steps:
+      - name: Reinstall git
+        run: dnf -y install git
       - uses: actions/checkout@v4
         with: {submodules: true }
       - uses: actions/download-artifact@v4
@@ -60,6 +64,8 @@ jobs:
     runs-on: ubuntu-latest
     container: docker.io/almalinux:10
     steps:
+      - name: Reinstall git
+        run: dnf -y install git
       - uses: actions/checkout@v4
         with: {submodules: true }
       - uses: actions/download-artifact@v4
