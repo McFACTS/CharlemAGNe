@@ -1,0 +1,73 @@
+name: CI
+
+# Run on any push or PR to main, and whenever there is a version tag
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+# Read the repository. No write
+permissions:
+  contents: read
+
+# Don't run multiple at a time from the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Environment variables
+env:
+  CIBW_CONTAINER_ENGINE: docker
+  CHARLEMAGNE_OPACITY_NAME: pagn_combined
+  CHARLEMAGNE_OPACITY_PATH: ${{ github.workspace }}/python/charlemagne/data/pagn_combined.sp5
+  CHARLEMAGNE_OPACITY_ID: "1001"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: docker.io/almalinux:10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install build dependencies
+        run: |
+          dnf -y groupinstall "Development Tools"
+          dnf -y install epel-release cmake hdf5 hdf5-devel hdf5-static
+          dnf -y install python3-devel python3-numpy python3-build python3-pytest
+      - run: make configure
+      - uses: actions/upload-artifact@v4
+        with: { name: build-dir, path: build/ }
+
+  unit:
+    needs: build
+    runs-on: ubuntu-latest
+    container: docker.io/almalinux:10
+    steps:
+      - uses: actions/checkout@v4
+        with: {submodules: true }
+      - uses: actions/download-artifact@v4
+        with: {name: build-dir, path: build/ }
+      - run: |
+        dnf -y groupinstall "Development Tools"
+        dnf -y install epel-release cmake hdf5 hdf5-devel python3-devel python3-numpy
+      - run: make tests
+
+  pytest:
+    needs: build
+    runs-on: ubuntu-latest
+    container: docker.io/almalinux:10
+    steps:
+      - uses: actions/checkout@v4
+        with: {submodules: true }
+      - uses: actions/download-artifact@v4
+        with: {name: build-dir, path: build/ }
+      - run: |
+        dnf -y groupinstall "Development Tools"
+        dnf -y install epel-release cmake hdf5 hdf5-devel python3-devel python3-numpy python3-build python3-pytest
+      - run: make pytest
+      - uses: actions/upload-artifact@v4
+        with: { name: dist, path: dist/ }
+
