@@ -102,8 +102,10 @@ jobs:
   wheels-macos:
     strategy:
       matrix:
-        os: [macos-latest, macos-13]
+        os: [macos-latest, macos-15-intell]
     runs-on: ${{ matrix.os }}
+    env:
+      CIBW_BUILD_VERBOSITY: 2
     steps:
       - uses: actions/checkout@v4
         with: { submodules: recursive }
@@ -116,6 +118,13 @@ jobs:
           echo "LIBRARY_PATH=$(brew --prefix hdf5)/lib" >> "$GITHUB_ENV"
           echo "CPATH=$(brew --prefix hdf5)/include" >> "$GITHUB_ENV"
       - run: pip install cibuildwheel
+      - name: Diagnose hdf5 visibility
+        run: |
+          brew --prefix hdf5
+          ls "$(brew --prefix hdf5)/lib/" | grep -i hdf5 || true
+          pkg-config --modversion hdf5 hdf5_hl
+          pkg-config --static --libs hdf5_hl || true
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH LIBRARY_PATH=$LIBRARY_PATH"
       - run: make local-wheels
       - uses: actions/upload-artifact@v4
         with: { name: "wheels-macos-${{ matrix.os }}", path: local-wheels/*.whl }
