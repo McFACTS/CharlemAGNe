@@ -55,8 +55,6 @@ jobs:
         with: { submodules: recursive }
       - name: Trust the workspace for git
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - uses: actions/download-artifact@v4
-        with: {name: build-dir, path: build/ }
       - run: |
           dnf -y groupinstall "Development Tools"
           dnf -y install epel-release
@@ -76,8 +74,6 @@ jobs:
         with: { submodules: recursive }
       - name: Trust the workspace for git
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - uses: actions/download-artifact@v4
-        with: {name: build-dir, path: build/ }
       - run: |
           dnf -y groupinstall "Development Tools"
           dnf -y install epel-release
