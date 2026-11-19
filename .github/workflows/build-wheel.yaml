@@ -112,7 +112,7 @@ jobs:
         with: { submodules: recursive }
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
-      - run: brew install hdf5
+      - run: brew install hdf5 szip libaec
       - name: Point builds at brew hdf5
         run: |
           echo "PKG_CONFIG_PATH=$(brew --prefix hdf5)/lib/pkgconfig" >> "$GITHUB_ENV"
