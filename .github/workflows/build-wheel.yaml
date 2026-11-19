@@ -93,7 +93,7 @@ jobs:
       - uses: actions/checkout@v4
         with: { submodules: recursive }
       - uses: actions/setup-python@v5
-        with: { python-version: '3.9' }
+        with: { python-version: '3.12' }
       - run: pip install cibuildwheel
       - run: make local-wheels
       - uses: actions/upload-artifact@v4
@@ -108,7 +108,7 @@ jobs:
       - uses: actions/checkout@v4
         with: { submodules: recursive }
       - uses: actions/setup-python@v5
-        with: { python-version: '3.9' }
+        with: { python-version: '3.12' }
       - run: brew install hdf5
       - name: Point builds at brew hdf5
         run: |
