@@ -26,7 +26,7 @@ container-engine = "podman"
 manylinux-x86_64-image = "manylinux_2_28"
 before-all = '''
 set -e
-dnf install -y hdf5-devel
+dnf install -y hdf5-devel hdf5-static
 test -f /usr/include/hdf5.h
 printf 'prefix=/usr\nlibdir=/usr/lib64\nincludedir=/usr/include\n\nName: hdf5\nDescription: HDF5\nVersion: 1.10.4\nLibs: -L${libdir} -lhdf5\nCflags: -I${includedir}\n' > /usr/local/lib/pkgconfig/hdf5.pc
 printf 'prefix=/usr\nlibdir=/usr/lib64\nincludedir=/usr/include\n\nName: hdf5_hl\nDescription: HDF5 HL\nVersion: 1.10.4\nRequires: hdf5\nLibs: -L${libdir} -lhdf5_hl\nCflags: -I${includedir}\n' > /usr/local/lib/pkgconfig/hdf5_hl.pc
