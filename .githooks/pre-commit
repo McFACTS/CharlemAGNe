@@ -23,7 +23,7 @@ echo "Running global pre-commit rules..."
 # pre-commit runs from repo root by default,
 # so run the formatter script on everything:
 export KDEV_FORMAT_STAGED=1
-./bin/format.sh
+./bin/format
 unset KDEV_FORMAT_STAGED
 
 # Then need to re-stage so that the formatted version is committed.
