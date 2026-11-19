@@ -38,63 +38,56 @@
 //// Local ////
 #include "constants.hpp"
 #include "disk1d.hpp"
+#include "opacity.hpp"
 #include "sg03.hpp"
 #include "tqm05.hpp"
-#include "opacity.hpp"
 #include "utils.hpp"
 //// Third Party ////
 //// Standard Library ////
+#include <chrono>
 #include <cstdio>
-#include <iostream>
 #include <filesystem>
+#include <iostream>
 #include <stdexcept>
 #include <string>
-#include <chrono>
 
-constexpr char CHARLEMAGNE_OPACITY_NAME[]   = "CHARLEMAGNE_OPACITY_NAME";
-//std::string name = "pagn_combined",
-constexpr char CHARLEMAGNE_OPACITY_PATH[]   = "CHARLEMAGNE_OPACITY_PATH";
-//std::string path = "./pagn_combined.sp5",
-constexpr char CHARLEMAGNE_OPACITY_ID[]     = "CHARLEMAGNE_OPACITY_ID";
-//int opacid = 1001
+constexpr char CHARLEMAGNE_OPACITY_NAME[] = "CHARLEMAGNE_OPACITY_NAME";
+// std::string name = "pagn_combined",
+constexpr char CHARLEMAGNE_OPACITY_PATH[] = "CHARLEMAGNE_OPACITY_PATH";
+// std::string path = "./pagn_combined.sp5",
+constexpr char CHARLEMAGNE_OPACITY_ID[] = "CHARLEMAGNE_OPACITY_ID";
+// int opacid = 1001
 
 int main(int argc, char *argv[]) {
   // Get arguments
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
   }
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
 
   // setup disk
-  auto sg03_disk = SG03(
-    opac_name,
-    opac_path,
-    opac_id
-  );
+  auto sg03_disk = SG03(opac_name, opac_path, opac_id);
   auto tic = std::chrono::high_resolution_clock::now();
   sg03_disk.WriteDisk("./charlemagne_sg03.csv");
   auto toc = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
+  auto duration =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(toc - tic);
   printf("Solved SG03 disk in %g s\n", duration.count() / 1.e9);
 
   // Run TQM disk
-  auto tqm05_disk = TQM05(
-    opac_name,
-    opac_path,
-    opac_id
-  );
+  auto tqm05_disk = TQM05(opac_name, opac_path, opac_id);
   tic = std::chrono::high_resolution_clock::now();
   tqm05_disk.WriteDisk("./charlemagne_tqm05.csv");
   toc = std::chrono::high_resolution_clock::now();
-  duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc-tic);
+  duration = std::chrono::duration_cast<std::chrono::nanoseconds>(toc - tic);
   printf("Solved TQM05 disk in %g s\n", duration.count() / 1.e9);
   return 0;
 }

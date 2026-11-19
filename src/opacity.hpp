@@ -48,7 +48,6 @@
 #include <string>
 #include <utility>
 
-
 //////// Setup /////////
 using namespace constants;
 
@@ -62,18 +61,12 @@ public:
 class PAGNCombined : public OpacityHandler {
 public:
   /* Constructor for PAGNCombined OpacityHandler */
-  PAGNCombined(
-    const std::string name,
-    const std::string path,
-    int opacid
-  ) :
-    name_(std::move(name)),
-    path_(std::move(path)),
-    opacid_(std::move(opacid))
-  {
+  PAGNCombined(const std::string name, const std::string path, int opacid)
+      : name_(std::move(name)), path_(std::move(path)),
+        opacid_(std::move(opacid)) {
     // Make sure the filepath checks out
     if (!std::filesystem::is_regular_file(path_)) {
-        throw std::runtime_error("File not found: " + path_);
+      throw std::runtime_error("File not found: " + path_);
     }
     mean_opac_cgs_ = singularity::photons::MeanOpacityBase(path_, name_);
   }
@@ -83,14 +76,17 @@ public:
 
   // Return the value of the opacity
   double eval(double rho_si, double temp) const {
-    //const double logRopac = std::log10(rho_si) - 3.0 * std::log10(temp) + 15.0;
+    // const double logRopac = std::log10(rho_si) - 3.0 * std::log10(temp)
+    // + 15.0;
     const double fake_rho = (rho_si / (temp * temp * temp)) * 1.e15;
-    return 0.1 * mean_opac_cgs_.RosselandMeanAbsorptionCoefficient(fake_rho, temp) / fake_rho;
+    return 0.1 *
+           mean_opac_cgs_.RosselandMeanAbsorptionCoefficient(fake_rho, temp) /
+           fake_rho;
   }
 
 private:
-    std::string name_;
-    std::string path_;
-    int opacid_;
-    singularity::photons::MeanOpacityBase mean_opac_cgs_;
+  std::string name_;
+  std::string path_;
+  int opacid_;
+  singularity::photons::MeanOpacityBase mean_opac_cgs_;
 };

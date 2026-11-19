@@ -44,25 +44,25 @@
 //// Standard Library ////
 
 //////// Setup ////////
-constexpr char CHARLEMAGNE_OPACITY_NAME[]   = "CHARLEMAGNE_OPACITY_NAME";
-//std::string name = "pagn_combined",
-constexpr char CHARLEMAGNE_OPACITY_PATH[]   = "CHARLEMAGNE_OPACITY_PATH";
-//std::string path = "./pagn_combined.sp5",
-constexpr char CHARLEMAGNE_OPACITY_ID[]     = "CHARLEMAGNE_OPACITY_ID";
-//int opacid = 1001
+constexpr char CHARLEMAGNE_OPACITY_NAME[] = "CHARLEMAGNE_OPACITY_NAME";
+// std::string name = "pagn_combined",
+constexpr char CHARLEMAGNE_OPACITY_PATH[] = "CHARLEMAGNE_OPACITY_PATH";
+// std::string path = "./pagn_combined.sp5",
+constexpr char CHARLEMAGNE_OPACITY_ID[] = "CHARLEMAGNE_OPACITY_ID";
+// int opacid = 1001
 
 //////// Tests ////////
 
 //// SG03 Defaults ////
 TEST_CASE("SG03 Disk object defaults", "[sg03]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
   }
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
@@ -78,26 +78,22 @@ TEST_CASE("SG03 Disk object defaults", "[sg03]") {
 //// SG03 Assign ////
 TEST_CASE("SG03 Disk object value assignments", "[sg03]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
   }
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
-  auto B = SG03(
-    opac_name,
-    opac_path,
-    opac_id,
-    1.e7,  /* SMBH mass */
-    1.0,   /* Eddington ratio */
-    0.02,  /* Alpha */
-    0.715, /* X mass abundance */
-    0.2    /* radiative efficiency */
+  auto B = SG03(opac_name, opac_path, opac_id, 1.e7, /* SMBH mass */
+                1.0,                                 /* Eddington ratio */
+                0.02,                                /* Alpha */
+                0.715,                               /* X mass abundance */
+                0.2                                  /* radiative efficiency */
   );
   REQUIRE(B.GetSMBHMassSolar() == 1e7);
   REQUIRE(B.GetEddingtonRatio() == 1.0);
@@ -109,136 +105,129 @@ TEST_CASE("SG03 Disk object value assignments", "[sg03]") {
 //// SG03 Mdot ////
 TEST_CASE("SG03 Disk Mdot default", "[sg03]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
   }
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
-    auto disk = SG03(opac_name, opac_path, opac_id);
-    REQUIRE(std::abs((disk.GetMDot() - 8.180726668384155e+22)/8.180726668384155e+22) < 1e-7);
+  auto disk = SG03(opac_name, opac_path, opac_id);
+  REQUIRE(std::abs((disk.GetMDot() - 8.180726668384155e+22) /
+                   8.180726668384155e+22) < 1e-7);
 }
 
 //// SG03 omega and Teff4 ////
 TEST_CASE("SG03 Disk annulus (inner, SF off, viscosity_flag false)", "[sg03]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
   }
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
-    auto disk = SG03(opac_name, opac_path, opac_id);
-    double r_12 = 12.0 * disk.GetRg();
-    /* Test r_g */
-    REQUIRE(std::abs((r_12 - 1.773e+12) /1.773e+12) < 1.e-3 );
-    /* Test omega */
-    double omega = disk.GetAngularVelocity(r_12);
-    REQUIRE(std::abs((omega - 4.8786388186989514e-05) / 4.8786388186989514e-05) < 1.e-2);
-    /* Teff4 */
-    double Teff4 = disk.GetEffectiveTemperature4(r_12, omega);
-    REQUIRE(std::abs((Teff4 - 1.4540e+20)/1.4540e+20) < 1.e-1);
-    /* xguess */
-    double Teff = disk.GetEffectiveTemperature(r_12, omega);
-    double xguess_a = std::log10(omega * r_12 * 1.e-2);
-    double xguess_b = std::log10(Teff);
-    REQUIRE(std::abs((xguess_a - 5.93707448) / 5.93707448) < 1.e-4);
-    REQUIRE(std::abs((xguess_b - 5.04064371) / 5.04064371) < 1.e-4);
-    /* do the solve */
-    Parcel parcel = disk.solve_cs_T(r_12, xguess_a, xguess_b);
-    REQUIRE(std::abs((std::log10(parcel.cs) - 6.987e+00) / 6.987e+00) < 1.e-2);
-    REQUIRE(std::abs((std::log10(parcel.T) - 5.794e+00) / 5.794e+00) < 1.e-3);
-    /* Test other things about the solution */
-    /* These are only going to agree to like 10 % */
-    /* That's okay. We don't have to be pAGN. */
-    REQUIRE(parcel.converged);
-    REQUIRE(parcel.steps > 0);
-    REQUIRE((std::abs(parcel.rho - 4.005222e-07)/4.005222e-07) < 1.e-1);
-    REQUIRE((std::abs(parcel.kappa - 3.444013e-02)/3.444013e-02) < 1.e-1);
-    REQUIRE((std::abs(parcel.tauV - 2.744850e+03)/2.744850e+03) < 1.e-1);
-    REQUIRE((std::abs(parcel.Q - 1.417050e+07)/1.417050e+07) < 1.e-1);
-    REQUIRE((std::abs(parcel.h - 1.989881e+11)/1.989881e+11) < 1.e-1);
-
-
+  auto disk = SG03(opac_name, opac_path, opac_id);
+  double r_12 = 12.0 * disk.GetRg();
+  /* Test r_g */
+  REQUIRE(std::abs((r_12 - 1.773e+12) / 1.773e+12) < 1.e-3);
+  /* Test omega */
+  double omega = disk.GetAngularVelocity(r_12);
+  REQUIRE(std::abs((omega - 4.8786388186989514e-05) / 4.8786388186989514e-05) <
+          1.e-2);
+  /* Teff4 */
+  double Teff4 = disk.GetEffectiveTemperature4(r_12, omega);
+  REQUIRE(std::abs((Teff4 - 1.4540e+20) / 1.4540e+20) < 1.e-1);
+  /* xguess */
+  double Teff = disk.GetEffectiveTemperature(r_12, omega);
+  double xguess_a = std::log10(omega * r_12 * 1.e-2);
+  double xguess_b = std::log10(Teff);
+  REQUIRE(std::abs((xguess_a - 5.93707448) / 5.93707448) < 1.e-4);
+  REQUIRE(std::abs((xguess_b - 5.04064371) / 5.04064371) < 1.e-4);
+  /* do the solve */
+  Parcel parcel = disk.solve_cs_T(r_12, xguess_a, xguess_b);
+  REQUIRE(std::abs((std::log10(parcel.cs) - 6.987e+00) / 6.987e+00) < 1.e-2);
+  REQUIRE(std::abs((std::log10(parcel.T) - 5.794e+00) / 5.794e+00) < 1.e-3);
+  /* Test other things about the solution */
+  /* These are only going to agree to like 10 % */
+  /* That's okay. We don't have to be pAGN. */
+  REQUIRE(parcel.converged);
+  REQUIRE(parcel.steps > 0);
+  REQUIRE((std::abs(parcel.rho - 4.005222e-07) / 4.005222e-07) < 1.e-1);
+  REQUIRE((std::abs(parcel.kappa - 3.444013e-02) / 3.444013e-02) < 1.e-1);
+  REQUIRE((std::abs(parcel.tauV - 2.744850e+03) / 2.744850e+03) < 1.e-1);
+  REQUIRE((std::abs(parcel.Q - 1.417050e+07) / 1.417050e+07) < 1.e-1);
+  REQUIRE((std::abs(parcel.h - 1.989881e+11) / 1.989881e+11) < 1.e-1);
 }
 
 TEST_CASE("SG03 Disk annulus (inner, SF off, viscosity_flag true)", "[sg03]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
   }
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
-    auto disk = SG03(
-      opac_name,
-      opac_path,
-      opac_id,
-      1.0e8,
-      0.5,
-      0.01,
-      0.7,
-      0.1,
-      true
-    );
-    double r_12 = 1773273854892.248;
-    /* Test r_g */
-    REQUIRE(std::abs((r_12 - 1.773e+12) /1.773e+12) < 1.e-3 );
-    double omega = disk.GetAngularVelocity(r_12);
-    double Teff = disk.GetEffectiveTemperature(r_12, omega);
-    /* xguess */
-    double xguess_a = std::log10(omega * r_12 * 1.e-2);
-    double xguess_b = std::log10(Teff) + 1.6;
-    /* do the solve */
-    Parcel parcel = disk.solve_cs_T(r_12, xguess_a, xguess_b);
-    /* Test other things about the solution */
-    /* These are only going to agree to like 10 % */
-    /* That's okay. We don't have to be pAGN. */
-    REQUIRE(parcel.converged);
-    REQUIRE(parcel.steps > 0);
-    REQUIRE((std::abs(parcel.r_cyl - 1773273854892.248)/1773273854892.248) < 1.e-6);
-    /// R: 1773273854892.248
-    REQUIRE((std::abs(parcel.cs - 9499194.578861302)/9499194.578861302) < 1.e-1);
-    /// cs: 9499194.578861302
-    REQUIRE((std::abs(parcel.T - 4405448.482048553)/4405448.482048553) < 1.e-1);
-    /// T: 4405448.482048553
-    REQUIRE((std::abs(parcel.Teff - 109810.459)/109810.459) < 1.e-1);
-    /// Teff: 109810.45933419175
-    REQUIRE((std::abs(parcel.rho - 1.053157e-03)/1.053157e-03) < 1.e-1);
-    /// rho: 1.053157e-03
-    REQUIRE((std::abs(parcel.kappa - 3.368785e-02)/3.368785e-02) < 1.e-1);
-    /// kappa: 3.368785e-02
-    REQUIRE((std::abs(parcel.tauV - 6.908032e+06)/6.908032e+06) < 1.e-1);
-    /// tauV: 6.908032e+06
-    REQUIRE((std::abs(parcel.Q - 5.389132e+03)/5.389132e+03) < 1.e-1);
-    /// Q: 5.389132e+03
-    REQUIRE((std::abs(parcel.h - 1.947099e+11)/1.947099e+11) < 1.e-1);
-    /// h: 1.947099e+11
+  auto disk =
+      SG03(opac_name, opac_path, opac_id, 1.0e8, 0.5, 0.01, 0.7, 0.1, true);
+  double r_12 = 1773273854892.248;
+  /* Test r_g */
+  REQUIRE(std::abs((r_12 - 1.773e+12) / 1.773e+12) < 1.e-3);
+  double omega = disk.GetAngularVelocity(r_12);
+  double Teff = disk.GetEffectiveTemperature(r_12, omega);
+  /* xguess */
+  double xguess_a = std::log10(omega * r_12 * 1.e-2);
+  double xguess_b = std::log10(Teff) + 1.6;
+  /* do the solve */
+  Parcel parcel = disk.solve_cs_T(r_12, xguess_a, xguess_b);
+  /* Test other things about the solution */
+  /* These are only going to agree to like 10 % */
+  /* That's okay. We don't have to be pAGN. */
+  REQUIRE(parcel.converged);
+  REQUIRE(parcel.steps > 0);
+  REQUIRE((std::abs(parcel.r_cyl - 1773273854892.248) / 1773273854892.248) <
+          1.e-6);
+  /// R: 1773273854892.248
+  REQUIRE((std::abs(parcel.cs - 9499194.578861302) / 9499194.578861302) <
+          1.e-1);
+  /// cs: 9499194.578861302
+  REQUIRE((std::abs(parcel.T - 4405448.482048553) / 4405448.482048553) < 1.e-1);
+  /// T: 4405448.482048553
+  REQUIRE((std::abs(parcel.Teff - 109810.459) / 109810.459) < 1.e-1);
+  /// Teff: 109810.45933419175
+  REQUIRE((std::abs(parcel.rho - 1.053157e-03) / 1.053157e-03) < 1.e-1);
+  /// rho: 1.053157e-03
+  REQUIRE((std::abs(parcel.kappa - 3.368785e-02) / 3.368785e-02) < 1.e-1);
+  /// kappa: 3.368785e-02
+  REQUIRE((std::abs(parcel.tauV - 6.908032e+06) / 6.908032e+06) < 1.e-1);
+  /// tauV: 6.908032e+06
+  REQUIRE((std::abs(parcel.Q - 5.389132e+03) / 5.389132e+03) < 1.e-1);
+  /// Q: 5.389132e+03
+  REQUIRE((std::abs(parcel.h - 1.947099e+11) / 1.947099e+11) < 1.e-1);
+  /// h: 1.947099e+11
 }
 TEST_CASE("SG03 Disk annulus (inner, SF on, viscosity_flag false)", "[sg03]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
   }
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
@@ -255,14 +244,10 @@ TEST_CASE("SG03 Disk annulus (inner, SF on, viscosity_flag false)", "[sg03]") {
   Parcel parcel = disk.solve_cs_T(r_800, xguess_a, xguess_b);
 
   /* We're only using Teff to set up our next guess */
-  xguess_a = std::log10(Teff);// + 1.6;
+  xguess_a = std::log10(Teff); // + 1.6;
   xguess_b = std::log10(Teff) + 1.6;
   /* do the real solve */
-  parcel = disk.solve_Teff_T(
-    r_800,
-    xguess_a,
-    xguess_b
-  );
+  parcel = disk.solve_Teff_T(r_800, xguess_a, xguess_b);
   printf("converged: %d\n", parcel.converged);
   printf("r_cyl: %g\n", parcel.r_cyl);
   printf("cs: %g\n", parcel.cs);
@@ -273,70 +258,66 @@ TEST_CASE("SG03 Disk annulus (inner, SF on, viscosity_flag false)", "[sg03]") {
   printf("tauV: %g\n", parcel.tauV);
   printf("Q: %g\n", parcel.Q);
   printf("h: %g\n", parcel.h);
-    REQUIRE(parcel.converged);
-    REQUIRE(parcel.steps > 0);
-    // R: 233981685308525.47
-    REQUIRE((std::abs(parcel.r_cyl - 233981685308525.47)/233981685308525.47) < 1.e-6);
-    // cs: 55589.63200337918
-    REQUIRE((std::abs(parcel.cs - 55589.632)/55589.632) < 1.e-4);
-    // T: 70383.14284818874
-    REQUIRE((std::abs(parcel.T - 70383.14284818874)/70383.14284818874) < 1.e-4);
-    // Teff: 3603.107000477657
-    REQUIRE((std::abs(parcel.Teff - 3603.107)/3603.107) < 1.e-2);
-    // rho: 2.470550e-06
-    REQUIRE((std::abs(parcel.rho - 2.470550e-06)/2.470550e-06) < 1.e-4);
-    // kappa: 9.099875e-02
-    REQUIRE((std::abs(parcel.kappa - 9.099875e-02)/9.099875e-02) < 1.e-1);
-    // tauV: 3.882695e+05
-    REQUIRE((std::abs(parcel.tauV - 3.882695e+05)/3.882695e+05) < 1.e-1);
-    // Q: 1.000000e+00
-    REQUIRE((std::abs(parcel.Q - 1.000000e+00)/1.000000e+00) < 1.e-6);
-    // h: 1.727047e+12
-    REQUIRE((std::abs(parcel.h - 1.727047e+12)/1.727047e+12) < 1.e-3);
+  REQUIRE(parcel.converged);
+  REQUIRE(parcel.steps > 0);
+  // R: 233981685308525.47
+  REQUIRE((std::abs(parcel.r_cyl - 233981685308525.47) / 233981685308525.47) <
+          1.e-6);
+  // cs: 55589.63200337918
+  REQUIRE((std::abs(parcel.cs - 55589.632) / 55589.632) < 1.e-4);
+  // T: 70383.14284818874
+  REQUIRE((std::abs(parcel.T - 70383.14284818874) / 70383.14284818874) < 1.e-4);
+  // Teff: 3603.107000477657
+  REQUIRE((std::abs(parcel.Teff - 3603.107) / 3603.107) < 1.e-2);
+  // rho: 2.470550e-06
+  REQUIRE((std::abs(parcel.rho - 2.470550e-06) / 2.470550e-06) < 1.e-4);
+  // kappa: 9.099875e-02
+  REQUIRE((std::abs(parcel.kappa - 9.099875e-02) / 9.099875e-02) < 1.e-1);
+  // tauV: 3.882695e+05
+  REQUIRE((std::abs(parcel.tauV - 3.882695e+05) / 3.882695e+05) < 1.e-1);
+  // Q: 1.000000e+00
+  REQUIRE((std::abs(parcel.Q - 1.000000e+00) / 1.000000e+00) < 1.e-6);
+  // h: 1.727047e+12
+  REQUIRE((std::abs(parcel.h - 1.727047e+12) / 1.727047e+12) < 1.e-3);
 }
 
 TEST_CASE("SG03 Default solve doesn't crash", "[sg03]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
   }
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
   // setup disk
-  auto sg03_disk = SG03(opac_name ,opac_path, opac_id);
+  auto sg03_disk = SG03(opac_name, opac_path, opac_id);
   auto sg03_profile = sg03_disk.SolveDisk();
 }
 
 TEST_CASE("SG03 Standard options converges", "[sg03]") {
   if (!std::getenv(CHARLEMAGNE_OPACITY_NAME)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_NAME");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_PATH)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_PATH");
   }
   if (!std::getenv(CHARLEMAGNE_OPACITY_ID)) {
-      throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
+    throw std::runtime_error("Must define CHARLEMAGNE_OPACITY_ID");
   }
   std::string opac_name = std::getenv(CHARLEMAGNE_OPACITY_NAME);
   std::string opac_path = std::getenv(CHARLEMAGNE_OPACITY_PATH);
   int opac_id = std::stoi(std::getenv(CHARLEMAGNE_OPACITY_ID));
   // setup disk
-  auto sg03_disk = SG03(opac_name ,opac_path, opac_id);
-  auto opts = SolverOpts(
-    200 /*maxfev*/,
-    1.e-5 /*xtol*/,
-    1.e-8 /*ftol*/,
-    0.0 /*gtol*/,
-    1.e-7 /*epsfcn*/,
-    0.1 /*factor*/,
-    0.1 /*conv_tol*/
-  );
+  auto sg03_disk = SG03(opac_name, opac_path, opac_id);
+  auto opts =
+      SolverOpts(200 /*maxfev*/, 1.e-5 /*xtol*/, 1.e-8 /*ftol*/, 0.0 /*gtol*/,
+                 1.e-7 /*epsfcn*/, 0.1 /*factor*/, 0.1 /*conv_tol*/
+      );
   auto sg03_profile = sg03_disk.SolveDisk(6.0, 2.e7, 10000, opts);
   for (size_t i = 0; i < sg03_profile.r_cyl.size(); i++) {
     REQUIRE(sg03_profile.converged[i]);

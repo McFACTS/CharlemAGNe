@@ -39,13 +39,13 @@
 #include "constants.hpp"
 //// Third Party ////
 //// Standard Library ////
-#include <vector>
 #include <cmath>
-#include <cstdio>
 #include <cstddef>
+#include <cstdio>
 #include <stdexcept>
-#include <utility>
 #include <string>
+#include <utility>
+#include <vector>
 
 //////// Setup /////////
 using namespace constants;
@@ -58,26 +58,25 @@ using namespace constants;
 #endif
 
 // We are trying to replicate np.geomspace
-inline std::vector<double> geomspace(
-    double start,
-    double stop,
-    size_t num,
-    bool endpoint = true) {
+inline std::vector<double> geomspace(double start, double stop, size_t num,
+                                     bool endpoint = true) {
   // Initialize output
   std::vector<double> out;
-  if (num == 0) return out;
+  if (num == 0)
+    return out;
   out.reserve(num);
   // Some of the loop logic
   const double log_start = std::log(start);
-  const double log_stop  = std::log(stop);
-  const size_t div       = endpoint ? num - 1 : num;
+  const double log_stop = std::log(stop);
+  const size_t div = endpoint ? num - 1 : num;
   const double step = (div > 0) ? (log_stop - log_start) / div : 0.0;
   // Loop through
   for (size_t i = 0; i < num; i++) {
     out.push_back(std::exp(log_start + i * step));
   }
-  // Pin the endpoints 
+  // Pin the endpoints
   out.front() = start;
-  if (endpoint && num > 1) out.back() = stop;
+  if (endpoint && num > 1)
+    out.back() = stop;
   return out;
 };

@@ -37,17 +37,16 @@
 //////// Include ////////
 //// Local ////
 #include "constants.hpp"
-#include "opacity.hpp"
 #include "disk1d.hpp"
+#include "opacity.hpp"
 #include "utils.hpp"
 //// Third Party ////
 //// Standard Library ////
 #include <cmath>
 #include <cstdio>
 #include <stdexcept>
-#include <utility>
 #include <string>
-
+#include <utility>
 
 //////// Setup /////////
 using namespace constants;
@@ -68,26 +67,19 @@ public:
    * @param X_mass_fraction Hydrogen abundance
    * @param radiative_efficiency The radiative efficiency
    * @param viscosity_switch Switch for alpha/beta disk assumptions
-  */
-  SG03(
-      std::string opac_name,
-      std::string opac_path,
-      int opac_id,
-      double smbh_mass = 1.0e8,
-      double eddington_ratio = 0.5,
-      double alpha = 0.01,
-      double X_mass_fraction = 0.7,
-      double radiative_efficiency = 0.1,
-      bool viscosity_switch = false)
+   */
+  SG03(std::string opac_name, std::string opac_path, int opac_id,
+       double smbh_mass = 1.0e8, double eddington_ratio = 0.5,
+       double alpha = 0.01, double X_mass_fraction = 0.7,
+       double radiative_efficiency = 0.1, bool viscosity_switch = false)
       : smbh_mass_(smbh_mass * SOLAR_MASS_KG),
-        eddington_ratio_(eddington_ratio),
-        alpha_(alpha),
+        eddington_ratio_(eddington_ratio), alpha_(alpha),
         X_mass_fraction_(X_mass_fraction),
         radiative_efficiency_(radiative_efficiency),
         viscosity_switch_(viscosity_switch),
         opac_(opac_name, opac_path, opac_id) {}
 
-  const PAGNCombined& opac() const { return opac_; }
+  const PAGNCombined &opac() const { return opac_; }
 
   /* const is a promise that it does not modify anything in the object */
   /* accessors will have it. setters will not. */
@@ -105,24 +97,20 @@ public:
     double electron_scattering_opacity = 0.2 * (1.0 + GetX()) * 0.1;
     /* Eddington Luminosity */
     double eddington_luminosity =
-        4.0 * M_PI * G_SI * C_SI * GetSMBHMass() /
-        electron_scattering_opacity;
+        4.0 * M_PI * G_SI * C_SI * GetSMBHMass() / electron_scattering_opacity;
     /* Mdot at Eddington */
     double mdot_eddington =
-        eddington_luminosity /
-        (GetRadiativeEfficiency() * C_SI * C_SI);
+        eddington_luminosity / (GetRadiativeEfficiency() * C_SI * C_SI);
     /* Mass accretion rate */
     return mdot_eddington * GetEddingtonRatio();
   }
 
   /* Rg */
-  double GetRg() const {
-    return GetSMBHMass() * G_SI / (C_SI * C_SI);
-  }
+  double GetRg() const { return GetSMBHMass() * G_SI / (C_SI * C_SI); }
 
   /* Rmin */
   double GetRmin() const {
-    /*  Schwarzschild radius / (4 * rad_eff) 
+    /*  Schwarzschild radius / (4 * rad_eff)
      *  Schwarzschild radius = 2 Rg */
     return GetRg() / (2.0 * GetRadiativeEfficiency());
   }
@@ -134,15 +122,13 @@ public:
 
   /* Effective temperature to the fourth power */
   double GetEffectiveTemperature4(double r, double angular_velocity) const {
-    return 3.0 * GetMDot() * (1.0 - std::sqrt(GetRmin() / r)) * angular_velocity * angular_velocity / (8.0 * M_PI * STEFAN_BOLTZMANN);
+    return 3.0 * GetMDot() * (1.0 - std::sqrt(GetRmin() / r)) *
+           angular_velocity * angular_velocity /
+           (8.0 * M_PI * STEFAN_BOLTZMANN);
   }
   /* Effective temperature */
   double GetEffectiveTemperature(double r, double angular_velocity) const {
-    return std::sqrt(
-        std::sqrt(
-            GetEffectiveTemperature4(r, angular_velocity)
-        )
-    );
+    return std::sqrt(std::sqrt(GetEffectiveTemperature4(r, angular_velocity)));
   }
 
   /// Solve for cs and T in a 2D rootfind
@@ -152,14 +138,10 @@ public:
   /// by finding the sound speed and temperature which satisfy them.
   ///
   /// For a 2D Newton's method, X_{i + 1} = X_{i} - J^{-1} f(X_{i})
-  /// where here f(X_{i}) has rows which are the pressure term and the radiation term
-  /// which are both being minimized.
-  Parcel solve_cs_T(
-        double r,
-        double log10cs = 0.0,
-        double log10T = 0.0,
-        const SolverOpts& opts = {}
-    ) {
+  /// where here f(X_{i}) has rows which are the pressure term and the radiation
+  /// term which are both being minimized.
+  Parcel solve_cs_T(double r, double log10cs = 0.0, double log10T = 0.0,
+                    const SolverOpts &opts = {}) {
     // Construct Parcel
     Parcel out = Parcel(r);
 
@@ -170,10 +152,10 @@ public:
     out.Mdotprime = GetMDot() * (1. - std::sqrt(GetRmin() / r));
     // Check arguments for rootfind guess
     if (log10cs == 0.0) {
-        log10cs = std::log10(out.omega * r * 1.e-2);
+      log10cs = std::log10(out.omega * r * 1.e-2);
     }
     if (log10T == 0.0) {
-        log10T = std::log10(out.Teff);
+      log10T = std::log10(out.Teff);
     }
 
     // Current guess
@@ -185,8 +167,10 @@ public:
     double fn_pressure, fn_radiation;
     cs_T_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Check for errors
-    out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
-    out.converged = std::isfinite(out.max_residual) && (out.max_residual < opts.conv_tol);
+    out.max_residual =
+        std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
+    out.converged =
+        std::isfinite(out.max_residual) && (out.max_residual < opts.conv_tol);
     out.steps = nfev;
 
     // Fill Q / h
@@ -194,23 +178,19 @@ public:
     out.star_formation = std::isfinite(out.Q) && (out.Q <= 1.0);
     out.h = out.cs / out.omega;
     return out;
-    
   }
   /// Solve for Teff and T in a 2D rootfind
   /// We are trying to solve these two equations:
   /// $c_s^2 = \frac{p_{\rm tot}}{T}$
   /// $T^4 = (\frac{3}{8}\tau_V + \frac{1}{2} + \frac{1}{4\tau_V}) T_{\rm eff}^4
-  /// by finding the effective temperature and midplane temperature which satisfy them
+  /// by finding the effective temperature and midplane temperature which
+  /// satisfy them
   ///
   /// For a 2D Newton's method, X_{i + 1} = X_{i} - J^{-1} f(X_{i})
-  /// where here f(X_{i}) has rows which are the pressure term and the radiation term
-  /// which are both being minimized.
-  Parcel solve_Teff_T(
-        double r,
-        double log10Teff,
-        double log10T,
-        const SolverOpts& opts = {}
-    ) {
+  /// where here f(X_{i}) has rows which are the pressure term and the radiation
+  /// term which are both being minimized.
+  Parcel solve_Teff_T(double r, double log10Teff, double log10T,
+                      const SolverOpts &opts = {}) {
     // Construct Parcel
     Parcel out = Parcel(r);
 
@@ -228,11 +208,9 @@ public:
 
     // We may or may not know cs by fiat
     if (!viscosity_switch_) {
-        out.cs = std::pow(
-          out.Mdotprime * out.omega * out.omega / (
-            6.0 * M_PI * GetAlpha() * out.rho),
-          1.0/3.0
-        );
+      out.cs = std::pow(out.Mdotprime * out.omega * out.omega /
+                            (6.0 * M_PI * GetAlpha() * out.rho),
+                        1.0 / 3.0);
     }
 
     // current guess
@@ -244,13 +222,15 @@ public:
     double fn_pressure, fn_radiation;
     Teff_T_eqn(out, cur[0], cur[1], fn_pressure, fn_radiation);
     // Check for errors
-    out.max_residual = std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
-    out.converged = std::isfinite(out.max_residual) && (out.max_residual < opts.conv_tol);
+    out.max_residual =
+        std::max(std::fabs(fn_pressure), std::fabs(fn_radiation));
+    out.converged =
+        std::isfinite(out.max_residual) && (out.max_residual < opts.conv_tol);
     out.steps = nfev;
 
     // Fill Q / h
     if (out.converged) {
-        out.h = out.cs / out.omega;
+      out.h = out.cs / out.omega;
     }
     return out;
   }
@@ -259,10 +239,7 @@ public:
   // disk profiles
   // It doesn't make sense to write this one for TQM because it's more
   //  truly an ODE.
-  Profile WalkDisk(
-    std::vector<double> r_cyl,
-    const SolverOpts& opts = {}
-  ) {
+  Profile WalkDisk(std::vector<double> r_cyl, const SolverOpts &opts = {}) {
     // Initialize out
     Profile out = Profile(r_cyl);
     // Initialize things we might reuse
@@ -273,23 +250,15 @@ public:
     Parcel prev;
     Parcel cur;
     // Enter loop
-    for (size_t iter=0; iter < r_cyl.size(); iter++) {
+    for (size_t iter = 0; iter < r_cyl.size(); iter++) {
       if (iter == 0) {
-        cur = solve_cs_T(
-            r_cyl[iter],
-            std::log10(omega * r_cyl[iter] * 1.e-2),
-            std::log10(Teff),
-            opts
-        );
+        cur = solve_cs_T(r_cyl[iter], std::log10(omega * r_cyl[iter] * 1.e-2),
+                         std::log10(Teff), opts);
       } else {
         if (!star_formation) {
-          cur = solve_cs_T(
-              r_cyl[iter],
-              std::log10(prev.cs),
-              std::log10(prev.T),
-              opts
-          );
-          // 
+          cur = solve_cs_T(r_cyl[iter], std::log10(prev.cs), std::log10(prev.T),
+                           opts);
+          //
           if (!(std::isfinite(cur.Q) && cur.Q > 1.0)) {
             star_formation = true;
             switched_solve = true;
@@ -297,46 +266,44 @@ public:
         }
         // Not a bug that this is separate check.
         if (star_formation) {
-          cur = solve_Teff_T(
-            r_cyl[iter],
-            std::log10(switched_solve ? cur.Teff : prev.Teff),
-            std::log10(switched_solve ? cur.T : prev.T),
-            opts
-          );
+          cur = solve_Teff_T(r_cyl[iter],
+                             std::log10(switched_solve ? cur.Teff : prev.Teff),
+                             std::log10(switched_solve ? cur.T : prev.T), opts);
         }
       }
       // Catch non-converged
       if (!cur.converged) {
         // Check the maximum residual
         CHARLES_LOG_STDERR("non-converged i=%zu r=%.6gRg sf=%d residual=%.3e\n",
-            iter, r_cyl[iter] / GetRg(), (int)star_formation, cur.max_residual);
+                           iter, r_cyl[iter] / GetRg(), (int)star_formation,
+                           cur.max_residual);
         if (!std::isfinite(cur.max_residual)) {
           throw std::runtime_error("Failed to converge disk!\n");
         }
       }
       // We have constructed cur; let's update our profiles
-      out.converged[iter]       = cur.converged;
-      out.max_residual[iter]    = cur.max_residual;
-      out.steps[iter]           = cur.steps;
-      out.star_formation[iter]  = star_formation;
-      out.omega[iter]           = cur.omega;
-      out.Teff[iter]            = cur.Teff;
-      out.Mdotprime[iter]       = cur.Mdotprime;
-      out.Mdot[iter]            = cur.Mdot;
-      out.T[iter]               = cur.T;
-      out.cs[iter]              = cur.cs;
-      out.rho[iter]             = cur.rho;
-      out.kappa[iter]           = cur.kappa;
-      out.tauV[iter]            = cur.tauV;
-      out.PPgas[iter]           = cur.PPgas;
-      out.PPrad[iter]           = cur.PPrad;
-      out.opacfac[iter]         = cur.opacfac;
-      out.Q[iter]               = cur.Q;
-      out.h[iter]               = cur.h;
-      out.eta[iter]             = cur.eta;
+      out.converged[iter] = cur.converged;
+      out.max_residual[iter] = cur.max_residual;
+      out.steps[iter] = cur.steps;
+      out.star_formation[iter] = star_formation;
+      out.omega[iter] = cur.omega;
+      out.Teff[iter] = cur.Teff;
+      out.Mdotprime[iter] = cur.Mdotprime;
+      out.Mdot[iter] = cur.Mdot;
+      out.T[iter] = cur.T;
+      out.cs[iter] = cur.cs;
+      out.rho[iter] = cur.rho;
+      out.kappa[iter] = cur.kappa;
+      out.tauV[iter] = cur.tauV;
+      out.PPgas[iter] = cur.PPgas;
+      out.PPrad[iter] = cur.PPrad;
+      out.opacfac[iter] = cur.opacfac;
+      out.Q[iter] = cur.Q;
+      out.h[iter] = cur.h;
+      out.eta[iter] = cur.eta;
 
       // Profile specific things
-      out.dr_cyl[iter] = (iter == 0) ? 0.0 : cur.r_cyl - out.r_cyl[iter-1];
+      out.dr_cyl[iter] = (iter == 0) ? 0.0 : cur.r_cyl - out.r_cyl[iter - 1];
       out.dA[iter] = out.dr_cyl[iter] * M_PI * 4.0 * cur.r_cyl;
       out.dV[iter] = out.dA[iter] * cur.h;
       out.mass_disk[iter] = out.dV[iter] * cur.rho;
@@ -349,71 +316,42 @@ public:
   }
 
   // Take radii and options instead of vector; Same format as TQM.
-  Profile SolveDisk(
-    double rmin = 6.0,
-    double rmax = 1.e7,
-    int npts = 10000,
-    const SolverOpts& opts = {}
-  ) {
+  Profile SolveDisk(double rmin = 6.0, double rmax = 1.e7, int npts = 10000,
+                    const SolverOpts &opts = {}) {
     // Initialize radii
-    std::vector<double> r_cyl = geomspace(
-      rmin * GetRg(),
-      rmax * GetRg(),
-      npts
-    );
+    std::vector<double> r_cyl = geomspace(rmin * GetRg(), rmax * GetRg(), npts);
     return WalkDisk(r_cyl, opts);
   }
 
   // Write disk to file
-  void WriteDisk(
-    const char* fname,
-    double rmin = 6.0,
-    double rmax = 1.e7,
-    int npts = 10000,
-    const SolverOpts& opts = {}
-  ) {
+  void WriteDisk(const char *fname, double rmin = 6.0, double rmax = 1.e7,
+                 int npts = 10000, const SolverOpts &opts = {}) {
     // Solve the disk
     Profile sg03 = SolveDisk(rmin, rmax, npts, opts);
     // open a file
-    std::FILE* sg03_out = std::fopen(fname, "w");
+    std::FILE *sg03_out = std::fopen(fname, "w");
     if (!sg03_out) {
-      throw::std::runtime_error(std::string("WriteDisk cannot open '")
-        + fname + "': " + std::strerror(errno));
+      throw ::std::runtime_error(std::string("WriteDisk cannot open '") +
+                                 fname + "': " + std::strerror(errno));
     }
-    fprintf(sg03_out, "#iter, converged, max_residual, steps, star_formation, r_cyl[R_g], omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
-    for (size_t i = 0; i < sg03.r_cyl.size(); i++) {
-      fprintf(
+    fprintf(
         sg03_out,
-        "%lu %d %g %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-        i,
-        (int)sg03.converged[i],
-        sg03.max_residual[i],
-        sg03.steps[i],
-        (int)sg03.star_formation[i],
-        sg03.r_cyl[i] / GetRg(),
-        sg03.omega[i],
-        sg03.Teff[i],
-        sg03.Mdotprime[i],
-        sg03.Mdot[i],
-        sg03.T[i],
-        sg03.cs[i],
-        sg03.rho[i],
-        sg03.kappa[i],
-        sg03.tauV[i],
-        sg03.PPgas[i],
-        sg03.PPrad[i],
-        sg03.opacfac[i],
-        sg03.Q[i],
-        sg03.h[i],
-        sg03.eta[i],
-        sg03.dr_cyl[i],
-        sg03.dA[i],
-        sg03.dV[i],
-        sg03.mass_disk[i],
-        sg03.Mdot_sf[i]
-      );
+        "#iter, converged, max_residual, steps, star_formation, r_cyl[R_g], "
+        "omega, Teff, Mdotprime, Mdot, T, cs, rho, kappa, tauV, PPgas, PPrad, "
+        "opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
+    for (size_t i = 0; i < sg03.r_cyl.size(); i++) {
+      fprintf(sg03_out,
+              "%lu %d %g %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g "
+              "%g %g %g %g %g\n",
+              i, (int)sg03.converged[i], sg03.max_residual[i], sg03.steps[i],
+              (int)sg03.star_formation[i], sg03.r_cyl[i] / GetRg(),
+              sg03.omega[i], sg03.Teff[i], sg03.Mdotprime[i], sg03.Mdot[i],
+              sg03.T[i], sg03.cs[i], sg03.rho[i], sg03.kappa[i], sg03.tauV[i],
+              sg03.PPgas[i], sg03.PPrad[i], sg03.opacfac[i], sg03.Q[i],
+              sg03.h[i], sg03.eta[i], sg03.dr_cyl[i], sg03.dA[i], sg03.dV[i],
+              sg03.mass_disk[i], sg03.Mdot_sf[i]);
     }
-  std::fclose(sg03_out);
+    std::fclose(sg03_out);
   }
 
 private:
@@ -427,74 +365,70 @@ private:
   PAGNCombined opac_;
 
 protected:
-  void cs_T_eqn(
-          Parcel &parcel,
-          double log10cs,
-          double log10T,
-          double &fn_pressure,
-          double &fn_radiation
-  ) {
+  void cs_T_eqn(Parcel &parcel, double log10cs, double log10T,
+                double &fn_pressure, double &fn_radiation) {
 
-        parcel.cs = std::exp(log10cs * M_LN10);
-        double cs2 = parcel.cs * parcel.cs;
-        parcel.T = std::exp(log10T * M_LN10);
-        double Teff4 = parcel.Teff * parcel.Teff * parcel.Teff * parcel.Teff;
+    parcel.cs = std::exp(log10cs * M_LN10);
+    double cs2 = parcel.cs * parcel.cs;
+    parcel.T = std::exp(log10T * M_LN10);
+    double Teff4 = parcel.Teff * parcel.Teff * parcel.Teff * parcel.Teff;
 
-        // Density / sound speed have different expression depending on b=0,1
-        parcel.rho = (viscosity_switch_) ?
-            parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (6 * M_PI * GetAlpha() * parcel.cs * parcel.T * KBOLTZMANN):
-            parcel.Mdotprime * parcel.omega * parcel.omega / (6 * M_PI * GetAlpha() * cs2 * parcel.cs);
-        //printf("rho: %g\n", rho);
+    // Density / sound speed have different expression depending on b=0,1
+    parcel.rho =
+        (viscosity_switch_)
+            ? parcel.Mdotprime * parcel.omega * parcel.omega * AMU /
+                  (6 * M_PI * GetAlpha() * parcel.cs * parcel.T * KBOLTZMANN)
+            : parcel.Mdotprime * parcel.omega * parcel.omega /
+                  (6 * M_PI * GetAlpha() * cs2 * parcel.cs);
+    // printf("rho: %g\n", rho);
 
-        parcel.kappa = opac_.eval(parcel.rho, parcel.T);
+    parcel.kappa = opac_.eval(parcel.rho, parcel.T);
 
-        parcel.tauV = parcel.kappa * parcel.rho * parcel.cs / parcel.omega;
+    parcel.tauV = parcel.kappa * parcel.rho * parcel.cs / parcel.omega;
 
-        parcel.PPgas = (KBOLTZMANN / AMU) * parcel.T / cs2;
-        parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 / (parcel.rho * cs2);
+    parcel.PPgas = (KBOLTZMANN / AMU) * parcel.T / cs2;
+    parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 /
+                   (parcel.rho * cs2);
 
-        // Rewritten as dimensionless, dividing by cs2
-        fn_pressure = parcel.PPgas + parcel.PPrad - 1;
-        // Same, dividing by Teff4
-        parcel.opacfac = (0.375 * parcel.tauV + 0.5 + 0.25 / parcel.tauV);
-        double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
-        double T4ratio = Teff4 / T4;
-        double Rr = T4ratio * parcel.opacfac;
-        fn_radiation = Rr - 1;
+    // Rewritten as dimensionless, dividing by cs2
+    fn_pressure = parcel.PPgas + parcel.PPrad - 1;
+    // Same, dividing by Teff4
+    parcel.opacfac = (0.375 * parcel.tauV + 0.5 + 0.25 / parcel.tauV);
+    double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
+    double T4ratio = Teff4 / T4;
+    double Rr = T4ratio * parcel.opacfac;
+    fn_radiation = Rr - 1;
   }
 
   // Equation for Teff/T rootfind
-  void Teff_T_eqn(
-          Parcel &parcel,
-          double log10Teff,
-          double log10T,
-          double &fn_pressure,
-          double &fn_radiation
-  ) {
+  void Teff_T_eqn(Parcel &parcel, double log10Teff, double log10T,
+                  double &fn_pressure, double &fn_radiation) {
 
-        parcel.Teff = std::exp(log10Teff * M_LN10);
-        parcel.T = std::exp(log10T * M_LN10);
-        double Teff4 = parcel.Teff * parcel.Teff * parcel.Teff * parcel.Teff;
-        parcel.cs = (viscosity_switch_) ?
-            parcel.Mdotprime * parcel.omega * parcel.omega * AMU / (
-              6.0 * M_PI * GetAlpha() * parcel.rho * KBOLTZMANN * parcel.T)
-              : parcel.cs;
-        double cs2 = parcel.cs * parcel.cs;
+    parcel.Teff = std::exp(log10Teff * M_LN10);
+    parcel.T = std::exp(log10T * M_LN10);
+    double Teff4 = parcel.Teff * parcel.Teff * parcel.Teff * parcel.Teff;
+    parcel.cs =
+        (viscosity_switch_)
+            ? parcel.Mdotprime * parcel.omega * parcel.omega * AMU /
+                  (6.0 * M_PI * GetAlpha() * parcel.rho * KBOLTZMANN * parcel.T)
+            : parcel.cs;
+    double cs2 = parcel.cs * parcel.cs;
 
-        parcel.kappa = opac_.eval(parcel.rho, parcel.T);
+    parcel.kappa = opac_.eval(parcel.rho, parcel.T);
 
-        parcel.tauV = parcel.kappa * parcel.rho * parcel.cs / parcel.omega;
+    parcel.tauV = parcel.kappa * parcel.rho * parcel.cs / parcel.omega;
 
-        parcel.PPgas = (KBOLTZMANN / AMU) * parcel.T / cs2;
-        parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 / (parcel.rho * cs2);
+    parcel.PPgas = (KBOLTZMANN / AMU) * parcel.T / cs2;
+    parcel.PPrad = parcel.tauV * STEFAN_BOLTZMANN / (2 * C_SI) * Teff4 /
+                   (parcel.rho * cs2);
 
-        // Rewritten as dimensionless, dividing by cs2
-        fn_pressure = parcel.PPgas + parcel.PPrad - 1;
-        // Same, dividing by Teff4
-        parcel.opacfac = (0.375 * parcel.tauV + 0.5 + 0.25 / parcel.tauV);
-        double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
-        double T4ratio = Teff4 / T4;
-        double Rr = T4ratio * parcel.opacfac;
-        fn_radiation = Rr - 1;
+    // Rewritten as dimensionless, dividing by cs2
+    fn_pressure = parcel.PPgas + parcel.PPrad - 1;
+    // Same, dividing by Teff4
+    parcel.opacfac = (0.375 * parcel.tauV + 0.5 + 0.25 / parcel.tauV);
+    double T4 = parcel.T * parcel.T * parcel.T * parcel.T;
+    double T4ratio = Teff4 / T4;
+    double Rr = T4ratio * parcel.opacfac;
+    fn_radiation = Rr - 1;
   }
 };
