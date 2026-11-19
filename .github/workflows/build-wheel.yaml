@@ -53,6 +53,8 @@ jobs:
         run: dnf -y install git
       - uses: actions/checkout@v4
         with: { submodules: recursive }
+      - name: Trust the workspace for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/download-artifact@v4
         with: {name: build-dir, path: build/ }
       - run: |
@@ -72,6 +74,8 @@ jobs:
         run: dnf -y install git
       - uses: actions/checkout@v4
         with: { submodules: recursive }
+      - name: Trust the workspace for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/download-artifact@v4
         with: {name: build-dir, path: build/ }
       - run: |
