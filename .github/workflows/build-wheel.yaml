@@ -97,7 +97,7 @@ jobs:
       - run: pip install cibuildwheel
       - run: make local-wheels
       - uses: actions/upload-artifact@v4
-        with: { name: wheels-linux-${{ matrix.os }}, path: local-wheels/*.whl }
+        with: { name: "wheels-linux-${{ matrix.os }}", path: local-wheels/*.whl }
 
   wheels-macos:
     strategy:
@@ -118,4 +118,4 @@ jobs:
       - run: pip install cibuildwheel
       - run: make local-wheels
       - uses: actions/upload-artifact@v4
-        with: { name: wheels-macos-${{ matrix.os }}, path: local-wheels/*.whl }
+        with: { name: "wheels-macos-${{ matrix.os }}", path: local-wheels/*.whl }
