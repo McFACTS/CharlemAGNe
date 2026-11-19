@@ -84,3 +84,38 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: dist, path: dist/ }
 
+  wheels-linux:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.9' }
+      - run: pip install cibuildwheel
+      - run: make local-wheels
+      - uses: actions/upload-artifact@v4
+        with: { name: wheels-linux-${{ matrix.os }}, path: local-wheels/*.whl }
+
+  wheels-macos:
+    strategy:
+      matrix:
+        os: [macos-latest, macos-13]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.9' }
+      - run: brew install hdf5
+      - name: Point builds at brew hdf5
+        run: |
+          echo "PKG_CONFIG_PATH=$(brew --prefix hdf5)/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=$(brew --prefix hdf5)/lib" >> "$GITHUB_ENV"
+          echo "CPATH=$(brew --prefix hdf5)/include" >> "$GITHUB_ENV"
+      - run: pip install cibuildwheel
+      - run: make local-wheels
+      - uses: actions/upload-artifact@v4
+        with: { name: wheels-macos-${{ matrix.os }}, path: local-wheels/*.whl }
