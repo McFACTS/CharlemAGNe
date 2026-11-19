@@ -38,7 +38,7 @@ test-command = "pytest {project}/tests -q"
 
 
 [tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
+#archs = ["x86_64", "arm64"]
 test-requires = ["pytest"]
 test-command = "pytest {project}/tests -q"
 

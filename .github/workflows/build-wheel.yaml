@@ -102,7 +102,7 @@ jobs:
   wheels-macos:
     strategy:
       matrix:
-        os: [macos-latest, macos-15-intell]
+        os: [macos-latest, macos-15-intel]
     runs-on: ${{ matrix.os }}
     env:
       CIBW_BUILD_VERBOSITY: 2
