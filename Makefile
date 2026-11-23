@@ -1,5 +1,5 @@
 # Declarations
-.PHONY: all init configure build tests run clean version install install-dist pytest pypi testpypi pypi-wheels testpypi-wheels
+.PHONY: all init configure build tests run clean version install install-dist pytest pypi testpypi pypi-wheels testpypi-wheels hdf5
 all: tests
 
 ######## Settings ########
@@ -29,8 +29,12 @@ init:
 	git submodule update --recursive --init
 	mkdir -p ${BUILD_DIR}
 
-configure:
+external/hdf5/lib/libhdf5_hl.a:
 	./bin/hdf5_build.sh
+
+hdf5: external/hdf5/lib/libhdf5_hl.a external/hdf5/lib/libhdf5.a external/hdf5/lib/libhdf5_hl.la external/hdf5/lib/libhdf5.la
+
+configure: hdf5
 	cmake ${CMAKE_FLAGS} -S . -B ${BUILD_DIR}
 
 build: configure
