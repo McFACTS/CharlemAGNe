@@ -16,7 +16,6 @@ default:
   before_script:
     - dnf -y groupinstall "Development Tools"
     - dnf -y install epel-release
-    - dnf -y install cmake hdf5
     - dnf -y install cmake hdf5-devel hdf5-static
     - dnf -y install python3-devel python3-numpy
     - dnf -y install python3-build
