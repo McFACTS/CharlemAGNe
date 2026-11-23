@@ -30,6 +30,7 @@ init:
 	mkdir -p ${BUILD_DIR}
 
 configure:
+	./bin/hdf5_build.sh
 	cmake ${CMAKE_FLAGS} -S . -B ${BUILD_DIR}
 
 build: configure

@@ -20,6 +20,10 @@ include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 git_describe_working_tree(GIT_VERSION --tags)
 
+set(HDF5_USE_STATIC_LIBRARIES ON CACHE BOOL "")
+set(CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/external/hdf5 CACHE PATH "")
+find_package(HDF5 COMPONENTS C HL)
+
 # Singularity-opac options
 set(SINGULARITY_USE_HDF5 ON CACHE BOOL "" FORCE)
 # Build Singularity-opac

@@ -10,7 +10,7 @@ py = import('python').find_installation(pure: false)
 cc = meson.get_compiler('c')
 numpy_dep = dependency('numpy')
 hdf5_dep = dependency('hdf5', static: true)
-hdf5_hl_dep = dependency('hdf5_hl', static: true, required: false)
+hdf5_hl_dep = dependency('hdf5_hl', static: true)
 
 #if not hdf5_hl_dep.found()
 #  hdf5_hl_dep = cc.find_library('hdf5_hl')
