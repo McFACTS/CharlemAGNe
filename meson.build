@@ -12,9 +12,9 @@ numpy_dep = dependency('numpy')
 hdf5_dep = dependency('hdf5', static: true)
 hdf5_hl_dep = dependency('hdf5_hl', static: true, required: false)
 
-if not hdf5_hl_dep.found()
-  hdf5_hl_dep = cc.find_library('hdf5_hl')
-endif
+#if not hdf5_hl_dep.found()
+#  hdf5_hl_dep = cc.find_library('hdf5_hl')
+#endif
 
 add_project_arguments('-DNPY_TARGET_VERSION=NPY_1_19_API_VERSION', language: 'cpp')
 
