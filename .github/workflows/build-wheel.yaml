@@ -127,6 +127,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       CIBW_BUILD_VERBOSITY: 2
+      VCPKG_ROOT: C:\vcpkg
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
     steps:
       - uses: actions/checkout@v4
@@ -138,11 +139,11 @@ jobs:
         run: |
           & C:\msys64\usr\bin\pacman.exe -S --noconfirm pkgconf
           echo "C:\msys64\usr\bin" >> $env:GITHUB_PATH
-      - name: Install HDF5 (vcpkg, static-md)
+      - name: Install HDF5 (vcpkg, static-md, with HL)
         run: |
-          vcpkg install hdf5:${{ matrix.triplet }}
-          $t = $env:VCPKG_DEFAULT_TRIPLET
-          echo "PKG_CONFIG_PATH=$env:VCPKG_ROOT/installed/$t/share/pkgconfig;$env:VCPKG_ROOT/installed/$t/lib/pkgconfig" >> $env:GITHUB_ENV
+          vcpkg install "hdf5[hl]:${{ matrix.triplet }}"
+          echo "PKG_CONFIG_PATH=$env:VCPKG_ROOT/installed/$env:VCPKG_DEFAULT_TRIPLET/share/pkgconfig;$env:VCPKG_ROOT/installed/$env:VCPKG_DEFAULT_TRIPLET/lib/pkgconfig" >> $env:GITHUB_ENV
+          ls "$env:VCPKG_ROOT/installed/$env:VCPKG_DEFAULT_TRIPLET/share/pkgconfig"
       - run: python -m cibuildwheel --output-dir local-wheels
       - uses: actions/upload-artifact@v4
         with: { name: "wheels-windows-${{ matrix.os }}", path: local-wheels/*.whl }
