@@ -38,8 +38,7 @@ jobs:
           dnf -y groupinstall "Development Tools"
           dnf -y install epel-release
           dnf config-manager --set-enabled crb || true
-          dnf -y install cmake hdf5 hdf5-devel hdf5-static
-          dnf -y install python3-devel python3-numpy python3-build python3-pytest
+          dnf -y install cmake python3-devel python3-numpy python3-build python3-pytest
       - run: make configure
       - uses: actions/upload-artifact@v4
         with: { name: build-dir, path: build/ }
@@ -59,8 +58,7 @@ jobs:
           dnf -y groupinstall "Development Tools"
           dnf -y install epel-release
           dnf config-manager --set-enabled crb || true
-          dnf -y install cmake hdf5 hdf5-devel hdf5-static
-          dnf -y install python3-devel python3-numpy
+          dnf -y install cmake python3-devel python3-numpy
       - run: make tests
 
   pytest:
@@ -78,8 +76,7 @@ jobs:
           dnf -y groupinstall "Development Tools"
           dnf -y install epel-release
           dnf config-manager --set-enabled crb || true
-          dnf -y install cmake hdf5 hdf5-devel hdf5-static
-          dnf -y install python3-devel python3-pip python3-numpy python3-build python3-pytest
+          dnf -y install cmake python3-devel python3-pip python3-numpy python3-build python3-pytest
       - run: make pytest
       - uses: actions/upload-artifact@v4
         with: { name: dist, path: dist/ }
@@ -95,6 +92,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
       - run: pip install cibuildwheel
+      - run: make configure
       - run: make local-wheels
       - uses: actions/upload-artifact@v4
         with: { name: "wheels-linux-${{ matrix.os }}", path: local-wheels/*.whl }
@@ -112,20 +110,8 @@ jobs:
         with: { submodules: recursive }
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
-      - run: brew install hdf5 libaec
-      - name: Point builds at brew hdf5
-        run: |
-          echo "PKG_CONFIG_PATH=$(brew --prefix hdf5)/lib/pkgconfig" >> "$GITHUB_ENV"
-          echo "LIBRARY_PATH=$(brew --prefix hdf5)/lib" >> "$GITHUB_ENV"
-          echo "CPATH=$(brew --prefix hdf5)/include" >> "$GITHUB_ENV"
+      - run: make configure
       - run: pip install cibuildwheel
-      - name: Diagnose hdf5 visibility
-        run: |
-          brew --prefix hdf5
-          ls "$(brew --prefix hdf5)/lib/" | grep -i hdf5 || true
-          pkg-config --modversion hdf5 hdf5_hl
-          pkg-config --static --libs hdf5_hl || true
-          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH LIBRARY_PATH=$LIBRARY_PATH"
       - run: make local-wheels
       - uses: actions/upload-artifact@v4
         with: { name: "wheels-macos-${{ matrix.os }}", path: local-wheels/*.whl }
