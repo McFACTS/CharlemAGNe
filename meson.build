@@ -14,6 +14,9 @@ numpy_dep = dependency('numpy')
 
 add_project_arguments('-DNPY_TARGET_VERSION=NPY_1_19_API_VERSION', language: 'cpp')
 
+res1 = run_command('make', 'init')
+res2 = run_command('make', 'hdf5')
+
 # Include directories
 inc_dirs = [
     'src',
@@ -26,9 +29,6 @@ inc_dirs = [
 ]
 
 incdir = include_directories(inc_dirs)
-
-res1 = run_command('make', 'init')
-res2 = run_command('make', 'hdf5')
 
 # HDF5
 hdf5_lib_path = meson.current_source_dir() / 'external/hdf5/lib'
