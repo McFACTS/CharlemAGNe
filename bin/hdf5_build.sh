@@ -28,7 +28,7 @@ cd $SOURCE_DIR/external/hdf5-${H5VER}/
 
 echo Configuring HDF5...
 
-export CFLAGS="-fPIC $CFLAGS"
+export CFLAGS="-std=c11 -fPIC $CFLAGS"
 sh ./configure -C --prefix=$SOURCE_DIR/external/hdf5 --enable-build-mode=production \
   --disable-dependency-tracking --disable-tests --disable-tools --disable-deprecated-symbols \
   --disable-shared --without-zlib > build-hdf5.log

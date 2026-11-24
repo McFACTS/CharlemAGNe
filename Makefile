@@ -70,7 +70,7 @@ install-dist: $(DIST)
 install: clean version
 	pip install . $(PIP_OPTS)
 
-pytest: clean tests install-dist
+pytest: clean install-dist
 	pytest
 
 ######## Wheel funny buisiness ########
