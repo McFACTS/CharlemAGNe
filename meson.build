@@ -46,8 +46,12 @@ hdf5_hl_dep = cc.find_library('hdf5_hl',
   required: true,
 )
 else
-dependency('hdf5', method: 'cmake')
-dependency('hdf5_hl', method: 'cmake')
+# vcpkg: runner sets VCPKG_ROOT; CI must also export VCPKG_DEFAULT_TRIPLET
+# matching the `vcpkg install` triplet (x64-windows-static-md / arm64-...)
+hdf5_dep = dependency('hdf5', method: 'cmake')
+vcpkg_root = run_command(py, '-c', 'import os; print(os.environ["VCPKG_ROOT"])', check: true).stdout().strip()
+vcpkg_triplet = run_command(py, '-c', 'import os; print(os.environ["VCPKG_DEFAULT_TRIPLET"])', check: true).stdout().strip()
+hdf5_hl_dep = cc.find_library('hdf5_hl', dirs: [vcpkg_root / 'installed' / vcpkg_triplet / 'lib'], required: true)
 endif
 
 # Handle cminpack dependency
