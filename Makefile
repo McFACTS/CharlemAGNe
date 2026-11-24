@@ -59,7 +59,7 @@ version:
 	sed --in-place "s/ version: .*/ version: '${VERSION}',/g" meson.build
 	echo "__version__ = '${VERSION}'" > python/charlemagne/__version__.py
 
-$(DIST): clean build version
+$(DIST): clean version
 	- git add python meson.build __version__.py
 	- git commit
 	python3 -m build $(BUILD_OPTS)
