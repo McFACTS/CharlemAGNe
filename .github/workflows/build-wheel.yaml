@@ -92,7 +92,6 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
       - run: pip install cibuildwheel
-      - run: make configure
       - run: make local-wheels
       - uses: actions/upload-artifact@v4
         with: { name: "wheels-linux-${{ matrix.os }}", path: local-wheels/*.whl }
@@ -110,7 +109,6 @@ jobs:
         with: { submodules: recursive }
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
-      - run: make configure
       - run: pip install cibuildwheel
       - run: make local-wheels
       - uses: actions/upload-artifact@v4
