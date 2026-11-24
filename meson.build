@@ -27,6 +27,9 @@ inc_dirs = [
 
 incdir = include_directories(inc_dirs)
 
+res1 = run_command('make', 'init')
+res2 = run_command('make', 'hdf5')
+
 # HDF5
 hdf5_lib_path = meson.current_source_dir() / 'external/hdf5/lib'
 hdf5_inc_path = 'external/hdf5/include'
