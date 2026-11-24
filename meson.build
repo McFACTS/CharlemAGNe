@@ -33,6 +33,7 @@ inc_dirs = [
 incdir = include_directories(inc_dirs)
 
 # HDF5
+if host_machine.system() != 'windows'
 hdf5_lib_path = meson.current_source_dir() / 'external/hdf5/lib'
 hdf5_inc_path = 'external/hdf5/include'
 hdf5_inc = include_directories(hdf5_inc_path)
@@ -44,6 +45,10 @@ hdf5_hl_dep = cc.find_library('hdf5_hl',
   dirs: [hdf5_lib_path],
   required: true,
 )
+else
+dependency('hdf5', method: 'cmake')
+dependency('hdf5_hl', method: 'cmake')
+endif
 
 # Handle cminpack dependency
 add_project_arguments('-DSPINER_USE_HDF', '-DCMINPACK_NO_DLL', language: 'cpp')

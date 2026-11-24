@@ -114,3 +114,24 @@ jobs:
       - run: make local-wheels
       - uses: actions/upload-artifact@v4
         with: { name: "wheels-macos-${{ matrix.os }}", path: local-wheels/*.whl }
+
+  wheels-windows:
+    strategy:
+      matrix:
+        os: [windows-latest]
+        #os: [windows-latest, windows-11-arm]
+    runs-on: ${{ matrix.os }}
+    env:
+      CIBW_BUILD_VERBOSITY: 2
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Install HDF5 (vcpkg, static-md)
+        run: vcpkg install hdf5:${{ runner.arch == 'ARM64' && 'arm64-windows-static-md' || 'x64-windows-static-md' }}
+      - run: pip install cibuildwheel
+      - run: python -m cibuildwheel --output-dir local-wheels
+      - run: make local-wheels
+      - uses: actions/upload-artifact@v4
+        with: { name: "wheels-windows-${{ matrix.os }}", path: local-wheels/*.whl }
