@@ -12,4 +12,4 @@ local-wheels
 SG03*.png
 SG03*.jpg
 # hdf5
-external/hdf5
+external/hdf5*
