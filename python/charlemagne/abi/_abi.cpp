@@ -5,7 +5,6 @@
 // I am proud that I can make and understand this, even with lots of refs.
 //
 // Python / Numpy modules
-#pragma once
 #include <Python.h>
 #define CHARLES_LOG_STDOUT(...) PySys_WriteStdout(__VA_ARGS__)
 #define CHARLES_LOG_STDERR(...) PySys_WriteStderr(__VA_ARGS__)
