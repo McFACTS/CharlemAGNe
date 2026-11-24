@@ -15,8 +15,8 @@ numpy_dep = dependency('numpy')
 add_project_arguments('-DNPY_TARGET_VERSION=NPY_1_19_API_VERSION', language: 'cpp')
 
 if host_machine.system() != 'windows'
-res1 = run_command('make', 'init')
-res2 = run_command('make', 'hdf5')
+res1 = run_command('make', 'init', check:true)
+res2 = run_command('make', 'hdf5', check:true)
 endif
 
 # Include directories
