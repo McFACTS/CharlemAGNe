@@ -101,3 +101,4 @@ pypi-wheels: testpypi-wheels
 ######## Cleanup #########
 clean:
 	rm -rf ${BUILD_DIR}/*
+	rm -rf external/hdf5/lib/*
