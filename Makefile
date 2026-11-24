@@ -29,12 +29,7 @@ init:
 	git submodule update --recursive --init
 	mkdir -p ${BUILD_DIR}
 
-external/hdf5/lib/libhdf5_hl.a:
-	./bin/hdf5_build.sh
-
-hdf5: external/hdf5/lib/libhdf5_hl.a external/hdf5/lib/libhdf5.a external/hdf5/lib/libhdf5_hl.la external/hdf5/lib/libhdf5.la
-
-configure: hdf5
+configure:
 	cmake ${CMAKE_FLAGS} -S . -B ${BUILD_DIR}
 
 build: configure
@@ -55,6 +50,11 @@ run: build
 		./build/src/charlemagne
 
 #### Python ####
+external/hdf5/lib/libhdf5_hl.a:
+	./bin/hdf5_build.sh
+
+hdf5: external/hdf5/lib/libhdf5_hl.a external/hdf5/lib/libhdf5.a external/hdf5/lib/libhdf5_hl.la external/hdf5/lib/libhdf5.la
+
 version:
 	sed --in-place "s/ version: .*/ version: '${VERSION}',/g" meson.build
 	echo "__version__ = '${VERSION}'" > python/charlemagne/__version__.py
@@ -64,10 +64,10 @@ $(DIST): clean build version
 	- git commit
 	python3 -m build $(BUILD_OPTS)
 
-install-dist: $(DIST)
+install-dist: $(DIST) hdf5
 	python3 -m pip install $(DIST) $(PIP_OPTS)
 
-install: clean version
+install: clean version hdf5
 	pip install . $(PIP_OPTS)
 
 pytest: clean install-dist
@@ -84,12 +84,6 @@ pypi: pytest
 local-wheels: clean
 	mkdir -p $(LOCAL_WHEELS)
 	cibuildwheel --output-dir $(LOCAL_WHEELS)
-	#wget "https://gitlab.com/xevra/charlemagne/-/jobs/artifacts/main/download?job=linux" -O $(LOCAL_WHEELS)/artifacts.zip
-	#cd $(LOCAL_WHEELS); unzip artifacts.zip
-	#mv $(LOCAL_WHEELS)/$(WHL)/*.whl $(LOCAL_WHEELS)
-	#ls $(LOCAL_WHEELS)/artifacts.zip
-	#rm $(LOCAL_WHEELS)/artifacts.zip
-	#rm -rf $(LOCAL_WHEELS)/$(WHL)
 
 testpypi-wheels: local-wheels
 	python3 -m twine upload --repository testpypi $(LOCAL_WHEELS)/*.whl

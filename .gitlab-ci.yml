@@ -9,20 +9,14 @@ variables:
   CHARLEMAGNE_OPACITY_PATH: "${CI_PROJECT_DIR}/python/charlemagne/data/pagn_combined.sp5"
   CHARLEMAGNE_OPACITY_ID: "1001"
 
-
-### DEFAULT TEST BEHAVIOR ###
+### DEFAULT BEHAVIOR ###
 default:
   # By default: install hdf5
   before_script:
     - dnf -y groupinstall "Development Tools"
     - dnf -y install epel-release
-    - dnf -y install cmake python3-devel python3-numpy python3-build python3-pytest
-  # Always keep logs and plots.  Results should be printed to console!
-  # artifacts:
-  #   when: always
-  #   paths:
-  #     - tests/*/*.png
-  #     - tests/*/*.txt
+    - dnf -y install cmake hdf5-devel hdf5-static
+    - dnf -y install python3-devel python3-numpy python3-build python3-pytest
 
 # Tests can be executed in parallel
 stages:
@@ -53,14 +47,3 @@ python:
   artifacts:
     paths:
       - dist/
-
-# tests:
-#   stage: tests
-#   script:
-#     - cd tests/$TEST
-#     - ./run.sh
-#   parallel:
-#     matrix:
-#       - TEST: [all_pars, anisotropic_conduction, bondi, bondi_rad, bondi_viscous, bz_monopole, conducting_atmosphere,
-#                emhdmodes, emhdshock, entropy_wave, hubble_flow, mhdmodes, mhdmodes_smr, noh, rad_linear_waves, radshock,
-#                regrid, reinit, resize, restart, tilt_init, torus_sanity]

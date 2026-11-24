@@ -19,6 +19,4 @@ target_link_libraries(${EXE_NAME}
 PUBLIC
     singularity-opac::flags
     cminpack
-    hdf5::hdf5
-    HDF5::HDF5
 )
