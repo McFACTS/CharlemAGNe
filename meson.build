@@ -34,6 +34,7 @@ inc_dirs = [
     'external/singularity-opac/utils/spiner',
     'external/singularity-opac/utils/ports-of-call',
     'external/cminpack/include',
+    'external/hdf5/include',
 ]
 
 incdir = include_directories(inc_dirs)
