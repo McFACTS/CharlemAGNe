@@ -12,18 +12,6 @@ numpy_dep = dependency('numpy')
 #hdf5_dep = dependency('hdf5', static: true)
 #hdf5_hl_dep = dependency('hdf5_hl', static: true)
 
-hdf5_lib_path = meson.current_source_dir() / 'external/hdf5/lib'
-hdf5_inc_path = 'external/hdf5/include'
-hdf5_inc = include_directories(hdf5_inc_path)
-hdf5_dep = cc.find_library('hdf5',
-  dirs: [hdf5_lib_path],
-  required: true,
-)
-hdf5_hl_dep = cc.find_library('hdf5_hl',
-  dirs: [hdf5_lib_path],
-  required: true,
-)
-
 add_project_arguments('-DNPY_TARGET_VERSION=NPY_1_19_API_VERSION', language: 'cpp')
 
 # Include directories
@@ -38,6 +26,19 @@ inc_dirs = [
 ]
 
 incdir = include_directories(inc_dirs)
+
+# HDF5
+hdf5_lib_path = meson.current_source_dir() / 'external/hdf5/lib'
+hdf5_inc_path = 'external/hdf5/include'
+hdf5_inc = include_directories(hdf5_inc_path)
+hdf5_dep = cc.find_library('hdf5',
+  dirs: [hdf5_lib_path],
+  required: true,
+)
+hdf5_hl_dep = cc.find_library('hdf5_hl',
+  dirs: [hdf5_lib_path],
+  required: true,
+)
 
 # Handle cminpack dependency
 add_project_arguments('-DSPINER_USE_HDF', '-DCMINPACK_NO_DLL', language: 'cpp')
