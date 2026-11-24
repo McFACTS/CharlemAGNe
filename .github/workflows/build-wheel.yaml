@@ -119,8 +119,11 @@ jobs:
   wheels-windows:
     strategy:
       matrix:
-        os: [windows-latest]
-        #os: [windows-latest, windows-11-arm]
+        include:
+          - os: [windows-latest]
+            triplet: x64-windows-static-md
+          - os: [windows-11-arm]
+            triplet: arm64-windows-static-md
     runs-on: ${{ matrix.os }}
     env:
       CIBW_BUILD_VERBOSITY: 2
