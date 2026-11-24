@@ -14,8 +14,10 @@ numpy_dep = dependency('numpy')
 
 add_project_arguments('-DNPY_TARGET_VERSION=NPY_1_19_API_VERSION', language: 'cpp')
 
+if host_machine.system() != 'windows'
 res1 = run_command('make', 'init')
 res2 = run_command('make', 'hdf5')
+endif
 
 # Include directories
 inc_dirs = [
@@ -47,7 +49,7 @@ hdf5_hl_dep = cc.find_library('hdf5_hl',
 add_project_arguments('-DSPINER_USE_HDF', '-DCMINPACK_NO_DLL', language: 'cpp')
 cminpack_inc = include_directories('external/cminpack/include')
 cminpack_lib = static_library('cminpack',
-  run_command('sh', '-c', 'ls external/cminpack/src/*.c', check: true).stdout().strip().split('\n'),
+  run_command(py, '-c', 'import glob; print(*glob.glob("external/cminpack/src/*.c"), sep="\\n")'),
   include_directories: cminpack_inc,
   c_args: ['-DCMINPACK_NO_DLL'],
 )
