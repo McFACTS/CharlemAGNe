@@ -27,8 +27,10 @@ inc_dirs = [
     'external/singularity-opac/utils/spiner',
     'external/singularity-opac/utils/ports-of-call',
     'external/cminpack/include',
-    'external/hdf5/include',
 ]
+if host_machine.system() != 'windows'
+    inc_dirs += 'external/hdf5/include'
+endif
 
 incdir = include_directories(inc_dirs)
 
@@ -36,7 +38,7 @@ incdir = include_directories(inc_dirs)
 if host_machine.system() != 'windows'
 hdf5_lib_path = meson.current_source_dir() / 'external/hdf5/lib'
 hdf5_inc_path = 'external/hdf5/include'
-hdf5_inc = include_directories(hdf5_inc_path)
+#hdf5_inc = include_directories(hdf5_inc_path)
 hdf5_dep = cc.find_library('hdf5',
   dirs: [hdf5_lib_path],
   required: true,
