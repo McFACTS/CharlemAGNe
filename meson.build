@@ -3,7 +3,7 @@ project('charlemagne',
     'cpp',
     version: '0.1.1',
     meson_version: '>=1.3.0',
-    default_options: ['cpp_std=c++20', 'warning_level=2', 'optimization=3'],
+    default_options: ['cpp_std=c++20', 'warning_level=2', 'optimization=3', 'c_std=c11'],
 )
 
 py = import('python').find_installation(pure: false)
