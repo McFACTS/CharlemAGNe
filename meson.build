@@ -9,12 +9,20 @@ project('charlemagne',
 py = import('python').find_installation(pure: false)
 cc = meson.get_compiler('c')
 numpy_dep = dependency('numpy')
-hdf5_dep = dependency('hdf5', static: true)
-hdf5_hl_dep = dependency('hdf5_hl', static: true)
+#hdf5_dep = dependency('hdf5', static: true)
+#hdf5_hl_dep = dependency('hdf5_hl', static: true)
 
-#if not hdf5_hl_dep.found()
-#  hdf5_hl_dep = cc.find_library('hdf5_hl')
-#endif
+hdf5_lib_path = meson.current_source_dir() / 'external/hdf5/lib'
+hdf5_inc_path = 'external/hdf5/include'
+hdf5_inc = include_directories(hdf5_inc_path)
+hdf5_dep = cc.find_library('hdf5',
+  dirs: [hdf5_lib_path],
+  required: true,
+)
+hdf5_hl_dep = cc.find_library('hdf5_hl',
+  dirs: [hdf5_lib_path],
+  required: true,
+)
 
 add_project_arguments('-DNPY_TARGET_VERSION=NPY_1_19_API_VERSION', language: 'cpp')
 
