@@ -11,5 +11,3 @@ dist/
 local-wheels
 SG03*.png
 SG03*.jpg
-# External libs
-external/hdf5*
