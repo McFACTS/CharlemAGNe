@@ -54,7 +54,10 @@ hdf5_hl_dep = cc.find_library('hdf5_hl',
 else
 # vcpkg: runner sets VCPKG_ROOT; CI must also export VCPKG_DEFAULT_TRIPLET
 # matching the `vcpkg install` triplet (x64-windows-static-md / arm64-...)
-hdf5_dep = dependency('hdf5', static: true)
+hdf5_dep = declare_dependency(dependencies: [
+    dependency('hdf5', static: true),
+    cc.find_library('shlwapi', required: true),
+])
 hdf5_hl_dep = dependency('hdf5_hl', static: true)
 #vcpkg_root = run_command(py, '-c', 'import os; print(os.environ["VCPKG_ROOT"])', check: true).stdout().strip()
 #vcpkg_triplet = run_command(py, '-c', 'import os; print(os.environ["VCPKG_DEFAULT_TRIPLET"])', check: true).stdout().strip()
