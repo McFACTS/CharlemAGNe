@@ -11,7 +11,7 @@ build-backend = 'mesonpy'
 limited-api = true
 
 [tool.meson-python.args]
-setup = ["--warnlevel=2"]
+setup = ["--warnlevel=2", "--vsenv"]
 
 [tool.cibuildwheel]
 build = "cp39-* cp314t-*"
@@ -30,6 +30,7 @@ test-command = "pytest {project}/tests -q"
 
 [tool.cibuildwheel.windows]
 #archs = ["x86_64", "arm64"]
+archs = ["AMD64"]
 test-requires = ["pytest"]
 test-command = "pytest {project}/tests -q"
 
