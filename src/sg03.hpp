@@ -341,7 +341,7 @@ public:
         "opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
     for (size_t i = 0; i < sg03.r_cyl.size(); i++) {
       fprintf(sg03_out,
-              "%lu %d %g %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g "
+              "%zu %d %g %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g "
               "%g %g %g %g %g\n",
               i, (int)sg03.converged[i], sg03.max_residual[i], sg03.steps[i],
               (int)sg03.star_formation[i], sg03.r_cyl[i] / GetRg(),

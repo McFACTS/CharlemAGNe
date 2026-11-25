@@ -441,7 +441,7 @@ public:
         "opacfac, Q, h, eta, dr, dA, dV, mass_disk, Mdot_sf\n");
     for (size_t i = 0; i < tqm05.r_cyl.size(); i++) {
       fprintf(tqm05_out,
-              "%lu %d %g %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g "
+              "%zu %d %g %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g "
               "%g %g %g %g %g\n",
               i, (int)tqm05.converged[i], tqm05.max_residual[i], tqm05.steps[i],
               (int)tqm05.star_formation[i], tqm05.r_cyl[i] / GetRg(),
