@@ -3,7 +3,7 @@
 all: tests
 
 ######## Settings ########
-VERSION = 0.1.1
+VERSION = 0.1.2
 DIST=dist/charlemagne-${VERSION}.tar.gz
 MAX_THREADS=20
 BUILD_DIR=build
