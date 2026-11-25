@@ -135,15 +135,14 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
       - run: pip install cibuildwheel
-      - name: Install pkgconf (working pkg-config)
+      - name: Install HDF5 + native pkgconf (vcpkg)
         run: |
-          & C:\msys64\usr\bin\pacman.exe -S --noconfirm pkgconf
-          echo "C:\msys64\usr\bin" >> $env:GITHUB_PATH
-      - name: Install HDF5 (vcpkg, static-md, with HL)
-        run: |
-          vcpkg install "hdf5[hl]:${{ matrix.triplet }}"
-          echo "PKG_CONFIG_PATH=$env:VCPKG_ROOT/installed/$env:VCPKG_DEFAULT_TRIPLET/share/pkgconfig;$env:VCPKG_ROOT/installed/$env:VCPKG_DEFAULT_TRIPLET/lib/pkgconfig" >> $env:GITHUB_ENV
-          ls "$env:VCPKG_ROOT/installed/$env:VCPKG_DEFAULT_TRIPLET/share/pkgconfig"
+          vcpkg install "hdf5[core,hl]:${{ matrix.triplet }}" "pkgconf:x64-windows"
+          $prefix = "$env:VCPKG_ROOT\installed\${{ matrix.triplet }}"
+          "PKG_CONFIG=$env:VCPKG_ROOT\installed\x64-windows\tools\pkgconf\pkgconf.exe" >> $env:GITHUB_ENV
+          "PKG_CONFIG_PATH=$prefix\lib\pkgconfig" >> $env:GITHUB_ENV
+          Get-ChildItem "$prefix\lib\pkgconfig"
+          & "$env:VCPKG_ROOT\installed\x64-windows\tools\pkgconf\pkgconf.exe" --with-path="$prefix\lib\pkgconfig" --static --cflags --libs hdf5 hdf5_hl
       - run: python -m cibuildwheel --output-dir local-wheels
       - uses: actions/upload-artifact@v4
         with: { name: "wheels-windows-${{ matrix.os }}", path: local-wheels/*.whl }
