@@ -14,7 +14,7 @@ limited-api = true
 setup = ["--warnlevel=2", "--vsenv"]
 
 [tool.cibuildwheel]
-build = "cp39-* cp314t-*"
+build = "cp39-* cp314t-* cp315t-*"
 skip = "*-musllinux_*"
 
 [[tool.cibuildwheel.overrides]]
