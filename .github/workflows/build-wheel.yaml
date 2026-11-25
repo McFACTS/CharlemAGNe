@@ -122,8 +122,6 @@ jobs:
         include:
           - os: windows-latest
             triplet: x64-windows-static-md
-          - os: windows-11-arm
-            triplet: arm64-windows-static-md
     runs-on: ${{ matrix.os }}
     env:
       CIBW_BUILD_VERBOSITY: 2
